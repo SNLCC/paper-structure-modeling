@@ -12,9 +12,64 @@ import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
 import { extractPdfText } from "../lib/pdf-text.js";
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as zoteroSearch from "../tools/zotero-search.js";
 import * as zoteroItem from "../tools/zotero-item.js";
 import * as zoteroAttachmentPath from "../tools/zotero-attachment-path.js";
+
+// 首次配置自动铺模板（第 89 轮）：读包内用 fs（安装目录对子进程只读可读），
+// 写目标用 ctx.resources（库目录在许可根外，裸 fs 会被 Permission Model 拒）。
+const TEMPLATE_ROOT = fileURLToPath(new URL("../library-template", import.meta.url));
+
+function walkRel(dir, base = "") {
+  const out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${ent.name}` : ent.name;
+    if (ent.isDirectory()) out.push(...walkRel(path.join(dir, ent.name), rel));
+    else out.push(rel);
+  }
+  return out;
+}
+
+async function initLibraryFromTemplate(ctx, target) {
+  try {
+    // 目标已有内容 → 保留不动（不覆盖既有库）
+    try {
+      const st = await ctx.resources.stat(ref(target));
+      if (st && st.exists && st.isDirectory) {
+        const listing = await ctx.resources.list(ref(target));
+        if ((listing.items || []).length > 0) return { action: "kept", files: listing.items.length };
+      }
+    } catch {
+      // 目录不存在：落到下方初始化
+    }
+    try {
+      await ctx.resources.mkdir(ref(target));
+    } catch {
+      /* 已存在 */
+    }
+    const rels = walkRel(TEMPLATE_ROOT);
+    const dirs = new Set(
+      rels.filter((r) => r.includes("/")).map((r) => r.slice(0, r.lastIndexOf("/")))
+    );
+    for (const d of dirs) {
+      try {
+        await ctx.resources.mkdir(ref(`${target}/${d}`));
+      } catch {
+        /* 已存在 */
+      }
+    }
+    for (const rel of rels) {
+      const buf = readFileSync(path.join(TEMPLATE_ROOT, rel));
+      await ctx.resources.write(ref(`${target}/${rel}`), buf);
+    }
+    return { action: "initialized", files: rels.length };
+  } catch (e) {
+    return { action: "failed", message: String(e?.message || e) };
+  }
+}
 
 const TOOLS = {
   zotero_search: zoteroSearch,
@@ -102,7 +157,13 @@ export function registerApiRoutes(app, ctx) {
       if (!isDir) return c.json({ ok: false, message: "结构库路径不存在或不是目录" }, 400);
     }
     try {
-      return c.json({ ok: true, config: saveConfig(v.value) });
+      const saved = saveConfig(v.value);
+      // 首次配置自动铺模板（第 89 轮，库主三问）：目标为空/不存在时从包内 library-template 初始化
+      let libraryInit = null;
+      if (v.value.libraryPath) {
+        libraryInit = await initLibraryFromTemplate(ctx, v.value.libraryPath);
+      }
+      return c.json({ ok: true, config: saved, ...(libraryInit ? { libraryInit } : {}) });
     } catch (e) {
       return c.json({ ok: false, message: String(e?.message || e) }, 500);
     }

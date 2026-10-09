@@ -30,8 +30,7 @@
         "description": "论证结构提取与写作模型工作台：导入文献一键拆解，按写作意图检索可回溯的规律与范例。",
         "route": "/panel.html",
         "realization": "page",
-        "siteNavEntry": true,
-        "functionPanel": { "id": "side", "label": "结构库速览", "route": "/fp.html" }
+        "siteNavEntry": true
       }
     ]
   }

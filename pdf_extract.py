@@ -9,6 +9,19 @@
 import json
 import sys
 
+# 启动自报（第 86 轮诊断）：确认 node 侧 env 注入与 user site 判定输入
+try:
+    import os as _os
+    import site as _site
+    print(
+        f"BOOT py={sys.executable} PYPATH={_os.environ.get('PYTHONPATH', '<unset>')} "
+        f"US={_site.getusersitepackages()} NOUSER={_os.environ.get('PYTHONNOUSERSITE', '-')}",
+        file=sys.stderr,
+        flush=True,
+    )
+except Exception:
+    pass
+
 X_GAP = 14.0  # 带内切段间隙（pt）：大于任何词距（<6pt）、小于任何栏间隙（≥10pt）
 
 
@@ -56,6 +69,16 @@ def main():
         if not data:
             print(json.dumps({"ok": False, "error": "empty stdin", "code": "not_pdf"}))
             return
+        # 用户 site 注入（第 86 轮根因修复）：宿主子进程环境禁用 user site 自动加载，
+        # 而 pymupdf 常装在用户 site；getusersitepackages() 仅查询路径不受禁用标志影响，
+        # 手动注入后 import 恢复；无安装时仍走下方回退逻辑。
+        try:
+            import site as _site
+            _us = _site.getusersitepackages()
+            if _us and _us not in sys.path:
+                sys.path.append(_us)
+        except Exception:
+            pass
         import pymupdf
 
         try:
@@ -70,12 +93,16 @@ def main():
                 texts, _two, _st = sort_blocks(page.get_text("blocks"), w)
                 pages_text.append("\n\n".join(texts))
             text = "\n\n".join(pages_text)
-            print(json.dumps({"ok": True, "text": text, "pages": len(pages_text)}, ensure_ascii=False))
+            print(json.dumps({"ok": True, "text": text, "pages": len(pages_text)}))
         finally:
             doc.close()
     except Exception as e:  # 畸形 PDF 不许炸进程：回 ok:false 由 node 侧回退 unpdf
+        # 自报环境（第 85 轮）：import 失败时带上解释器与 site 路径（sys 用模块级，勿在函数内重 import 造成遮蔽）
         try:
-            print(json.dumps({"ok": False, "error": str(e), "code": "mupdf_fail"}, ensure_ascii=False))
+            env_hint = f" [py={sys.executable}; path={'|'.join(sys.path[:6])}]" if "pymupdf" in str(e) else ""
+            # ensure_ascii=True：Windows 默认 GBK stdout 遇非 ASCII 会抛 UnicodeEncodeError
+            # 反噬错误报告本身（第 88 轮 gbk/œ 事故）；JSON 转义后语义不变。
+            print(json.dumps({"ok": False, "error": str(e) + env_hint, "code": "mupdf_fail"}))
         except Exception:
             print(json.dumps({"ok": False, "error": "unknown", "code": "mupdf_fail"}))
 

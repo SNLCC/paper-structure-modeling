@@ -727,9 +727,25 @@ function ZoteroBox({ submit, busy }: { submit: (body: Record<string, unknown>) =
 // ---- 首页（方案三四要素 + 导入入口）----
 function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => void; onDone: () => void }) {
   const todo = stats ? stats.queuePending + stats.failures : 0;
+  // 未配置引导（第 89 轮）：库路径为空或占位串时，在首页给出一步到位的指引
+  const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok'>('loading');
+  useEffect(() => {
+    apiGet('/api/config')
+      .then((r) => {
+        const p = r?.config?.libraryPath ?? '';
+        setLibState(p && !String(p).startsWith('NOT_CONFIGURED') ? 'ok' : 'unconfigured');
+      })
+      .catch(() => setLibState('loading'));
+  }, []);
   return (
     <div className="home">
       <p className="tagline">把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。</p>
+      {libState === 'unconfigured' && (
+        <div className="home-banner">
+          尚未配置结构库。到「设置」填写 libraryPath 并保存，模板会自动铺到该目录，无需手动拷贝。
+          <Button onClick={() => go('settings')}>前往设置</Button>
+        </div>
+      )}
       <ol className="steps">
         <li>把文献拖进面板一键拆解，或在对话里让我拆</li>
         <li>库里提出的疑问到「待办」处理，保证每条引文可回溯</li>
