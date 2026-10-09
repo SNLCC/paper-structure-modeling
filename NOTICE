@@ -9,7 +9,9 @@ third-party notices
 
 1. @hana/app-sdk, @hana/plugin-components, @hana/plugin-protocol
    Copyright HanaAgent / liliMozi
-   Licensed under the Apache License, Version 2.0（package.json license 字段）。
+   Licensed under the Apache License, Version 2.0。**协议全文随包：
+   vendor/sdk/LICENSE-APACHE-2.0.txt**（Apache-2.0 第 4(a) 条要求向接收者提供
+   License 副本；本 NOTICE 满足第 4(c) 条的署名保留，两者互补不可互代）。
    来源：官方 hana-app-creator skill 随附的 SDK 分发资产；其中 @hana/app-sdk 未上
    公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录，
    随包携带系官方机制的预期产物。随本仓库分发供构建与类型解析使用，未作修改，
