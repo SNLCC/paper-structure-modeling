@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+
+# 本地验收与 spike 临时产物
+_spike-pdf/
+out_*.txt
+final_*.txt
+stats*.txt

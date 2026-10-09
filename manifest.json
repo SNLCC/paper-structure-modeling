@@ -1,0 +1,38 @@
+{
+  "manifestVersion": 2,
+  "id": "paper-structure-modeling",
+  "name": "论文结构建模",
+  "version": "0.1.0",
+  "entry": "index.js",
+  "icon": "assets/icon.jpg",
+  "minAppVersion": "1.0.6-beta",
+  "description": "从文献提取论文底层论证架构与表层呈现结构，聚类归纳类型，生成可回溯的写作模型。",
+  "capabilities": [
+    "app/tools.expose-to-model",
+    "app/models.infer",
+    "app/resources.read",
+    "app/resources.write",
+    "app/process.spawn",
+    "app/ui.clipboard-write"
+  ],
+  "network": {
+    "allowedHosts": ["localhost", "127.0.0.1"],
+    "methods": ["GET"],
+    "allowLocalhost": true,
+    "defaultTimeoutMs": 10000
+  },
+  "contributes": {
+    "cards": [
+      {
+        "id": "panel",
+        "face": { "image": "assets/cover.png" },
+        "title": "论文结构建模",
+        "description": "论证结构提取与写作模型工作台：导入文献一键拆解，按写作意图检索可回溯的规律与范例。",
+        "route": "/panel.html",
+        "realization": "page",
+        "siteNavEntry": true,
+        "functionPanel": { "id": "side", "label": "结构库速览", "route": "/fp.html" }
+      }
+    ]
+  }
+}

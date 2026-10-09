@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Two-column spike sample</title>
+<style>
+@page { size: A4; margin: 18mm 14mm; }
+body { font-family: "Times New Roman", serif; font-size: 10.5pt; line-height: 1.45; }
+h1 { column-span: all; font-size: 16pt; text-align: center; margin: 0 0 10pt; }
+h2 { column-span: all; font-size: 12pt; margin: 10pt 0 4pt; }
+.cols { column-count: 2; column-gap: 18px; column-rule: 0.5px solid #999; text-align: justify; }
+p { margin: 0 0 6pt; text-indent: 1.5em; }
+</style></head><body>
+<h1>Watering the Garden: A Two-Column Extraction Test</h1>
+<h2>Abstract</h2>
+<div class="cols">
+<p>This sample compares two ways of watering a domestic garden: a fixed weekly schedule and a demand-based routine guided by soil moisture. It lays them side by side without picking a winner, because the point of this document is the layout rather than the verdict.</p>
+<p>This sample is deliberately typeset in two columns to test reading-order behaviour. The extractor must read down the left column first and then down the right column. An extractor that reads across the page will interleave sentences from both columns, producing text in which every word is present but no sentence survives intact.</p>
+<p>Consider the following sequence as printed. Left column paragraph one explains that a fixed schedule keeps the routine simple and easy to remember. Left column paragraph two continues that predictability guards against both over-watering and neglect during busy weeks.</p>
+<p>Right column paragraph one counters that a fixed schedule wastes water in weeks of steady rain and can drown shallow-rooted plants. Right column paragraph two concedes the point only where the gardener checks the soil by hand before each session.</p>
+<p>The corruption of reading order is silent. No exception is raised, no confidence score is attached, and the consumer of the text discovers the damage only when comprehension fails at a place far downstream. This sample therefore serves as a ground truth: the correct output must reproduce each paragraph contiguously.</p>
+<p>Final sentence of the left column: the fixed schedule can be followed without any further questions. Final sentence of the right column: the demand-based routine must be checked against the soil before it is trusted again.</p>
+</div>
+</body></html>

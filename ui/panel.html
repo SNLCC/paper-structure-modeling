@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>论文结构建模</title>
+  <link rel="stylesheet" href="./assets/panel.css">
+  <script>
+    // 宿主主题样式桥（与 v1 renderShell 同逻辑）：host 经 query 下发 hana-css 时接上
+    (function () {
+      var c = new URLSearchParams(location.search).get('hana-css');
+      if (c) {
+        var l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = c;
+        document.head.appendChild(l);
+      }
+    })();
+  </script>
+</head>
+<body data-hana-theme="inherit" data-surface="page">
+  <div id="root" data-surface="page"></div>
+  <script type="module" src="./assets/panel.js"></script>
+</body>
+</html>

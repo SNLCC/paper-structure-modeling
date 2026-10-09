@@ -1,0 +1,47 @@
+third-party notices
+===================
+
+本仓库（paper-structure-modeling）以 MIT 许可发布（见 LICENSE）。以下为随包或声明的第三方组件及其许可；列出即披露，各自许可以其原始声明为准。
+
+
+一、随包分发（vendor/ 与构建依赖）
+--------------------------------
+
+1. @hana/app-sdk, @hana/plugin-sdk, @hana/plugin-protocol,
+   @hana/plugin-components, @hana/plugin-runtime
+   Copyright HanaAgent / liliMozi
+   Licensed under the Apache License, Version 2.0（package.json license 字段）。
+   来源：官方 hana-app-creator skill 随附的 SDK 分发资产，与官方文档推荐的
+   file: 依赖用法一致；仅用于本插件构建与运行，未作修改。
+
+2. unpdf
+   Copyright (c) 2023-Present Johann Schopplich
+   Licensed under the MIT License.
+   说明：unpdf 的打包产物内嵌 Mozilla pdf.js（Apache-2.0, https://github.com/mozilla/pdf.js），
+   其上游 LICENSE 文件未单独声明该内嵌，此处代为披露。
+
+3. react, react-dom
+   Copyright (c) Meta Platforms, Inc.
+   Licensed under the MIT License.
+
+4. 构建期依赖（不随产物分发）：vite（MIT）、@vitejs/plugin-react（MIT）、
+   typescript（Apache-2.0）、@types/*（MIT）、esbuild（MIT）。
+
+
+二、运行时外部依赖（用户自行安装，不随本仓库分发）
+------------------------------------------------
+
+PyMuPDF (pymupdf)
+   https://pymupdf.org/ · PyPI: pymupdf
+   Licensed under the GNU AGPL v3.0（另有商业许可）。
+   使用方式：本插件的 pdf_extract.py 通过 stdin/stdout 以独立子进程方式调用其
+   公开函数接口（Python 函数调用，纯本地内存处理，不涉及任何网络访问）；
+   与本仓库代码无链接、无嵌入，且不随本仓库分发该库本体。
+   用户如需 PDF 主引擎功能，请自行 `python -m pip install pymupdf` 并自行
+   遵守其 AGPL 义务；不安装时插件自动回退内置 unpdf（MIT）引擎，功能完整。
+
+   关于本仓库的 pdf_extract.py：系第一方原创代码，以本仓库 LICENSE（MIT）发布；
+   仅通过 Python import 调用 PyMuPDF 公开 API，未修改、未嵌入该库任何源码，
+   与之构成独立程序关系（GNU GPL FAQ 的 fork/exec 与独立源文件标准），
+   本项目不主张对 PyMuPDF/MuPDF 的任何权利，也不构成其衍生作品。
+   如未来商业分发，建议届时另行评估 Artifex 商业许可。
