@@ -4,7 +4,7 @@ import { ref, STRUCT_ROOT, META_DIR, TAG_LIB } from "../lib/paths.js";
 const decoder = new TextDecoder();
 const json = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] });
 
-// 道 2 共现提示（§4.2）：候选判定 = 两标签共现篇数 ≥ threshold，或共享同一处置动作。
+// 共现提示：候选判定 = 两标签共现篇数 ≥ threshold，或共享同一处置动作。
 // 语义同义与否不在此判定（道 3 归库主裁决）；此处只算证据、进队列。
 const DEFAULT_THRESHOLD = 2;
 
@@ -17,8 +17,8 @@ const parseTagsLine = (md) => {
 const tool = {
   name: "suggest_tag_merges",
   description:
-    "Co-occurrence scan for label-merge review (§4.2 道 2): scan all 篇目 for tag co-occurrence, score each tag pair by shared papers and shared 处置动作 (from 标签库), and append qualifying pairs to 标签库's 复核队列 with evidence. " +
-    "This only computes evidence and enqueues — whether two labels are actually synonymous is 库主's call (道 3, then apply_tag_merge). Idempotent: pairs already in the queue are not duplicated.",
+    "Co-occurrence scan for label-merge review: scan all 篇目 for tag co-occurrence, score each tag pair by shared papers and shared 处置动作 (from 标签库), and append qualifying pairs to 标签库's 复核队列 with evidence. " +
+    "This only computes evidence and enqueues — whether two labels are actually synonymous is the user's call (then apply_tag_merge). Idempotent: pairs already in the queue are not duplicated.",
   parameters: {
     type: "object",
     properties: {

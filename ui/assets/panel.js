@@ -15327,7 +15327,7 @@ async function cb() {
   };
 }
 function sb() {
-  const i = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), [r, o] = k.useState({ id: "", title: "", authors: "", year: "", venue: "", textType: "", score: "9", rationale: "", date: i, recordedBy: "库主" }), [c, d] = k.useState(null), h = (b, U) => o((w) => ({ ...w, [b]: U }));
+  const i = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), [r, o] = k.useState({ id: "", title: "", authors: "", year: "", venue: "", textType: "", score: "9", rationale: "", date: i, recordedBy: "" }), [c, d] = k.useState(null), h = (b, U) => o((w) => ({ ...w, [b]: U }));
   async function g() {
     const b = {
       id: r.id.trim(),

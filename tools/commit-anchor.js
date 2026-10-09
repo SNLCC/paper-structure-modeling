@@ -7,8 +7,8 @@ const json = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, nul
 const tool = {
   name: "commit_anchor",
   description:
-    "Commit one anchor sample (库主's own total score for a paper) into 锚点样本/. Anchors feed two things only: 评分指引归纳 and 盲打校验 (§5.5). Append-only; an existing id is rejected. " +
-    "Input `anchor` fields: id (slug-year, aligned with 篇目 id), title, authors, year, venue?, textType (库主's judgment, free text), score (1-10 total), rationale (≥10 chars, this is what guidance induction consumes), date (YYYY-MM-DD), recordedBy (e.g. 「库主」/「助手代录（库主口述）」), entryRef?",
+    "Commit one anchor sample (the user's own total score for a paper) into 锚点样本/. Anchors feed two things only: 评分指引归纳 and 盲打校验. Append-only; an existing id is rejected. " +
+    "Input `anchor` fields: id (slug-year, aligned with 篇目 id), title, authors, year, venue?, textType (the user's judgment, free text), score (1-10 total), rationale (≥10 chars, this is what guidance induction consumes), date (YYYY-MM-DD), recordedBy (e.g. 「库主」/「助手代录（库主口述）」), entryRef?",
   parameters: {
     type: "object",
     properties: {

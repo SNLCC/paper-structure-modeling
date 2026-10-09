@@ -19,7 +19,7 @@ import * as zoteroSearch from "../tools/zotero-search.js";
 import * as zoteroItem from "../tools/zotero-item.js";
 import * as zoteroAttachmentPath from "../tools/zotero-attachment-path.js";
 
-// 首次配置自动铺模板（第 89 轮）：读包内用 fs（安装目录对子进程只读可读），
+// 首次配置自动铺模板：读包内用 fs（安装目录对子进程只读可读），
 // 写目标用 ctx.resources（库目录在许可根外，裸 fs 会被 Permission Model 拒）。
 const TEMPLATE_ROOT = fileURLToPath(new URL("../library-template", import.meta.url));
 
@@ -118,7 +118,7 @@ export function registerApiRoutes(app, ctx) {
     }
   });
 
-  // 共用检索层的 UI 入口（§5.8 通道二）：与 search_structure 工具走同一 searchLibrary，
+  // 共用检索层的 UI 入口：与 search_structure 工具走同一 searchLibrary，
   // 不各存一套。语义精筛仍由前端/模型做，本端点只给物理命中排序。
   app.get("/api/search", async (c) => {
     try {
@@ -148,7 +148,7 @@ export function registerApiRoutes(app, ctx) {
     if (v.value.libraryPath) {
       let isDir = false;
       try {
-        // 第 72 轮合规化：用户路径校验走 ResourceIO，不再裸 statSync（PLUGINS.md 资源边界）
+        // 合规化：用户路径校验走 ResourceIO，不再裸 statSync（PLUGINS.md 资源边界）
         const st = await ctx.resources.stat(ref(v.value.libraryPath));
         isDir = !!st?.exists && !!st?.isDirectory;
       } catch {
@@ -158,7 +158,7 @@ export function registerApiRoutes(app, ctx) {
     }
     try {
       const saved = saveConfig(v.value);
-      // 首次配置自动铺模板（第 89 轮，库主三问）：目标为空/不存在时从包内 library-template 初始化
+      // 首次配置自动铺模板：目标为空/不存在时从包内 library-template 初始化
       let libraryInit = null;
       if (v.value.libraryPath) {
         libraryInit = await initLibraryFromTemplate(ctx, v.value.libraryPath);
@@ -190,7 +190,7 @@ export function registerApiRoutes(app, ctx) {
     }
   });
 
-  // 导入拆解（§6.1 B档，第 68-71 轮）：面板导入 → 通道一提取 → 落格校验带错重试 →
+  // 导入拆解：面板导入 → 通道一提取 → 落格校验带错重试 →
   // commit_extraction 同一写闸入库。失败进待办（too_short/too_long 属入参问题不落待办）。
   app.post("/api/import", async (c) => {
     let body;
@@ -200,7 +200,7 @@ export function registerApiRoutes(app, ctx) {
       body = {};
     }
     let text = String(body.text || "");
-    // PDF 源（第 74 轮）：pdfPath（Zotero 附件等用户路径，ResourceIO 合规读）或 pdfBase64（拖放/选择文件）。
+    // PDF 源：pdfPath（Zotero 附件等用户路径，ResourceIO 合规读）或 pdfBase64（拖放/选择文件）。
     // 服务端提取为 text 后进同一条 runImport 链，同流三保障零改动。
     let pdfEngine;
     if (!text && (body.pdfPath || body.pdfBase64)) {
@@ -221,7 +221,7 @@ export function registerApiRoutes(app, ctx) {
       }
     }
     const r = await runImport(ctx, { text });
-    // 运行时披露（库主第 82 轮）：PDF 源把实际引擎带进响应，UI 据此显示主/回退与安装指引
+    // 运行时披露：PDF 源把实际引擎带进响应，UI 据此显示主/回退与安装指引
     if (pdfEngine) r.pdfEngine = pdfEngine;
     if (r.ok) {
       if (body.fromTs !== undefined && body.fromTs !== null) removeFailure(body.fromTs);
@@ -258,7 +258,7 @@ export function registerApiRoutes(app, ctx) {
     return c.json({ ok: true });
   });
 
-  // spike（开发阶段 D6，第 69 轮；v2 迁移第 76 轮改走 models.utility——v2 禁 model:sample-text）：
+  // spike（v2 走 models.utility，v2 禁 model:sample-text）：
   // utility 动态实测。验证三件事：
   // 入口通不通、实际返回形态（含模型/用量元数据）、短样质量；hasBus/hasPluginId
   // 是诊断位。spike 结束后本端点并入正式导入端点或移除，不属首版 UI 契约。

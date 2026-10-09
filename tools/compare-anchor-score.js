@@ -5,14 +5,14 @@ const ANCHOR_DIR = `${STRUCT_ROOT}/锚点样本`;
 const decoder = new TextDecoder();
 const json = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] });
 
-// 盲打比对阈值：10 分制差值 > 2 判为超阈 → 修评分指引再验（§5.5 环节 3）。
-// 【暂定参数】设计文档未定数，D4.6 已标注；调整只改这里。
+// 盲打比对阈值：10 分制差值 > 2 判为超阈 → 修评分指引再验（环节 3）。
+// 【暂定参数】数值尚未定案，调整只改这里。
 const THRESHOLD = 2;
 
 const tool = {
   name: "compare_anchor_score",
   description:
-    "Compare a blind model score against 库主's anchor score for the same paper (§5.5 calibration step 3). The model must NOT have seen the anchor's score when producing blindScore — passing a score it already looked up invalidates the check. Returns both scores, absolute difference, and pass/fail against the threshold.",
+    "Compare a blind model score against the user's anchor score for the same paper (calibration step 3). The model must NOT have seen the anchor's score when producing blindScore — passing a score it already looked up invalidates the check. Returns both scores, absolute difference, and pass/fail against the threshold.",
   parameters: {
     type: "object",
     properties: {
@@ -41,7 +41,7 @@ const tool = {
     }
 
     const anchorScore = parseAnchorScore(md);
-    if (anchorScore === null) return json({ ok: false, message: "锚点文件中未解析到「库主打的篇级总分」行（格式被改动？）" });
+    if (anchorScore === null) return json({ ok: false, message: "锚点文件中未解析到「篇级总分」行（格式被改动？）" });
 
     const diff = Math.abs(blind - anchorScore);
     const pass = diff <= THRESHOLD;
@@ -53,7 +53,7 @@ const tool = {
       diff,
       threshold: THRESHOLD,
       pass,
-      action: pass ? "一致性通过" : "超阈 → 修评分指引后重新盲打（§5.5 环节 3）",
+      action: pass ? "一致性通过" : "超阈 → 修评分指引后重新盲打（环节 3）",
       blindRationale: input.blindRationale || undefined,
     });
   },

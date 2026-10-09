@@ -1,15 +1,15 @@
-# pdf_extract.py — PDF 阅读顺序提取 sidecar（第 78 轮：PyMuPDF 升为默认引擎）
+# pdf_extract.py — PDF 阅读顺序提取 sidecar（PyMuPDF 默认引擎）
 # 协议：stdin 收 PDF 字节 → stdout 回单行 JSON：
 #   {"ok": true,  "text": "...", "pages": N}
 #   {"ok": false, "error": "...", "code": "mupdf_fail" | "not_pdf"}
-# 引擎：PyMuPDF 块级栏排序（spike 第 77 轮三组对照胜出：块=排版单元，
+# 引擎：PyMuPDF 块级栏排序（块=排版单元，
 # 天然避开同行跨栏字符拼接；畸形 PDF 兜底优于 pypdfium2）。
 # 坐标系：PyMuPDF 原点左上、y 向下 —— 升序即从上到下，切勿取负。
 # 本脚本只做提取与排序；字节上限、无文字层阈值判定在 node 侧统一执行。
 import json
 import sys
 
-# 启动自报（第 86 轮诊断）：确认 node 侧 env 注入与 user site 判定输入
+# 启动自报：确认 node 侧 env 注入与 user site 判定输入
 try:
     import os as _os
     import site as _site
@@ -69,7 +69,7 @@ def main():
         if not data:
             print(json.dumps({"ok": False, "error": "empty stdin", "code": "not_pdf"}))
             return
-        # 用户 site 注入（第 86 轮根因修复）：宿主子进程环境禁用 user site 自动加载，
+        # 用户 site 注入：宿主子进程环境禁用 user site 自动加载，
         # 而 pymupdf 常装在用户 site；getusersitepackages() 仅查询路径不受禁用标志影响，
         # 手动注入后 import 恢复；无安装时仍走下方回退逻辑。
         try:
@@ -97,11 +97,11 @@ def main():
         finally:
             doc.close()
     except Exception as e:  # 畸形 PDF 不许炸进程：回 ok:false 由 node 侧回退 unpdf
-        # 自报环境（第 85 轮）：import 失败时带上解释器与 site 路径（sys 用模块级，勿在函数内重 import 造成遮蔽）
+        # 自报环境：import 失败时带上解释器与 site 路径（sys 用模块级，勿在函数内重 import 造成遮蔽）
         try:
             env_hint = f" [py={sys.executable}; path={'|'.join(sys.path[:6])}]" if "pymupdf" in str(e) else ""
             # ensure_ascii=True：Windows 默认 GBK stdout 遇非 ASCII 会抛 UnicodeEncodeError
-            # 反噬错误报告本身（第 88 轮 gbk/œ 事故）；JSON 转义后语义不变。
+            # 反噬错误报告本身（GBK/œ 编码事故）；JSON 转义后语义不变。
             print(json.dumps({"ok": False, "error": str(e) + env_hint, "code": "mupdf_fail"}))
         except Exception:
             print(json.dumps({"ok": False, "error": "unknown", "code": "mupdf_fail"}))

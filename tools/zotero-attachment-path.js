@@ -29,7 +29,7 @@ const tool = {
     let exists = false;
     if (filePath) {
       try {
-        // 第 72 轮合规化：附件存在性走 ResourceIO stat（无裸 fs）；stat 无 size 字段，随 size 输出一并移除
+        // 合规化：附件存在性走 ResourceIO stat（无裸 fs）；stat 无 size 字段，随 size 输出一并移除
         const st = await ctx.resources.stat(ref(filePath));
         exists = !!st?.exists && !st?.isDirectory;
       } catch {

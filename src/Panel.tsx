@@ -31,7 +31,7 @@ async function apiPost(path: string, body: unknown): Promise<any> {
 }
 const fileApi = (rel: string) => `/api/file?path=${encodeURIComponent(rel)}`;
 
-// ---- 方案三信息架构（第 67 轮确认）：5 区导航 + 区内子页，首页为默认落点 ----
+// ---- 方案三信息架构：5 区导航 + 区内子页，首页为默认落点 ----
 type Zone = 'home' | 'use' | 'library' | 'todo' | 'settings';
 const NAV: { id: Zone; label: string }[] = [
   { id: 'home', label: '首页' },
@@ -154,7 +154,7 @@ async function loadStats(): Promise<Stats> {
 // ---- 1 录评分 ----
 function ScoreTab() {
   const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState({ id: '', title: '', authors: '', year: '', venue: '', textType: '', score: '9', rationale: '', date: today, recordedBy: '库主' });
+  const [f, setF] = useState({ id: '', title: '', authors: '', year: '', venue: '', textType: '', score: '9', rationale: '', date: today, recordedBy: '' });
   const [result, setResult] = useState<any>(null);
   const set = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
 
@@ -465,7 +465,7 @@ function SettingsTab() {
   );
 }
 
-// ---- 导入区（首页内，§6.1 B档）：拖放 md/txt + 文件选择 + 粘贴 → POST /api/import ----
+// ---- 导入区（首页内）：拖放 md/txt + 文件选择 + 粘贴 → POST /api/import ----
 function ImportZone({ onDone }: { onDone: () => void }) {
   const [paste, setPaste] = useState('');
   const [busy, setBusy] = useState(false);
@@ -599,7 +599,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ---- Zotero 取件面板（甲方案，第 74 轮）：搜索 → 条目 → 附件 → 导入拆解 / 复制路径 ----
+// ---- Zotero 取件面板（甲方案）：搜索 → 条目 → 附件 → 导入拆解 / 复制路径 ----
 // 调用全部走本插件 route（iframe 边界），zotero_* 工具经 /api/tool/:name 转发；
 // 导入 = 附件路径 → /api/import {pdfPath}（服务端 ResourceIO 读 + 提取 + 既有拆解链）。
 function ZoteroBox({ submit, busy }: { submit: (body: Record<string, unknown>) => Promise<void>; busy: boolean }) {
@@ -727,7 +727,7 @@ function ZoteroBox({ submit, busy }: { submit: (body: Record<string, unknown>) =
 // ---- 首页（方案三四要素 + 导入入口）----
 function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => void; onDone: () => void }) {
   const todo = stats ? stats.queuePending + stats.failures : 0;
-  // 未配置引导（第 89 轮）：库路径为空或占位串时，在首页给出一步到位的指引
+  // 未配置引导：库路径为空或占位串时，在首页给出一步到位的指引
   const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok'>('loading');
   useEffect(() => {
     apiGet('/api/config')
@@ -766,7 +766,7 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
   );
 }
 
-// ---- 待办 · 导入失败（§6.1：失败进待办，可原样重试）----
+// ---- 待办 · 导入失败（失败进待办，可原样重试）----
 function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
   const [items, setItems] = useState<any[]>([]);
   const [busyTs, setBusyTs] = useState<number | null>(null);

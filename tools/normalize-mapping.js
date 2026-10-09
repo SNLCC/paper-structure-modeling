@@ -8,7 +8,7 @@ const json = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, nul
 const tool = {
   name: "normalize_mapping",
   description:
-    "Run closure normalization on 闭包映射表.md: flatten every row's right value to its endpoint so the table stays single-hop (§4.2 库主第 37 轮). Idempotent — reports changed:false when already normalized. Use after hand-editing the mapping table or as a periodic integrity check. Writes only when the flattened result differs.",
+    "Run closure normalization on 闭包映射表.md: flatten every row's right value to its endpoint so the table stays single-hop. Idempotent — reports changed:false when already normalized. Use after hand-editing the mapping table or as a periodic integrity check. Writes only when the flattened result differs.",
   parameters: { type: "object", properties: {} },
   sessionPermission: {
     kind: "workspace_write",

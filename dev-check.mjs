@@ -71,6 +71,7 @@ console.log("anchor invalid:", !a2.ok, "|", a2.errors.map((e) => e.field).join("
 const aMd = renderAnchor(anchor);
 console.log("anchor render+parse roundtrip:", parseAnchorScore(aMd) === 9);
 console.log("anchor parse missing:", parseAnchorScore("no score line") === null);
+console.log("anchor parse legacy format:", parseAnchorScore("- 库主打的篇级总分：7\n") === 7);
 
 // ---- 闭包归一（M6）----
 const chain = flattenRows([
@@ -148,7 +149,7 @@ const s3 = await searchLibrary(mockCtx, "不存在词xyzq");
 console.log("search no-hit:", s3.ok && s3.results.length === 0);
 const s4 = await searchLibrary(mockCtx, "  ");
 console.log("search empty query rejected:", s4.ok === false);
-// ---- 通道三三闸纯逻辑（D4.12，第 60 轮）----
+// ---- 通道三三闸纯逻辑 ----
 console.log("push factory fn:", typeof pushFactory === "function");
 console.log("g1 empty markers silent:", matchMarker([], "写作") === null);
 console.log("g1 no name silent:", matchMarker(["写作"], undefined) === null);
@@ -161,7 +162,7 @@ console.log("config normalize:", cfgParsed.markers.length === 1 && cfgParsed.mar
 console.log("config validate:", validateConfig({ maxPerRun: 3 }).ok === false && validateConfig({ markers: ["ok"] }).ok === true && validateConfig("x").ok === false);
 const pushMsg = buildMessage([{ kind: "写作模型", title: "论证型", path: "写作模型/论证型.md", score: 5, hits: [{ line: 2, text: "开头先立靶", excerpt: "" }] }], ["反驳"], "小论文");
 console.log("push message contract:", pushMsg.includes("自动感知注入") && pushMsg.includes("写作模型/论证型.md") && pushMsg.includes("L2:") && pushMsg.includes("不相关请直接忽略"));
-// ---- 会话名三源取值链（第 63 轮）----
+// ---- 会话名三源取值链 ----
 const fakeRead1 = (f) =>
   f.endsWith(".files.json") ? { sessionId: "sess_x" } : f.endsWith("session-titles.json") ? { sess_x: "论文结构提取会话" } : null;
 const n1 = resolveSessionName({ piName: " 写作会话 ", sessionFile: "C:\\a\\b.jsonl", readJson: fakeRead1 });

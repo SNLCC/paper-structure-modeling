@@ -7,14 +7,14 @@ const tool = {
   name: "commit_model",
   description:
     "Commit one writing-model artifact as 写作模型/<类型>-写作模型-v<n>.md with automatic version increment (never overwrite history; 写作模型/README 版本规则). " +
-    "Content discipline (§5.2/§3.4/§3.5): pattern descriptions + detail layer (骨架挂实例, every skeleton entry cites 篇目位置 + 原文引文 + 评分) + selectively included high/low-score differences; NO fill-in templates; low-score papers must not be mixed into the positive model as whole papers (fragment absorption must state 出自篇级低分样本). The tool enforces header fields only — content discipline is the author's responsibility.",
+    "Content discipline: pattern descriptions + detail layer (骨架挂实例, every skeleton entry cites 篇目位置 + 原文引文 + 评分) + selectively included high/low-score differences; NO fill-in templates; low-score papers must not be mixed into the positive model as whole papers (fragment absorption must state 出自篇级低分样本). The tool enforces header fields only — content discipline is the author's responsibility.",
   parameters: {
     type: "object",
     properties: {
       typeName: { type: "string", description: "The type this model belongs to, e.g. 反驳型论证. Becomes the filename prefix." },
       content: { type: "string", description: "Full markdown body of the model (规律描述 + 细节层 + 高低分差异点)." },
       sampleSize: { type: "number", description: "n = number of papers in the sample." },
-      confidenceBasis: { type: "string", description: "置信度依据：样本量 / 频率稳定性 / 锚点覆盖度（§5.7 读法 A）." },
+      confidenceBasis: { type: "string", description: "置信度依据：样本量 / 频率稳定性 / 锚点覆盖度（读法 A）." },
       scoreGrouping: { type: "string", description: "高低分组口径, e.g. 锚点分≥8 为高分组（n=…）." },
       date: { type: "string", description: "YYYY-MM-DD generation date." },
       dryRun: { type: "boolean", description: "Validate and report the next version without writing." },
@@ -36,7 +36,7 @@ const tool = {
     if (!typeName || /[\\/:*?"<>|]/.test(typeName)) errors.push("typeName 必填且不含路径非法字符");
     if (content.length < 100) errors.push("content 太短：模型需至少含规律描述与挂实例的证据（≥100 字）");
     if (!(Number(input.sampleSize) >= 1)) errors.push("sampleSize 须 ≥ 1");
-    if (!String(input.confidenceBasis || "").trim()) errors.push("confidenceBasis 必填（置信度三依据，§5.7）");
+    if (!String(input.confidenceBasis || "").trim()) errors.push("confidenceBasis 必填（置信度三依据）");
     if (!String(input.scoreGrouping || "").trim()) errors.push("scoreGrouping 必填（高低分组口径）");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(input.date || ""))) errors.push("date 须为 YYYY-MM-DD");
     if (errors.length) return json({ ok: false, stage: "validate", errors });
@@ -66,7 +66,7 @@ const tool = {
       "",
       "---",
       "",
-      `> 生成：commit_model v${v}（版本递增，历史不覆盖；骨架每条须挂篇目位置 + 原文引文 + 评分，§5.8）`,
+      `> 生成：commit_model v${v}（版本递增，历史不覆盖；骨架每条须挂篇目位置 + 原文引文 + 评分）`,
       "",
     ].join("\n");
 

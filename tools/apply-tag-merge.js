@@ -19,15 +19,15 @@ function hopResolve(rows, start) {
 const tool = {
   name: "apply_tag_merge",
   description:
-    "Execute 库主's merge adjudication on a label (§4.2 道 3): normalize target to its current endpoint, upsert the mapping row, flatten the closure (single-hop invariant), append the evolution log, then patch 标签库 (merged label status → 并入→X, review-queue decision backfilled). " +
-    "Record-only writes: the original label stays in 标签库 as history; only its status and the mapping's right value change. Run this AFTER 库主 decides a 复核队列 pair — the model proposes, 库主 decides.",
+    "Execute the user's merge adjudication on a label: normalize target to its current endpoint, upsert the mapping row, flatten the closure (single-hop invariant), append the evolution log, then patch 标签库 (merged label status → 并入→X, review-queue decision backfilled). " +
+    "Record-only writes: the original label stays in 标签库 as history; only its status and the mapping's right value change. Run this AFTER the user decides a 复核队列 pair — the model proposes, the user decides.",
   parameters: {
     type: "object",
     properties: {
       mergedLabel: { type: "string", description: "The label being merged away (left column, 原始)." },
       target: { type: "string", description: "The surviving label (will be resolved to its current endpoint)." },
       date: { type: "string", description: "YYYY-MM-DD adjudication date." },
-      decidedBy: { type: "string", description: "Who decided, default 库主." },
+      decidedBy: { type: "string", description: "Who decided, default the user." },
       evidence: { type: "string", description: "Basis for the decision (copied into the evolution log)." },
       round: { type: "string", description: "Evolution round label, optional; defaults to next number." },
     },

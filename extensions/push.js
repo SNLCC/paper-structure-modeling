@@ -1,5 +1,5 @@
-// 通道三正式件：三闸推送链（设计文档 §5.8 第 58 轮已确认，开发文档 D4.12）。
-// 归属闸（会话标定词 × 会话名三源取值链，第 63 轮）→ 命中闸（标签/类型字典交集 + 共用检索层，机械层只给候选与命中事实）
+// 通道三正式件：三闸推送链。
+// 归属闸（会话标定词 × 会话名三源取值链）→ 命中闸（标签/类型字典交集 + 共用检索层，机械层只给候选与命中事实）
 // → 频次闸（注入史去重，单次 ≤ maxPerRun）。三闸顺序与上限是设计口径，不可调高。
 // 注入 = pi.sendMessage 可见档（存进会话、随下次请求进模型、不触发新 turn）；采纳权在读到消息的
 // 会话内模型，相似度分数只排序不作判据。观测件 observe.js 独立保留（无差别证据），本件日志写 push.log。
@@ -34,7 +34,7 @@ export function matchMarker(markers, name) {
   return null;
 }
 
-// ---- 会话名取值链（第 62 轮实证：Hana 从不写 Pi session_info，getSessionName 结构性为空）----
+// ---- 会话名取值链（Hana 从不写 Pi session_info，getSessionName 结构性为空）----
 // Hana 会话标题存 agents/<agent>/sessions/session-titles.json（key = sess id），而 Pi 会话标识是
 // jsonl 文件名，两套 id 不通。三源依次：pi 会话名 → <sessionFile>.files.json 的 sessionId →
 // usage-ledger attribution 按 sessionPath 反查 sessionId；拿到 sess id 后读同目录 session-titles.json
@@ -181,7 +181,7 @@ export default async function (pi) {
 
   pi.on("agent_end", async (event, ctx) => {
     try {
-      // ---- 闸三·归属（会话名 × 标定词；取名走三源链，日志分状态，第 63 轮；日志 G1 按执行序）----
+      // ---- 闸三·归属（会话名 × 标定词；取名走三源链，日志分状态；日志 G1 按执行序）----
       const cfg = loadConfig();
       if (!cfg.markers.length) {
         log("G1_SKIP markers_empty"); // 默认全静默：标定词未配置不推送
