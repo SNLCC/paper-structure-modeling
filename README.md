@@ -53,7 +53,9 @@ node <hana>/scripts/validate-app.mjs --dir . --json   # 官方静态校验
 
 ## 来源说明
 
-`vendor/sdk/` 内的 `@hana/*` 打包文件来自官方 `hana-app-creator` skill 附带的分发资产，与官方文档推荐的 `file:` 依赖用法一致，仅用于本地构建。
+`vendor/sdk/` 内的三个 `@hana/*` 打包文件来自官方 `hana-app-creator` skill 附带的分发资产（Apache-2.0，披露见 [NOTICE](NOTICE)）。`@hana/app-sdk` 尚未上公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录——随包携带是官方机制的预期产物，仅用于构建与类型解析，未作修改。
+
+HanaAgent 为 liliMozi 的商标；本项目是独立第三方插件，与官方无隶属关系、无背书关系。
 
 ## 许可
 

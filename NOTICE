@@ -7,12 +7,19 @@ third-party notices
 一、随包分发（vendor/ 与构建依赖）
 --------------------------------
 
-1. @hana/app-sdk, @hana/plugin-sdk, @hana/plugin-protocol,
-   @hana/plugin-components, @hana/plugin-runtime
+1. @hana/app-sdk, @hana/plugin-components, @hana/plugin-protocol
    Copyright HanaAgent / liliMozi
    Licensed under the Apache License, Version 2.0（package.json license 字段）。
-   来源：官方 hana-app-creator skill 随附的 SDK 分发资产，与官方文档推荐的
-   file: 依赖用法一致；仅用于本插件构建与运行，未作修改。
+   来源：官方 hana-app-creator skill 随附的 SDK 分发资产；其中 @hana/app-sdk 未上
+   公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录，
+   随包携带系官方机制的预期产物。随本仓库分发供构建与类型解析使用，未作修改，
+   再分发依 Apache-2.0 条款进行（本节即保留的声明）。
+   （原分发五包，2026-10 精简：@hana/plugin-sdk 与 @hana/plugin-runtime 经源码
+   引用扫描为零引用，已移除。）
+
+商标说明：HanaAgent 为 liliMozi 的项目名称与商标。本项目是独立第三方插件，
+与 HanaAgent 官方无隶属关系，亦未获官方背书；文中提及 HanaAgent 仅用于说明
+兼容性与来源真实性。
 
 2. unpdf
    Copyright (c) 2023-Present Johann Schopplich

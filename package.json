@@ -7,7 +7,6 @@
     "@hana/app-sdk": "file:vendor/sdk/hana-app-sdk.tgz",
     "@hana/plugin-components": "file:vendor/sdk/hana-plugin-components-0.0.0.tgz",
     "@hana/plugin-protocol": "file:vendor/sdk/hana-plugin-protocol-0.0.0.tgz",
-    "@hana/plugin-sdk": "file:vendor/sdk/hana-plugin-sdk-0.0.0.tgz",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "unpdf": "^1.8.1"
