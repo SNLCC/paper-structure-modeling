@@ -16,6 +16,10 @@ third-party notices
    公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录，
    随包携带系官方机制的预期产物。随本仓库分发供构建与类型解析使用，未作修改，
    再分发依 Apache-2.0 条款进行（本节即保留的声明）。
+   **来源核对**：上游 openhanako 仓库根 LICENSE、README License 节均为
+   Apache License 2.0，与本包 package.json 的 SPDX 标识一致；Apache-2.0 第 4 条
+   明文禁止修改 License 文本，故协议不存在合法“调整版”——随包全文取自
+   apache.org 官方文本，三级来源（上游仓库 / SPDX 标识 / 协议官方）同源。
    （原分发五包，2026-10 精简：@hana/plugin-sdk 与 @hana/plugin-runtime 经源码
    引用扫描为零引用，已移除。）
 
@@ -35,6 +39,18 @@ third-party notices
 
 4. 构建期依赖（不随产物分发）：vite（MIT）、@vitejs/plugin-react（MIT）、
    typescript（Apache-2.0）、@types/*（MIT）、esbuild（MIT）。
+
+5. 经构建产物（ui/assets/panel.js）随包分发的运行库，许可全文已从各自 npm
+   官方发行包原件拷贝（即各自上游仓库的一手文本）：
+   - react / react-dom — MIT，见 third-party/react-MIT-LICENSE.txt
+     （Copyright (c) Meta Platforms, Inc. and affiliates.）
+   - unpdf — MIT，见 third-party/unpdf-MIT-LICENSE.txt
+     （Copyright (c) 2023-PRESENT Johann Schopplich；其 bundle 内嵌的
+      Mozilla pdf.js 为 Apache-2.0，此处于上游 LICENSE 未单独声明，代为披露）
+
+6. sdk/ 目录内另含上游官方自带的一手披露文件，原样保留未改动：
+   THIRD_PARTY_NOTICES.txt（ant-design 等 MIT 全文）、components.js.LEGAL.txt、
+   app-ui.js.LEGAL.txt（react 系 bundle 许可头）。
 
 
 二、运行时外部依赖（用户自行安装，不随本仓库分发）
