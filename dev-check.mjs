@@ -12,14 +12,14 @@ import { parseConfig, validateConfig } from "./lib/config.js";
 const good = {
   id: "sample-2020",
   meta: {
-    title: "示例论文标题", authors: "示例作者", year: "1919", venue: "—", discipline: "社会学",
+    title: "示例论文标题", authors: "示例作者", year: "2020", venue: "—", discipline: "社会学",
     boundary: { result: "single" },
     extractor: "A", date: "2026-09-28",
     tags: [{ name: "示例标签", action: "以示例方式对照分析" }],
     toVerify: [], anchorStatus: { has: false }, lowDecomposability: false,
   },
   understanding: "全文以示例方式组织论证……",
-  slots: [{ location: "§2 ¶3", action: "对照", object: "示例乙概念", evidence: "……的行为后果承担责任……", purpose: "建立两种伦理的分界" }],
+  slots: [{ location: "§2 ¶3", action: "对照", object: "示例对象", evidence: "……此处为示例引文……", purpose: "建立示例分界" }],
   emergent: { coreThesis: "示例核心论题：两种取向不可通约" },
   scores: [
     { level: "article", target: "", score: 9, rationale: "整体论证结构清晰" },
@@ -59,8 +59,8 @@ console.log("low render placeholder:", md3.includes("低可拆解度，留空"))
 
 // ---- 锚点（M5）----
 const anchor = {
-  id: "sample-2020", title: "示例论文标题", authors: "示例作者", year: "1919",
-  textType: "论证型（演说整理）", score: 9,
+  id: "sample-2020", title: "示例论文标题", authors: "示例作者", year: "2020",
+  textType: "论证型（示例）", score: 9,
   rationale: "对照结构清楚，结尾收束有力，但第二节引证略薄",
   date: "2026-09-28", recordedBy: "库主",
 };
@@ -123,7 +123,7 @@ console.log("paths exports complete:", typeof ANCHOR_DIR === "string" && typeof 
 console.log("tokenize split:", tokenize("反驳 开头、例子").length === 3 && tokenize("  ").length === 0);
 
 const fakeLib = {
-  [`${STRUCT_ROOT}/篇目/sample-2020.md`]: "# 示例论文标题\n\n| 位置 | 处置动作 |\n| ¶2 | 反驳 示例乙概念 |\n",
+  [`${STRUCT_ROOT}/篇目/sample-2020.md`]: "# 示例论文标题\n\n| 位置 | 处置动作 |\n| ¶2 | 反驳 示例对象 |\n",
   [`${STRUCT_ROOT}/写作模型/论证型.md`]: "# 论证型\n\n规律：开头先立靶再反驳。\n",
   [`${STRUCT_ROOT}/标签库.md`]: "# 标签库\n\n| 标签 | 首次出现篇目 |\n|---|---|\n| 反驳型结构 | sample-2020 |\n",
 };
