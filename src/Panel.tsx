@@ -6,7 +6,6 @@ import {
   CardShell,
   EmptyState,
   HanaThemeProvider,
-  List,
   Select,
   TextInput,
 } from '@hana/plugin-components';
@@ -262,26 +261,47 @@ function QueueTab({ tick }: { tick: number }) {
   );
 }
 
-// ---- 3 篇目 ----
+// ---- 3 篇目（一套导航：条目即按钮，显示题目 / 作者 · 年份）----
 function BrowseTab({ tick }: { tick: number }) {
-  const [files, setFiles] = useState<string[]>([]);
+  const [items, setItems] = useState<{ id: string; title: string; meta: string }[]>([]);
   const [sel, setSel] = useState('');
   const [md, setMd] = useState('');
-  useEffect(() => { void listDir('篇目').then((fs) => setFiles(fs)); }, [tick]);
+  useEffect(() => {
+    void listDir('篇目').then(async (fs) => {
+      const list = await Promise.all(
+        fs.map(async (f) => {
+          const r = await apiGet(fileApi(`篇目/${f}`)).catch(() => null);
+          const head = r && r.ok ? String(r.content || '').split(/\r?\n/, 1)[0].trim() : '';
+          // 落格首行格式：# 题目（作者, 年份）
+          const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4}[^)）]*)）$/.exec(head);
+          return {
+            id: f,
+            title: m ? m[1] : f.replace(/\.md$/, ''),
+            meta: m ? `${m[2].trim()} · ${m[3]}` : f.replace(/\.md$/, ''),
+          };
+        }),
+      );
+      setItems(list);
+    });
+  }, [tick]);
   useEffect(() => {
     if (!sel) { setMd(''); return; }
     void apiGet(fileApi(`篇目/${sel}`)).then((r) => setMd(r.ok ? r.content : r.message || '读取失败'));
   }, [sel]);
 
-  if (!files.length) return <EmptyState title="还没有篇目" description="导入文献或在对话里拆解后，篇目会出现在这里。" />;
+  if (!items.length) return <EmptyState title="还没有篇目" description="导入文献或在对话里拆解后，篇目会出现在这里。" />;
   return (
     <div className="split">
       <div className="side">
-        <List items={files.map((f) => ({ id: f, title: f.replace(/\.md$/, ''), meta: '' }))} />
-        <div className="filebtns">
-          {files.map((f) => (
-            <button key={f} className={sel === f ? 'filebtn on' : 'filebtn'} onClick={() => setSel(f)}>
-              {f.replace(/\.md$/, '')}
+        <div className="entrylist">
+          {items.map((it) => (
+            <button
+              key={it.id}
+              className={sel === it.id ? 'entryitem on' : 'entryitem'}
+              onClick={() => setSel(it.id)}
+            >
+              <span className="entrytitle">{it.title}</span>
+              <span className="entrymeta">{it.meta}</span>
             </button>
           ))}
         </div>
