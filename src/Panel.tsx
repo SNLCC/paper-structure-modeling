@@ -228,6 +228,7 @@ function QueueTab({ tick }: { tick: number }) {
   const [rows, setRows] = useState<QueueRow[]>([]);
   const [note, setNote] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState('');
+  const [proposing, setProposing] = useState(false);
   const load = useCallback(async () => {
     const r = await apiGet(fileApi('标签库.md'));
     setRows(r.ok ? parseQueue(r.content) : []);
@@ -242,10 +243,49 @@ function QueueTab({ tick }: { tick: number }) {
     if (r.ok) await load();
   }
 
+  async function propose() {
+    setProposing(true);
+    setMsg('');
+    try {
+      const start = await apiPost('/api/model/propose-merges', {});
+      if (!start.started) { setMsg(start.message || '发起失败'); setProposing(false); return; }
+      const t0 = Date.now();
+      let fin: any = null;
+      while (Date.now() - t0 < 3 * 60 * 1000) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const s = await apiGet('/api/model/status').catch(() => null);
+        if (s && s.running === false && s.kind === 'propose' && s.lastResult) { fin = s.lastResult; break; }
+      }
+      if (!fin) { setMsg('等待超时（3 分钟），稍后刷新本页'); setProposing(false); return; }
+      setMsg(fin.ok
+        ? `已入队 ${fin.queued.length} 对：${fin.queued.join('；')}`
+        : (fin.message || '未产出建议'));
+      if (fin.ok) await load();
+    } catch (e: any) {
+      setMsg(`请求失败：${String(e?.message || e)}`);
+    }
+    setProposing(false);
+  }
+
+  async function cooccur() {
+    const r = await apiPost('/api/tool/suggest_tag_merges', {});
+    setMsg(r.ok
+      ? (r.written ? `共现入队 ${r.written} 对` : '共现提示无新候选（语义相近的对请用模型提议）')
+      : (r.message || JSON.stringify(r)));
+    if (r.ok) await load();
+  }
+
   const pending = rows.filter((r) => !r.decision);
   return (
     <div>
       <p className="hint">相近标签会进到这里，由你决定合并方向；裁决后库内归一，原始记录不动。</p>
+      <div className="import-row">
+        <Button variant="primary" disabled={proposing} onClick={() => void propose()}>
+          {proposing ? '提议中…' : '模型提议疑似对'}
+        </Button>
+        <Button disabled={proposing} onClick={() => void cooccur()}>跑共现提示</Button>
+        <span className="hint">提议与共现只负责入队；合并方向由你在下方卡片上裁决。</span>
+      </div>
       {rows.length === 0 && <EmptyState title="暂无待裁决标签" description="篇目积累出相近标签后，候选会自动出现在这里。" />}
       {rows.map((r) => (
         <CardShell key={r.pair} title={r.pair} description={`${r.date} 进队 · ${r.evidence}`}>
@@ -431,7 +471,7 @@ function ModelsTab({ tick }: { tick: number }) {
       while (Date.now() - t0 < 8 * 60 * 1000) {
         await new Promise((r) => setTimeout(r, 5000));
         const s = await apiGet('/api/model/status').catch(() => null);
-        if (s && s.running === false && s.lastResult) { fin = s.lastResult; break; }
+        if (s && s.running === false && s.kind === 'generate' && s.lastResult) { fin = s.lastResult; break; }
       }
       if (!fin) { setMsg('等待超时（8 分钟），稍后刷新本页查看结果'); setBusy(false); return; }
       const lines = (fin.results || []).map((x: any) =>

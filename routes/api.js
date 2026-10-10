@@ -11,7 +11,7 @@ import { ref, STRUCT_ROOT } from "../lib/paths.js";
 import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
-import { runModelGeneration } from "../lib/model.js";
+import { runModelGeneration, runMergeProposal } from "../lib/model.js";
 import { extractPdfText } from "../lib/pdf-text.js";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -271,13 +271,14 @@ export function registerApiRoutes(app, ctx) {
   app.get("/api/import/status", (c) => c.json({ ok: true, ...importJob }));
 
   // 建模链（异步单任务，同导入模式）：每类型一次模型调用，写闸 commit_model（版本递增）
-  let modelJob = { running: false, startedAt: 0, finishedAt: 0, lastResult: null };
+  // kind 区分 generate/propose，面板轮询各认各的 lastResult
+  let modelJob = { running: false, kind: null, startedAt: 0, finishedAt: 0, lastResult: null };
   app.post("/api/model/generate", async (c) => {
     if (modelJob.running) {
-      return c.json({ ok: false, stage: "busy", message: "建模任务进行中，完成后会自动提示，请稍候" });
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中，完成后会自动提示，请稍候" });
     }
     const startedAt = Date.now();
-    modelJob = { running: true, startedAt, finishedAt: 0, lastResult: null };
+    modelJob = { running: true, kind: "generate", startedAt, finishedAt: 0, lastResult: null };
     void (async () => {
       let r;
       try {
@@ -285,9 +286,28 @@ export function registerApiRoutes(app, ctx) {
       } catch (e) {
         r = { ok: false, stage: "model", message: `建模链异常：${e?.message || e}` };
       }
-      modelJob = { running: false, startedAt, finishedAt: Date.now(), lastResult: r };
+      modelJob = { running: false, kind: "generate", startedAt, finishedAt: Date.now(), lastResult: r };
     })();
     return c.json({ ok: true, started: true, message: "建模已开始（每个类型一次模型调用，可离开本页）" });
+  });
+
+  // 语义提议（异步，与生成共用单任务闸）：模型找相似标签对入队，裁决仍在队列页
+  app.post("/api/model/propose-merges", async (c) => {
+    if (modelJob.running) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中，完成后会自动提示，请稍候" });
+    }
+    const startedAt = Date.now();
+    modelJob = { running: true, kind: "propose", startedAt, finishedAt: 0, lastResult: null };
+    void (async () => {
+      let r;
+      try {
+        r = await runMergeProposal(ctx);
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `提议链异常：${e?.message || e}` };
+      }
+      modelJob = { running: false, kind: "propose", startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+    return c.json({ ok: true, started: true, message: "模型提议中（读标签库语义找对子，约半分钟）" });
   });
   app.get("/api/model/status", (c) => c.json({ ok: true, ...modelJob }));
 
