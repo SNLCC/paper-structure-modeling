@@ -234,6 +234,7 @@ export function registerApiRoutes(app, ctx) {
         message: r.message,
         attempts: r.attempts || 0,
         errors: r.errors || [],
+        output: r.output || undefined,
         text,
         source: body.pdfPath || (body.filename ? String(body.filename) : undefined),
       });
