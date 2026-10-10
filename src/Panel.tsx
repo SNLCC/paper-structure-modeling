@@ -48,6 +48,16 @@ async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
   }
   return { ok: false, stage: 'timeout', message: '等待超时（8 分钟），任务可能仍在运行；稍后到「待办 · 导入失败」查看结果。' };
 }
+
+// 篇目首行落格格式：# 题目（作者, 年份）——列表与下拉统一显示人话（不露文件 id）
+function parseEntryHead(firstLine: string, fallbackId: string) {
+  const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4}[^)）]*)）$/.exec(String(firstLine || '').trim());
+  return { title: m ? m[1] : fallbackId, meta: m ? `${m[2].trim()} · ${m[3]}` : '' };
+}
+async function readEntryHead(file: string): Promise<string> {
+  const r = await apiGet(fileApi(`篇目/${file}`)).catch(() => null);
+  return r && r.ok ? String(r.content || '').split(/\r?\n/, 1)[0] : '';
+}
 const fileApi = (rel: string) => `/api/file?path=${encodeURIComponent(rel)}`;
 
 // ---- 方案三信息架构：5 区导航 + 区内子页，首页为默认落点 ----
@@ -270,15 +280,8 @@ function BrowseTab({ tick }: { tick: number }) {
     void listDir('篇目').then(async (fs) => {
       const list = await Promise.all(
         fs.map(async (f) => {
-          const r = await apiGet(fileApi(`篇目/${f}`)).catch(() => null);
-          const head = r && r.ok ? String(r.content || '').split(/\r?\n/, 1)[0].trim() : '';
-          // 落格首行格式：# 题目（作者, 年份）
-          const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4}[^)）]*)）$/.exec(head);
-          return {
-            id: f,
-            title: m ? m[1] : f.replace(/\.md$/, ''),
-            meta: m ? `${m[2].trim()} · ${m[3]}` : f.replace(/\.md$/, ''),
-          };
+          const { title, meta } = parseEntryHead(await readEntryHead(f), f.replace(/\.md$/, ''));
+          return { id: f, title, meta: meta || f.replace(/\.md$/, '') };
         }),
       );
       setItems(list);
@@ -318,7 +321,19 @@ function CompareTab({ tick }: { tick: number }) {
   const [b, setB] = useState('');
   const [mdA, setMdA] = useState('');
   const [mdB, setMdB] = useState('');
-  useEffect(() => { void listDir('篇目').then((fs) => { setFiles(fs); if (fs[0]) setA(fs[0]); if (fs[1]) setB(fs[1]); }); }, [tick]);
+  const [labels, setLabels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    void listDir('篇目').then(async (fs) => {
+      setFiles(fs);
+      if (fs[0]) setA(fs[0]);
+      if (fs[1]) setB(fs[1]);
+      const pairs = await Promise.all(fs.map(async (f) => {
+        const { title, meta } = parseEntryHead(await readEntryHead(f), f.replace(/\.md$/, ''));
+        return [f, meta ? `${title} · ${meta}` : title] as const;
+      }));
+      setLabels(Object.fromEntries(pairs));
+    });
+  }, [tick]);
   useEffect(() => {
     if (a) void apiGet(fileApi(`篇目/${a}`)).then((r) => setMdA(r.ok ? r.content : ''));
   }, [a]);
@@ -327,7 +342,7 @@ function CompareTab({ tick }: { tick: number }) {
   }, [b]);
 
   if (files.length < 2) return <EmptyState title="至少两篇可对比" description="先积累两篇以上篇目。" />;
-  const opts = files.map((f) => ({ value: f, label: f.replace(/\.md$/, '') }));
+  const opts = files.map((f) => ({ value: f, label: labels[f] || f.replace(/\.md$/, '') }));
   return (
     <div>
       <div className="grid2">
