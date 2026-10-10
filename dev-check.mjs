@@ -190,5 +190,6 @@ const _full = JSON.stringify({ extraction: { id: "x-2026", scores: [1, 2] }, new
 console.log("json repair missing outer brace:", extractJson(_full.slice(0, _full.length - 1)).newTypeProposal === null);
 console.log("json repair cut mid-string:", extractJson('{"a":"一段被截断的中').a === null);
 console.log("json valid untouched:", extractJson(_full).extraction.id === "x-2026");
+console.log("json repair missing colon:", extractJson('{"a：b","c":1}').a === "b");
 
 console.log("done");
