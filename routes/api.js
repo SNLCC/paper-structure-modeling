@@ -11,6 +11,7 @@ import { ref, STRUCT_ROOT } from "../lib/paths.js";
 import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
+import { runModelGeneration } from "../lib/model.js";
 import { extractPdfText } from "../lib/pdf-text.js";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -268,6 +269,27 @@ export function registerApiRoutes(app, ctx) {
 
   // 后台任务状态（面板轮询收尾结果）
   app.get("/api/import/status", (c) => c.json({ ok: true, ...importJob }));
+
+  // 建模链（异步单任务，同导入模式）：每类型一次模型调用，写闸 commit_model（版本递增）
+  let modelJob = { running: false, startedAt: 0, finishedAt: 0, lastResult: null };
+  app.post("/api/model/generate", async (c) => {
+    if (modelJob.running) {
+      return c.json({ ok: false, stage: "busy", message: "建模任务进行中，完成后会自动提示，请稍候" });
+    }
+    const startedAt = Date.now();
+    modelJob = { running: true, startedAt, finishedAt: 0, lastResult: null };
+    void (async () => {
+      let r;
+      try {
+        r = await runModelGeneration(ctx);
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `建模链异常：${e?.message || e}` };
+      }
+      modelJob = { running: false, startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+    return c.json({ ok: true, started: true, message: "建模已开始（每个类型一次模型调用，可离开本页）" });
+  });
+  app.get("/api/model/status", (c) => c.json({ ok: true, ...modelJob }));
 
   // 待办区：导入失败清单（含 text 供重试原样重投）
   app.get("/api/import/failures", (c) => c.json({ ok: true, items: listFailures() }));

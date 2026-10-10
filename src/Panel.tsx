@@ -390,25 +390,74 @@ function countTable(md: string, headerFirst: string): string[] {
   return out;
 }
 
-// ---- 6 写作模型 ----
+// ---- 6 写作模型（浏览 + 生成/更新入口：管线第 4-5 环，版本递增历史不覆盖）----
 function ModelsTab({ tick }: { tick: number }) {
   const [files, setFiles] = useState<string[]>([]);
   const [sel, setSel] = useState('');
   const [md, setMd] = useState('');
-  useEffect(() => { void listDir('写作模型').then(setFiles); }, [tick]);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const load = useCallback(() => { void listDir('写作模型').then(setFiles); }, []);
+  useEffect(() => { void load(); }, [load, tick]);
   useEffect(() => {
     if (!sel) { setMd(''); return; }
     void apiGet(fileApi(`写作模型/${sel}`)).then((r) => setMd(r.ok ? r.content : ''));
   }, [sel]);
-  if (!files.length) return <EmptyState title="暂无写作模型" description="标签与类型积累后自动生成（版本递增，历史不覆盖）。" />;
+
+  async function generate() {
+    setBusy(true);
+    setMsg('');
+    try {
+      const start = await apiPost('/api/model/generate', {});
+      if (!start.started) { setMsg(start.message || '发起失败'); setBusy(false); return; }
+      setMsg('建模中：归属 → 归纳 → 逐类型生成（每个类型一次模型调用，可离开本页）…');
+      const t0 = Date.now();
+      let fin: any = null;
+      while (Date.now() - t0 < 8 * 60 * 1000) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const s = await apiGet('/api/model/status').catch(() => null);
+        if (s && s.running === false && s.lastResult) { fin = s.lastResult; break; }
+      }
+      if (!fin) { setMsg('等待超时（8 分钟），稍后刷新本页查看结果'); setBusy(false); return; }
+      const lines = (fin.results || []).map((x: any) =>
+        x.ok
+          ? `✓ ${x.type} → v${x.version}（样本 ${x.samples} 篇${x.previous ? `，原 v${x.previous}` : ''}）`
+          : x.skipped
+            ? `· ${x.type}：${x.skipped}`
+            : `✗ ${x.type}：${x.error || '失败'}`);
+      const wins = lines.filter((l: string) => l.startsWith('✓')).length;
+      setMsg((wins ? (lines.length === wins ? '完成：' : '部分完成：') : '未生成：') + (lines.join('；') || fin.message || ''));
+      if (wins) {
+        hana.toast.show({ message: '写作模型已生成/更新', type: 'success' });
+        load();
+      }
+    } catch (e: any) {
+      setMsg(`请求失败：${String(e?.message || e)}`);
+    }
+    setBusy(false);
+  }
+
   return (
     <div>
-      <div className="filebtns">
-        {files.map((f) => (
-          <button key={f} className={sel === f ? 'filebtn on' : 'filebtn'} onClick={() => setSel(f)}>{f.replace(/\.md$/, '')}</button>
-        ))}
+      <div className="import-row">
+        <Button variant="primary" disabled={busy} onClick={() => void generate()}>
+          {busy ? '建模中…' : '生成 / 更新写作模型'}
+        </Button>
+        <span className="hint">同类型样本 ≥2 篇才生成；新文献入库后再次点击即得新版本（v+1，历史保留）。</span>
       </div>
-      {sel ? <Doc md={md} /> : <p className="hint">选择一份模型查看（规律描述 + 骨架挂实例 + 高低分差异点）。</p>}
+      {msg && <pre className="hint">{msg}</pre>}
+      {!files.length ? (
+        <EmptyState title="暂无写作模型" description="点上方按钮归纳生成；样本不足的类型会跳过并说明。" />
+      ) : (
+        <>
+          <div className="filebtns">
+            {files.map((f) => (
+              <button key={f} className={sel === f ? 'filebtn on' : 'filebtn'} onClick={() => setSel(f)}>{f.replace(/\.md$/, '')}</button>
+            ))}
+          </div>
+          {sel ? <Doc md={md} /> : <p className="hint">选择一份模型查看（规律描述 + 骨架挂实例 + 高低分差异点）。</p>}
+        </>
+      )}
     </div>
   );
 }
