@@ -1,6 +1,7 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
 import { extractJson } from "./lib/import.js";
+import { sampleFingerprint } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
 import { parseTagLib, patchTagLib, appendQueueRow } from "./lib/taglib.js";
@@ -191,5 +192,7 @@ console.log("json repair missing outer brace:", extractJson(_full.slice(0, _full
 console.log("json repair cut mid-string:", extractJson('{"a":"一段被截断的中').a === null);
 console.log("json valid untouched:", extractJson(_full).extraction.id === "x-2026");
 console.log("json repair missing colon:", extractJson('{"a：b","c":1}').a === "b");
+console.log("model fingerprint order-insensitive:", sampleFingerprint(["b.md", "a.md"], [["y", "x"], ["q"]]) === sampleFingerprint(["a.md", "b.md"], [["x", "y"], ["q"]]));
+console.log("model fingerprint content-sensitive:", sampleFingerprint(["a.md"], [["x"]]) !== sampleFingerprint(["a.md"], [["y"]]));
 
 console.log("done");

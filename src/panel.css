@@ -127,6 +127,20 @@ body[data-surface="widget"] .plugin-panel {
   opacity: 0.65;
   line-height: 1.3;
 }
+/* ---- 写作模型分组：每类最新在头，历史折叠 ---- */
+.model-group {
+  margin: 10px 0;
+}
+.model-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.model-grouptitle {
+  font-weight: 600;
+  font-size: 13px;
+}
 .filebtns {
   display: flex;
   flex-wrap: wrap;

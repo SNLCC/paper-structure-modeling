@@ -452,6 +452,21 @@ function ModelsTab({ tick }: { tick: number }) {
   const [md, setMd] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [histOpen, setHistOpen] = useState<Record<string, boolean>>({});
+  // 按类型分组：默认最新在头，历史折叠（顺带避开 v10 字典序排在 v2 前的坑）
+  const groups = useMemo(() => {
+    const map = new Map<string, { file: string; v: number }[]>();
+    for (const f of files) {
+      const m = /^(.+)-写作模型-v(\d+)\.md$/.exec(f);
+      if (!m) continue;
+      if (!map.has(m[1])) map.set(m[1], []);
+      map.get(m[1])!.push({ file: f, v: Number(m[2]) });
+    }
+    return [...map.entries()].map(([type, list]) => {
+      list.sort((a, b) => a.v - b.v);
+      return { type, latest: list[list.length - 1], history: list.slice(0, -1).reverse() };
+    });
+  }, [files]);
   const load = useCallback(() => { void listDir('写作模型').then(setFiles); }, []);
   useEffect(() => { void load(); }, [load, tick]);
   useEffect(() => {
@@ -501,16 +516,38 @@ function ModelsTab({ tick }: { tick: number }) {
         <span className="hint">同类型样本 ≥2 篇才生成；新文献入库后再次点击即得新版本（v+1，历史保留）。</span>
       </div>
       {msg && <pre className="hint">{msg}</pre>}
-      {!files.length ? (
-        <EmptyState title="暂无写作模型" description="点上方按钮归纳生成；样本不足的类型会跳过并说明。" />
+      {!groups.length ? (
+        <EmptyState title="暂无写作模型" description="点上方按钮归纳生成；样本不足或样本未变的类型会跳过并说明。" />
       ) : (
         <>
-          <div className="filebtns">
-            {files.map((f) => (
-              <button key={f} className={sel === f ? 'filebtn on' : 'filebtn'} onClick={() => setSel(f)}>{f.replace(/\.md$/, '')}</button>
-            ))}
-          </div>
-          {sel ? <Doc md={md} /> : <p className="hint">选择一份模型查看（规律描述 + 骨架挂实例 + 高低分差异点）。</p>}
+          {groups.map((g) => (
+            <div key={g.type} className="model-group">
+              <div className="model-group-head">
+                <span className="model-grouptitle">{g.type}</span>
+                <button
+                  className={sel === g.latest.file ? 'filebtn on' : 'filebtn'}
+                  onClick={() => setSel(g.latest.file)}
+                >
+                  v{g.latest.v}（最新）
+                </button>
+                {g.history.length > 0 && (
+                  <button className="linkbtn" onClick={() => setHistOpen((p) => ({ ...p, [g.type]: !p[g.type] }))}>
+                    {histOpen[g.type] ? '收起历史' : `历史 ${g.history.length} 版`}
+                  </button>
+                )}
+              </div>
+              {histOpen[g.type] && (
+                <div className="filebtns">
+                  {g.history.map((h) => (
+                    <button key={h.file} className={sel === h.file ? 'filebtn on' : 'filebtn'} onClick={() => setSel(h.file)}>
+                      v{h.v}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {sel ? <Doc md={md} /> : <p className="hint">选择版本查看（每类默认最新；旧版折叠在「历史」里可对照）。</p>}
         </>
       )}
     </div>
