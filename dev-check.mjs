@@ -1,5 +1,6 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
+import { extractJson } from "./lib/import.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
 import { parseTagLib, patchTagLib, appendQueueRow } from "./lib/taglib.js";
@@ -184,4 +185,10 @@ console.log("name chain files_json source:", n2.name === "论文结构提取会�
 console.log("name chain ledger source + path case-insensitive:", n3.name === "台账标题" && n3.src === "ledger");
 console.log("name chain read-fail degrades silent:", n4.name === null && n4.src === "none");
 console.log("name chain no sessionFile silent:", n5.name === null && n5.src === "none");
+// ---- 截断自愈（provider 单响应上限砍断输出的回归保护）----
+const _full = JSON.stringify({ extraction: { id: "x-2026", scores: [1, 2] }, newTypeProposal: null });
+console.log("json repair missing outer brace:", extractJson(_full.slice(0, _full.length - 1)).newTypeProposal === null);
+console.log("json repair cut mid-string:", extractJson('{"a":"一段被截断的中').a === null);
+console.log("json valid untouched:", extractJson(_full).extraction.id === "x-2026");
+
 console.log("done");
