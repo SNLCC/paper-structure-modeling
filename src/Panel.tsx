@@ -17,9 +17,18 @@ import './panel.css';
 // 凭证经 appSurfaceSession 自动携带（v1 的 token query 机制退役）。
 const route = (p: string) => p.replace(/^\/+/, '');
 
+// 非 JSON 响应（如宿主 500 纯文本）不再让 .json() 当场炸：解析失败按 HTTP 错误结构化返回。
+async function parseAny(r: any): Promise<any> {
+  const t = await r.text();
+  try {
+    return JSON.parse(t);
+  } catch {
+    return { ok: false, stage: 'http', message: `HTTP ${r.status}：${(t || '无响应体').slice(0, 200)}` };
+  }
+}
 async function apiGet(path: string): Promise<any> {
   const r = await hana.api.fetch(route(path));
-  return r.json();
+  return parseAny(r);
 }
 async function apiPost(path: string, body: unknown): Promise<any> {
   const r = await hana.api.fetch(route(path), {
@@ -27,7 +36,18 @@ async function apiPost(path: string, body: unknown): Promise<any> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return r.json();
+  return parseAny(r);
+}
+
+// 导入链是后台单任务：提交后轮询 status 直到收尾（超时兕底 8 分钟 > 3 次重试上限）。
+async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 5000));
+    const s = await apiGet('/api/import/status').catch(() => null);
+    if (s && s.running === false && s.lastResult) return s.lastResult;
+  }
+  return { ok: false, stage: 'timeout', message: '等待超时（8 分钟），任务可能仍在运行；稍后到「待办 · 导入失败」查看结果。' };
 }
 const fileApi = (rel: string) => `/api/file?path=${encodeURIComponent(rel)}`;
 
@@ -477,7 +497,15 @@ function ImportZone({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setResult(null);
     try {
-      const r = await apiPost('/api/import', fromTs !== undefined ? { ...body, fromTs } : body);
+      const start = await apiPost('/api/import', fromTs !== undefined ? { ...body, fromTs } : body);
+      if (!start.started) {
+        // 快速失败（入参/忙闸/网络错误）直接呈现
+        setResult(start);
+        setBusy(false);
+        return;
+      }
+      setResult({ ok: true, stage: 'running', message: start.message || '拆解进行中' });
+      const r = await pollImport();
       setResult(r);
       if (r.ok) {
         hana.toast.show({ message: '拆解完成，已入库', type: 'success' });
@@ -580,7 +608,9 @@ function ImportZone({ onDone }: { onDone: () => void }) {
       {result && (
         <pre className={result.ok ? 'ok' : 'err'}>
           {result.ok
-            ? `已入库：${result.file}（第 ${result.attempts} 次通过${result.tagsAdded?.length ? `，新增标签 ${result.tagsAdded.join('、')}` : ''}）` +
+            ? result.stage === 'running'
+              ? `${result.message || '拆解进行中…'}`
+              : `已入库：${result.file}（第 ${result.attempts} 次通过${result.tagsAdded?.length ? `，新增标签 ${result.tagsAdded.join('、')}` : ''}）` +
               (result.pdfEngine
                 ? `\nPDF 引擎：${
                     result.pdfEngine === 'pymupdf'
@@ -781,13 +811,21 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
     setBusyTs(item.ts);
     setMsg('');
     try {
-      const r = await apiPost('/api/import', { text: item.text, fromTs: item.ts });
-      if (r.ok) {
-        setMsg(`重试成功：${r.file}`);
+      const start = await apiPost('/api/import', { text: item.text, fromTs: item.ts });
+      if (start.started) {
+        setMsg('重试中（约 1-3 分钟，可离开本页）…');
+        const r = await pollImport();
+        if (r.ok) {
+          setMsg(`重试成功：${r.file}`);
+          hana.toast.show({ message: '重试成功，已入库', type: 'success' });
+        } else {
+          setMsg(`仍失败：${r.message || '未知错误'}${r.failureTs ? '（已刷新记录）' : ''}`);
+        }
+      } else if (start.ok) {
+        setMsg(`重试成功：${start.file}`);
         hana.toast.show({ message: '重试成功，已入库', type: 'success' });
       } else {
-        setMsg(`仍失败：${r.message || '未知错误'}`);
-        if (r.failureTs) setMsg(`仍失败：${r.message || '未知错误'}（已刷新记录）`);
+        setMsg(`仍失败：${start.message || '未知错误'}`);
       }
     } catch (e: any) {
       setMsg(`请求失败：${String(e?.message || e)}`);

@@ -190,8 +190,11 @@ export function registerApiRoutes(app, ctx) {
     }
   });
 
-  // 导入拆解：面板导入 → 通道一提取 → 落格校验带错重试 →
-  // commit_extraction 同一写闸入库。失败进待办（too_short/too_long 属入参问题不落待办）。
+  // 导入拆解（异步单任务）：宿主普通 RPC 30 秒硬超时，分钟级模型链只能后台跑；
+  // POST 立即返回 started，面板轮询 /api/import/status 取最终结果。
+  // 失败进待办（too_short/too_long/input/pdf_extract 属入参或换料问题不落待办）。
+  let importJob = { running: false, startedAt: 0, finishedAt: 0, lastResult: null };
+
   app.post("/api/import", async (c) => {
     let body;
     try {
@@ -199,50 +202,72 @@ export function registerApiRoutes(app, ctx) {
     } catch {
       body = {};
     }
-    let text = String(body.text || "");
-    // PDF 源：pdfPath（Zotero 附件等用户路径，ResourceIO 合规读）或 pdfBase64（拖放/选择文件）。
-    // 服务端提取为 text 后进同一条 runImport 链，同流三保障零改动。
-    let pdfEngine;
-    if (!text && (body.pdfPath || body.pdfBase64)) {
-      try {
-        let bytes;
-        if (body.pdfPath) {
-          const rd = await ctx.resources.read(ref(String(body.pdfPath)));
-          bytes = rd.content ?? new Uint8Array();
-        } else {
-          bytes = Buffer.from(String(body.pdfBase64), "base64");
+    const text = String(body.text || "");
+    const pdfPath = body.pdfPath ? String(body.pdfPath) : undefined;
+    const pdfBase64 = body.pdfBase64 ? String(body.pdfBase64) : undefined;
+    const filename = body.filename ? String(body.filename) : undefined;
+    const fromTs = body.fromTs !== undefined && body.fromTs !== null ? body.fromTs : null;
+    if (!text && !pdfPath && !pdfBase64) {
+      return c.json({ ok: false, stage: "input", message: "请先粘贴文献全文，或选择 / 拖入 md、txt、pdf 文件" });
+    }
+    if (importJob.running) {
+      return c.json({ ok: false, stage: "busy", message: "已有拆解任务进行中，完成后会自动提示，请稍候" });
+    }
+    const startedAt = Date.now();
+    importJob = { running: true, startedAt, finishedAt: 0, lastResult: null };
+
+    // 后台执行：PDF 提取（若源是 PDF）→ 模型链（分钟级，远超普通 RPC 的 30 秒上限）→ 结果落盘
+    void (async () => {
+      let r = null;
+      let pdfEngine;
+      let content = text;
+      if (!content && (pdfPath || pdfBase64)) {
+        try {
+          const bytes = pdfPath
+            ? ((await ctx.resources.read(ref(pdfPath))).content ?? new Uint8Array())
+            : Buffer.from(String(pdfBase64), "base64");
+          const ex = await extractPdfText(bytes);
+          content = ex.text;
+          pdfEngine = ex.engine;
+        } catch (e) {
+          // 提取失败属换料问题（扫描版/损坏/超限），不进待办（同 too_short/too_long）
+          r = { ok: false, stage: "pdf_extract", message: e?.message || String(e), attempts: 0 };
         }
-        const ex = await extractPdfText(bytes);
-        text = ex.text;
-        pdfEngine = ex.engine;
-      } catch (e) {
-        // 提取失败是换料问题（扫描版/损坏/超限），重试同料无意义 → 不进待办（同 too_short/too_long）
-        return c.json({ ok: false, stage: "pdf_extract", message: e?.message || String(e), maxImportChars: MAX_IMPORT_CHARS });
       }
-    }
-    const r = await runImport(ctx, { text });
-    // 运行时披露：PDF 源把实际引擎带进响应，UI 据此显示主/回退与安装指引
-    if (pdfEngine) r.pdfEngine = pdfEngine;
-    if (r.ok) {
-      if (body.fromTs !== undefined && body.fromTs !== null) removeFailure(body.fromTs);
-      return c.json(r);
-    }
-    if (r.stage !== "too_short" && r.stage !== "too_long") {
-      // PDF 源时待办存提取后的 text：重试原样重投模型链，不重复提取；source 记来源便于追查
-      const item = addFailure({
-        stage: r.stage,
-        message: r.message,
-        attempts: r.attempts || 0,
-        errors: r.errors || [],
-        output: r.output || undefined,
-        text,
-        source: body.pdfPath || (body.filename ? String(body.filename) : undefined),
-      });
-      r.failureTs = item.ts;
-    }
-    r.maxImportChars = MAX_IMPORT_CHARS;
-    return c.json(r);
+      try {
+        if (!r) r = await runImport(ctx, { text: content });
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `模型调用失败：${e?.message || e}`, attempts: 0 };
+      }
+      if (pdfEngine) r.pdfEngine = pdfEngine;
+      if (r.ok) {
+        if (fromTs !== null) removeFailure(fromTs);
+      } else if (!["too_short", "too_long", "input", "pdf_extract"].includes(r.stage)) {
+        // PDF 源存提取后的 content：重试原样重投模型链，不重复提取；source 记来源便于追查
+        const item = addFailure({
+          stage: r.stage,
+          message: r.message,
+          attempts: r.attempts || 0,
+          errors: r.errors || [],
+          output: r.output || undefined,
+          text: content,
+          source: filename || pdfPath,
+        });
+        r.failureTs = item.ts;
+      }
+      r.maxImportChars = MAX_IMPORT_CHARS;
+      importJob = { running: false, startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+
+    return c.json({
+      ok: true,
+      started: true,
+      message: "拆解已开始（约 1-3 分钟，可离开本页），完成后本页自动显示结果",
+    });
   });
+
+  // 后台任务状态（面板轮询收尾结果）
+  app.get("/api/import/status", (c) => c.json({ ok: true, ...importJob }));
 
   // 待办区：导入失败清单（含 text 供重试原样重投）
   app.get("/api/import/failures", (c) => c.json({ ok: true, items: listFailures() }));
