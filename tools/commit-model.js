@@ -7,7 +7,7 @@ const tool = {
   name: "commit_model",
   description:
     "Commit one writing-model artifact as 写作模型/<类型>-写作模型-v<n>.md with automatic version increment (never overwrite history; 写作模型/README 版本规则). " +
-    "Content discipline: pattern descriptions + detail layer (骨架挂实例, every skeleton entry cites 篇目位置 + 原文引文 + 评分) + selectively included high/low-score differences; NO fill-in templates; low-score papers must not be mixed into the positive model as whole papers (fragment absorption must state 出自篇级低分样本). The tool enforces header fields only — content discipline is the author's responsibility.",
+    "Content discipline: pattern descriptions + detail layer (骨架挂实例, every skeleton entry cites source as《题名》(作者, 年份)·位置 — file id only as optional parenthetical cross-ref, never as the display source — plus 原文引文 + 评分) + selectively included high/low-score differences; NO fill-in templates; low-score papers must not be mixed into the positive model as whole papers (fragment absorption must state 出自篇级低分样本). The tool enforces header fields only — content discipline is the author's responsibility.",
   parameters: {
     type: "object",
     properties: {
