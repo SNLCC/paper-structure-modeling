@@ -487,10 +487,11 @@ export function registerApiRoutes(app, ctx) {
     const limit = Math.min(Math.max(Number(c.req.query("limit")) || 100, 1), 100);
     if (!key) return c.json({ ok: false, message: "缺 key" }, 400);
     try {
-      // 不拼 start（Zotero 本地集合端点带 start 会 400）：单页 limit=100，超量用搜索收窄
+      // 只拼 limit：Zotero 本地集合端点带 start/sort 会 400（直连裸 limit 为唯一验证过的成功形态）；
+      // 单页 limit=100，返回分类内原序，超量用 truncated 提示 + 搜索收窄
       const res = await zoteroSearch.zoteroFetch(
         ctx,
-        `/users/0/collections/${encodeURIComponent(key)}/items?limit=${limit}&sort=-dateAdded`,
+        `/users/0/collections/${encodeURIComponent(key)}/items?limit=${limit}`,
       );
       const raw = await res.json();
       const total = Number(res.headers.get("Total-Results") || 0);
