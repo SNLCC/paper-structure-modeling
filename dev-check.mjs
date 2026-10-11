@@ -136,7 +136,7 @@ console.log("tokenize split:", tokenize("反驳 开头、例子").length === 3 &
 
 const fakeLib = {
   [`${STRUCT_ROOT}/篇目/sample-2020.md`]: "# 示例论文标题\n\n| 位置 | 处置动作 |\n| ¶2 | 反驳 示例对象 |\n",
-  [`${STRUCT_ROOT}/写作模型/论证型.md`]: "# 论证型\n\n规律：开头先立靶再反驳。\n",
+  [`${STRUCT_ROOT}/写作模型/论证型.md`]: "# 论证型\n\n- 关联标签：镜像结构\n\n规律：开头先立靶再反驳。\n",
   [`${STRUCT_ROOT}/标签库.md`]: "# 标签库\n\n| 标签 | 首次出现篇目 |\n|---|---|\n| 反驳型结构 | sample-2020 |\n",
 };
 const mockCtx = {
@@ -162,6 +162,8 @@ const s3 = await searchLibrary(mockCtx, "不存在词xyzq");
 console.log("search no-hit:", s3.ok && s3.results.length === 0);
 const s4 = await searchLibrary(mockCtx, "  ");
 console.log("search empty query rejected:", s4.ok === false);
+const s5 = await searchLibrary(mockCtx, "镜像");
+console.log("search head-bridge tag hit (body has no such word):", s5.ok && s5.results.some((x) => x.kind === "写作模型" && x.hits.some((h) => h.excerpt.includes("标签命中"))));
 // ---- 通道三三闸纯逻辑 ----
 console.log("push factory fn:", typeof pushFactory === "function");
 console.log("g1 empty markers silent:", matchMarker([], "写作") === null);
