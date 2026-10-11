@@ -38,15 +38,19 @@ async function apiPost(path: string, body: unknown): Promise<any> {
   return parseAny(r);
 }
 
-// 导入链是后台单任务：提交后轮询 status 直到收尾（超时兕底 8 分钟 > 3 次重试上限）。
-async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
+// 后台任务轮询（导入/建模共用；切页后由挂载恢复接管，各认各的 kind）
+async function pollJob(statusPath: string, opts: { kind?: string; timeoutMs?: number } = {}): Promise<any> {
+  const timeoutMs = opts.timeoutMs ?? 8 * 60 * 1000;
   const t0 = Date.now();
   while (Date.now() - t0 < timeoutMs) {
     await new Promise((r) => setTimeout(r, 5000));
-    const s = await apiGet('/api/import/status').catch(() => null);
-    if (s && s.running === false && s.lastResult) return s.lastResult;
+    const s = await apiGet(statusPath).catch(() => null);
+    if (s && s.running === false && (!opts.kind || s.kind === opts.kind) && s.lastResult) return s.lastResult;
   }
-  return { ok: false, stage: 'timeout', message: '等待超时（8 分钟），任务可能仍在运行；稍后到「待办 · 导入失败」查看结果。' };
+  return { ok: false, stage: 'timeout', message: `等待超时（${Math.round(timeoutMs / 60000)} 分钟），任务可能仍在运行；稍后刷新查看结果。` };
+}
+async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
+  return pollJob('/api/import/status', { timeoutMs });
 }
 
 // 篇目首行落格格式：# 题目（作者, 年份）——列表与下拉统一显示人话（不露文件 id）
@@ -229,6 +233,23 @@ function QueueTab({ tick }: { tick: number }) {
   const [note, setNote] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState('');
   const [proposing, setProposing] = useState(false);
+
+  // 挂载恢复：提议中切页回来，接管轮询到收尾
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const s = await apiGet('/api/model/status').catch(() => null);
+      if (cancelled || !s || !s.running || s.kind !== 'propose') return;
+      setProposing(true);
+      setMsg('模型提议进行中（接管切页前的任务）…');
+      const fin = await pollJob('/api/model/status', { kind: 'propose', timeoutMs: 3 * 60 * 1000 });
+      if (cancelled) return;
+      setMsg(fin.ok ? `已入队 ${fin.queued?.length || 0} 对` : (fin.message || '未产出建议'));
+      if (fin.ok) await load();
+      setProposing(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const load = useCallback(async () => {
     const r = await apiGet(fileApi('标签库.md'));
     setRows(r.ok ? parseQueue(r.content) : []);
@@ -249,14 +270,8 @@ function QueueTab({ tick }: { tick: number }) {
     try {
       const start = await apiPost('/api/model/propose-merges', {});
       if (!start.started) { setMsg(start.message || '发起失败'); setProposing(false); return; }
-      const t0 = Date.now();
-      let fin: any = null;
-      while (Date.now() - t0 < 3 * 60 * 1000) {
-        await new Promise((r) => setTimeout(r, 4000));
-        const s = await apiGet('/api/model/status').catch(() => null);
-        if (s && s.running === false && s.kind === 'propose' && s.lastResult) { fin = s.lastResult; break; }
-      }
-      if (!fin) { setMsg('等待超时（3 分钟），稍后刷新本页'); setProposing(false); return; }
+      const fin = await pollJob('/api/model/status', { kind: 'propose', timeoutMs: 3 * 60 * 1000 });
+      if (fin.stage === 'timeout') { setMsg(fin.message); setProposing(false); return; }
       setMsg(fin.ok
         ? `已入队 ${fin.queued.length} 对：${fin.queued.join('；')}`
         : (fin.message || '未产出建议'));
@@ -453,6 +468,23 @@ function ModelsTab({ tick }: { tick: number }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [histOpen, setHistOpen] = useState<Record<string, boolean>>({});
+
+  // 挂载恢复：建模中切页回来，接管轮询到收尾
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const s = await apiGet('/api/model/status').catch(() => null);
+      if (cancelled || !s || !s.running || s.kind !== 'generate') return;
+      setBusy(true);
+      setMsg('建模进行中（接管切页前的任务）…');
+      const fin = await pollJob('/api/model/status', { kind: 'generate' });
+      if (cancelled) return;
+      setMsg(fin.stage === 'timeout' ? fin.message : (fin.ok ? '完成：见下方分组' : (fin.message || '未生成')));
+      if (fin.ok) { hana.toast.show({ message: '写作模型已生成/更新', type: 'success' }); load(); }
+      setBusy(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   // 按类型分组：默认最新在头，历史折叠（顺带避开 v10 字典序排在 v2 前的坑）
   const groups = useMemo(() => {
     const map = new Map<string, { file: string; v: number }[]>();
@@ -481,14 +513,8 @@ function ModelsTab({ tick }: { tick: number }) {
       const start = await apiPost('/api/model/generate', {});
       if (!start.started) { setMsg(start.message || '发起失败'); setBusy(false); return; }
       setMsg('建模中：归属 → 归纳 → 逐类型生成（每个类型一次模型调用，可离开本页）…');
-      const t0 = Date.now();
-      let fin: any = null;
-      while (Date.now() - t0 < 8 * 60 * 1000) {
-        await new Promise((r) => setTimeout(r, 5000));
-        const s = await apiGet('/api/model/status').catch(() => null);
-        if (s && s.running === false && s.kind === 'generate' && s.lastResult) { fin = s.lastResult; break; }
-      }
-      if (!fin) { setMsg('等待超时（8 分钟），稍后刷新本页查看结果'); setBusy(false); return; }
+      const fin = await pollJob('/api/model/status', { kind: 'generate' });
+      if (fin.stage === 'timeout') { setMsg(fin.message); setBusy(false); return; }
       const lines = (fin.results || []).map((x: any) =>
         x.ok
           ? `✓ ${x.type} → v${x.version}（样本 ${x.samples} 篇${x.previous ? `，原 v${x.previous}` : ''}）`
@@ -653,6 +679,24 @@ function ImportZone({ onDone }: { onDone: () => void }) {
   const [result, setResult] = useState<any>(null);
   const [dragOver, setDragOver] = useState(false);
   const [showZotero, setShowZotero] = useState(false);
+
+  // 挂载恢复：拆解中切页回来，接管轮询到收尾（不丢“拆解中”状态）
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const s = await apiGet('/api/import/status').catch(() => null);
+      if (cancelled || !s || !s.running) return;
+      setBusy(true);
+      setResult({ ok: true, stage: 'running', message: '拆解进行中（接管切页前的任务）…' });
+      const fin = await pollImport();
+      if (cancelled) return;
+      setResult(fin);
+      if (fin.ok) { hana.toast.show({ message: '拆解完成，已入库', type: 'success' }); onDone(); }
+      else if (fin.failureTs) { hana.toast.show({ message: '拆解失败，已记入待办', type: 'error' }); onDone(); }
+      setBusy(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   async function submit(body: Record<string, unknown>, fromTs?: number) {
     setBusy(true);
@@ -967,6 +1011,21 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
     setItems(r.items || []);
   }, []);
   useEffect(() => { void load(); }, [load, tick]);
+
+  // 挂载恢复：重试中切页回来，接管轮询到收尾
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const s = await apiGet('/api/import/status').catch(() => null);
+      if (cancelled || !s || !s.running) return;
+      setMsg('有导入任务进行中，等待结果…');
+      const fin = await pollImport();
+      if (cancelled) return;
+      setMsg(fin.ok ? `完成：${fin.file}` : `仍失败：${fin.message || '未知错误'}${fin.failureTs ? '（已刷新记录）' : ''}`);
+      if (fin.ok || fin.failureTs) { await load(); bump(); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   async function retry(item: any) {
     setBusyTs(item.ts);

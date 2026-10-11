@@ -1,6 +1,6 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
-import { extractJson } from "./lib/import.js";
+import { extractJson, isProviderRejection } from "./lib/import.js";
 import { sampleFingerprint } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
@@ -196,5 +196,6 @@ console.log("model fingerprint order-insensitive:", sampleFingerprint(["b.md", "
 console.log("model fingerprint content-sensitive:", sampleFingerprint(["a.md"], [["x"]]) !== sampleFingerprint(["a.md"], [["y"]]));
 console.log("json trailing junk ignored:", extractJson('{"a":1}\n后面还有复读 } 和残渣').a === 1);
 console.log("json unwrap extraction wrapper:", extractJson('{"extraction":{"id":"x-2020","meta":{"t":1}}}').id === "x-2020");
+console.log("provider rejection detected:", isProviderRejection("The request was rejected because it was considered high risk") && !isProviderRejection('{"a":1}'));
 
 console.log("done");
