@@ -59,6 +59,7 @@ const _plOk = JSON.parse(JSON.stringify(good));
 _plOk.paragraphLogic = [{ location: '¶3', logic: '设问句间推进', quote: '此处引文八个字以上' }];
 console.log("paragraphLogic valid ok:", validateExtraction(_plOk).ok);
 console.log("paragraphLogic optional absent ok:", v1.ok);
+console.log("model fingerprint scope-sensitive:", sampleFingerprint(["a.md"], [["x"]], "v1") !== sampleFingerprint(["a.md"], [["x"]], "v2"));
 console.log("render header:", md.startsWith("# 示例论文标题"));
 console.log("render slot row:", md.includes("| §2 ¶3 | 对照 |"));
 console.log("render anchor note:", md.includes("无锚点参照"));
