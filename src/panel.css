@@ -141,6 +141,14 @@ body[data-surface="widget"] .plugin-panel {
   font-weight: 600;
   font-size: 13px;
 }
+/* ---- 待办分布提示条（进待办即知待办在哪）---- */
+.todohint {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 6px 2px;
+}
 .filebtns {
   display: flex;
   flex-wrap: wrap;

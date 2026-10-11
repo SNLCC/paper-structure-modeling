@@ -293,7 +293,10 @@ function QueueTab({ tick }: { tick: number }) {
   const pending = rows.filter((r) => !r.decision);
   return (
     <div>
-      <p className="hint">相近标签会进到这里，由你决定合并方向；裁决后库内归一，原始记录不动。</p>
+      <p className="hint">
+        {pending.length > 0 && <b>{pending.length} 对待裁决　</b>}
+        相近标签会进到这里，由你决定合并方向；裁决后库内归一，原始记录不动。
+      </p>
       <div className="import-row">
         <Button variant="primary" disabled={proposing} onClick={() => void propose()}>
           {proposing ? '提议中…' : '模型提议疑似对'}
@@ -1064,7 +1067,10 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
   if (!items.length) return <EmptyState title="暂无导入失败" description="导入拆解失败的文献会落在这里，可原样重试。" />;
   return (
     <div>
-      <p className="hint">拆解失败的导入（多为校验未过或模型异常）连原文一起存在这里，重试走同一条链路。</p>
+      <p className="hint">
+        {items.length > 0 && <b>共 {items.length} 条待处理　</b>}
+        拆解失败的导入（多为校验未过或模型异常）连原文一起存在这里，重试走同一条链路。
+      </p>
       {items.map((it) => (
         <div key={it.ts} className="fail-item">
           <div className="fail-head">
@@ -1159,6 +1165,26 @@ function Panel() {
               </button>
             ))}
           </nav>
+        )}
+        {zone === 'todo' && (
+          <div className="todohint">
+            <button
+              className={sub === 'import-fail' ? 'filebtn on' : 'filebtn'}
+              onClick={() => setSubMap((p) => ({ ...p, todo: 'import-fail' }))}
+            >
+              导入失败 {(stats?.failures ?? 0)} 条
+            </button>
+            <button
+              className={sub === 'queue' ? 'filebtn on' : 'filebtn'}
+              onClick={() => setSubMap((p) => ({ ...p, todo: 'queue' }))}
+            >
+              待裁决 {(stats?.queuePending ?? 0)} 对
+            </button>
+            {(stats?.failures ?? 0) + (stats?.queuePending ?? 0) === 0 && (
+              <span className="hint">当前无待办</span>
+            )}
+            <span className="hint">点右侧数字直达对应待办</span>
+          </div>
         )}
         <div className="tab-body">{content}</div>
       </CardShell>
