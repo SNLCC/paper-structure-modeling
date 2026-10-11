@@ -1312,29 +1312,15 @@ function Panel() {
                 onClick={() => setSubMap((p) => ({ ...p, [zone]: s.id }))}
               >
                 {s.label}
+                {zone === 'todo' && s.id === 'import-fail' && (stats?.failures ?? 0) > 0 && (
+                  <span className="nav-badge">{stats?.failures ?? 0}</span>
+                )}
+                {zone === 'todo' && s.id === 'queue' && (stats?.queuePending ?? 0) > 0 && (
+                  <span className="nav-badge">{stats?.queuePending ?? 0}</span>
+                )}
               </button>
             ))}
           </nav>
-        )}
-        {zone === 'todo' && (
-          <div className="todohint">
-            <button
-              className={sub === 'import-fail' ? 'filebtn on' : 'filebtn'}
-              onClick={() => setSubMap((p) => ({ ...p, todo: 'import-fail' }))}
-            >
-              导入失败 {(stats?.failures ?? 0)} 条
-            </button>
-            <button
-              className={sub === 'queue' ? 'filebtn on' : 'filebtn'}
-              onClick={() => setSubMap((p) => ({ ...p, todo: 'queue' }))}
-            >
-              待裁决 {(stats?.queuePending ?? 0)} 对
-            </button>
-            {(stats?.failures ?? 0) + (stats?.queuePending ?? 0) === 0 && (
-              <span className="hint">当前无待办</span>
-            )}
-            <span className="hint">点右侧数字直达对应待办</span>
-          </div>
         )}
         <div className="tab-body">{content}</div>
       </CardShell>

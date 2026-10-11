@@ -227,6 +227,11 @@ body[data-surface="widget"] .plugin-panel {
 .qlabel { flex: 1; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .qok { color: #2e7d32; font-size: 11px; }
 .qerr { color: #c62828; font-size: 11px; max-width: 42%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ---- 待办子页角标（与主 nav 同款）---- */
+.sub .nav-badge {
+  margin-left: 6px;
+  font-size: 10px;
+}
 .filebtns {
   display: flex;
   flex-wrap: wrap;
