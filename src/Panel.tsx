@@ -798,7 +798,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
           </button>
         </p>
       </div>
-      {showZotero && <ZoteroBox submit={(b) => submit(b)} busy={busy} />}
+      {showZotero && <ZoteroBox />}
       <textarea
         className="pastebox"
         value={paste}
@@ -837,123 +837,273 @@ function ImportZone({ onDone }: { onDone: () => void }) {
   );
 }
 
-// ---- Zotero 取件面板（甲方案）：搜索 → 条目 → 附件 → 导入拆解 / 复制路径 ----
-// 调用全部走本插件 route（iframe 边界），zotero_* 工具经 /api/tool/:name 转发；
-// 导入 = 附件路径 → /api/import {pdfPath}（服务端 ResourceIO 读 + 提取 + 既有拆解链）。
-function ZoteroBox({ submit, busy }: { submit: (body: Record<string, unknown>) => Promise<void>; busy: boolean }) {
+// ---- Zotero 取件面板（M3 批量队列）：分类树/搜索双模式多选 → 队列串行拆解 ----
+// 附件解析在入队时完成（fail fast）；队列由后端有限并发执行，3 秒轮询；原生拖拽排序。
+type ZItem = { key: string; title: string; authors: string; year: string; itemType: string };
+type CollNode = { key: string; name: string; children: CollNode[] };
+type QItem = { key: number; label: string; status: string; attempts: number; message: string; file: string };
+
+const QSTATUS: Record<string, string> = {
+  pending: '排队', running: '运行中', stopping: '停止中', done: '✓ 完成', failed: '✗ 失败', cancelled: '■ 已停止',
+};
+
+function CollTree({ nodes, active, onPick, depth = 0 }: { nodes: CollNode[]; active: string | null; onPick: (k: string, n: string) => void; depth?: number }) {
+  return (
+    <>
+      {nodes.map((n) => (
+        <div key={n.key}>
+          <button
+            className={active === n.key ? 'collbtn on' : 'collbtn'}
+            style={{ paddingLeft: 8 + depth * 14 }}
+            onClick={() => onPick(n.key, n.name)}
+          >
+            {n.name}
+          </button>
+          {n.children.length > 0 && <CollTree nodes={n.children} active={active} onPick={onPick} depth={depth + 1} />}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ZoteroBox() {
+  const [colls, setColls] = useState<CollNode[]>([]);
+  const [collKey, setCollKey] = useState<string | null>(null);
+  const [cItems, setCItems] = useState<ZItem[]>([]);
   const [q, setQ] = useState('');
-  const [items, setItems] = useState<any[] | null>(null);
-  const [openKey, setOpenKey] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [mode, setMode] = useState<'collection' | 'search'>('collection');
+  const [sItems, setSItems] = useState<ZItem[] | null>(null);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [queue, setQueue] = useState<QItem[]>([]);
+  const [snap, setSnap] = useState<any>(null);
   const [msg, setMsg] = useState('');
   const [busy2, setBusy2] = useState(false);
+  const [dragKey, setDragKey] = useState<number | null>(null);
 
-  async function search() {
-    setBusy2(true);
-    setMsg('');
-    setOpenKey(null);
-    setAttachments([]);
+  // 分类树（挂载一次）
+  useEffect(() => {
+    void apiGet('/api/zotero/collections').then((r) => {
+      if (r && r.ok) setColls(r.collections || []);
+      else setMsg(r?.message || '分类读取失败（Zotero 桌面端在运行吗？）');
+    }).catch(() => setMsg('分类读取失败'));
+  }, []);
+
+  // 队列轮询（3 秒；卸载停）
+  useEffect(() => {
+    let alive = true;
+    const tickQ = () =>
+      void apiGet('/api/import/queue').then((s) => {
+        if (alive && s && s.ok) { setQueue(s.items || []); setSnap(s); }
+      }).catch(() => {});
+    tickQ();
+    const t = setInterval(tickQ, 3000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  async function openColl(key: string, name: string) {
+    setMode('collection'); setCollKey(key); setSel(new Set());
+    setBusy2(true); setMsg(`加载「${name}」…`);
     try {
-      const r = await apiPost('/api/tool/zotero_search', { query: q, limit: 20 });
+      const r = await apiGet(`/api/zotero/collection-items?key=${encodeURIComponent(key)}`);
+      if (r && r.ok) {
+        setCItems(r.items || []);
+        if (r.truncated) setMsg(`该分类较大，列表显示前 ${r.items.length} 条文献；更多可用搜索收窄`);
+        else if (!(r.items || []).length) setMsg('该分类没有可导入的文献条目');
+        else setMsg('');
+      } else setMsg(r?.message || '条目读取失败');
+    } catch (e: any) { setMsg(String(e?.message || e)); }
+    setBusy2(false);
+  }
+
+  async function goSearch() {
+    setMode('search'); setCollKey(null); setSel(new Set());
+    setBusy2(true); setMsg('');
+    try {
+      const r = await apiPost('/api/tool/zotero_search', { query: q, limit: 50 });
       if (r && Array.isArray(r.items)) {
-        setItems(r.items);
+        setSItems(r.items.map((it: any) => ({
+          key: it.key, title: it.title, authors: it.creators,
+          year: String(it.date || '').slice(0, 4), itemType: it.itemType,
+        })));
         if (!r.items.length) setMsg('没有命中条目');
-      } else {
-        setMsg(r?.message || 'Zotero 查询失败');
-      }
-    } catch (e: any) {
-      setMsg(String(e?.message || e));
-    }
+      } else setMsg(r?.message || 'Zotero 查询失败');
+    } catch (e: any) { setMsg(String(e?.message || e)); }
     setBusy2(false);
   }
 
-  async function open(key: string) {
-    if (openKey === key) {
-      setOpenKey(null);
-      return;
-    }
+  const list: ZItem[] = mode === 'collection' ? cItems : (sItems || []);
+
+  function toggle(k: string) {
+    setSel((p) => { const n = new Set(p); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  }
+  function toggleAll() {
+    setSel((p) => (p.size >= list.length && list.length > 0 ? new Set() : new Set(list.map((i) => i.key))));
+  }
+
+  // 加入队列：逐条解析附件（fail fast，缺附件当场报告不入队）
+  async function enqueueSelected() {
+    const chosen = list.filter((i) => sel.has(i.key));
+    if (!chosen.length) { setMsg('先勾选条目'); return; }
     setBusy2(true);
-    setMsg('');
-    try {
-      const r = await apiPost('/api/tool/zotero_item', { key });
-      if (r && r.item) {
-        setAttachments(r.attachments || []);
-        setOpenKey(key);
-      } else {
-        setMsg(r?.message || '条目读取失败');
-      }
-    } catch (e: any) {
-      setMsg(String(e?.message || e));
+    const items: any[] = [];
+    const missing: string[] = [];
+    for (let i = 0; i < chosen.length; i++) {
+      const it = chosen[i];
+      setMsg(`解析附件 ${i + 1}/${chosen.length}…`);
+      try {
+        const r = await apiPost('/api/tool/zotero_item', { key: it.key });
+        const att = r && Array.isArray(r.attachments) && r.attachments[0] ? r.attachments[0] : null;
+        if (!att) { missing.push(it.title || it.key); continue; }
+        const p = await apiPost('/api/tool/zotero_attachment_path', { attachmentKey: att.key || att });
+        if (p && p.path) items.push({ label: it.title || it.key, pdfPath: String(p.path), source: `zotero:${it.key}` });
+        else missing.push(it.title || it.key);
+      } catch { missing.push(it.title || it.key); }
+    }
+    if (items.length) {
+      const r = await apiPost('/api/import/enqueue', { items });
+      if (r && r.ok) {
+        setMsg(`已入队 ${r.queued} 篇${missing.length ? `；${missing.length} 篇缺附件未入队：${missing.slice(0, 2).join('、')}${missing.length > 2 ? '…' : ''}` : ''}`);
+        setSel(new Set());
+        hana.toast.show({ message: `已入队 ${r.queued} 篇，队列开始执行`, type: 'success' });
+      } else setMsg(r?.message || '入队失败');
+    } else {
+      setMsg(`没有可入队条目${missing.length ? `（${missing.length} 篇缺附件）` : ''}`);
     }
     setBusy2(false);
   }
 
-  async function pathOf(attachmentKey: string): Promise<string | null> {
-    try {
-      const r = await apiPost('/api/tool/zotero_attachment_path', { attachmentKey });
-      if (r && r.path) return String(r.path);
-      setMsg(r?.message || '附件路径解析失败');
-    } catch (e: any) {
-      setMsg(String(e?.message || e));
-    }
-    return null;
+  async function refreshQ() {
+    const s = await apiGet('/api/import/queue').catch(() => null);
+    if (s && s.ok) { setQueue(s.items || []); setSnap(s); }
   }
 
-  async function importAttachment(a: any) {
-    const p = await pathOf(a.key);
-    if (p) await submit({ pdfPath: p, filename: a.filename || '' });
+  async function qa(action: string, key?: number, extra: Record<string, unknown> = {}) {
+    const r = await apiPost('/api/import/queue-action', key !== undefined ? { action, key, ...extra } : { action });
+    if (r && r.ok) { setSnap(r.snapshot); void refreshQ(); return true; }
+    setMsg(r?.message || '操作失败');
+    return false;
   }
 
-  async function copyPath(a: any) {
-    const p = await pathOf(a.key);
-    if (!p) return;
+  async function copyPathFor(itemKey: string) {
+    setBusy2(true);
     try {
-      await hana.clipboard.writeText(p);
-      hana.toast.show({ message: '路径已复制', type: 'success' });
-    } catch {
-      setMsg(`复制失败，路径：${p}`);
-    }
+      const r = await apiPost('/api/tool/zotero_item', { key: itemKey });
+      const att = r && Array.isArray(r.attachments) && r.attachments[0] ? r.attachments[0] : null;
+      if (!att) { setMsg('该条目无附件'); setBusy2(false); return; }
+      const p = await apiPost('/api/tool/zotero_attachment_path', { attachmentKey: att.key || att });
+      if (p && p.path) {
+        await hana.clipboard.writeText(String(p.path));
+        hana.toast.show({ message: '路径已复制', type: 'success' });
+      } else setMsg(p?.message || '附件路径解析失败');
+    } catch (e: any) { setMsg(String(e?.message || e)); }
+    setBusy2(false);
   }
+
+  // 拖拽排序（原生 HTML5）：拖到目标项之前
+  function onDrop(targetKey: number) {
+    const from = dragKey;
+    setDragKey(null);
+    if (from === null || from === targetKey) return;
+    void qa('reorder', from, { before: targetKey });
+  }
+
+  const total = snap?.total ?? queue.length;
+  const finished = (snap?.done ?? 0) + (snap?.failed ?? 0) + (snap?.cancelled ?? 0);
 
   return (
     <div className="zbox">
-      <p className="hint">需 Zotero 桌面端运行，且设置 → 高级 → 勾选「Allow other applications on this computer to communicate with Zotero」。</p>
+      <p className="hint">需 Zotero 桌面端运行，且设置 → 高级 → 勾选「Allow other applications on this computer to communicate with Zotero」。勾选后加入队列，串行拆解（并发 1，随时可停）。</p>
       <div className="import-row">
         <TextInput
-          label="搜索（标题 / 作者 / 年份；留空 = 最近添加）"
+          label="搜索（标题 / 作者 / 年份）"
           value={q}
           onChange={(e) => setQ(e.currentTarget.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') void search(); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') void goSearch(); }}
         />
-        <Button disabled={busy2 || busy} onClick={() => void search()}>搜索</Button>
+        <Button disabled={busy2} onClick={() => void goSearch()}>搜索</Button>
+        <Button variant="primary" disabled={busy2 || sel.size === 0} onClick={() => void enqueueSelected()}>
+          加入队列（{sel.size}）
+        </Button>
+        <Button disabled={busy2 || list.length === 0} onClick={toggleAll}>
+          {sel.size >= list.length && list.length > 0 ? '取消全选' : '全选本页'}
+        </Button>
       </div>
-      {msg && <p className="err">{msg}</p>}
-      {items && items.length > 0 && (
-        <div className="zlist">
-          {items.map((it: any) => (
-            <div key={it.key} className="zitem">
-              <div className="zitem-head" onClick={() => void open(it.key)}>
-                <b>{it.title || '（无标题）'}</b>
-                <span className="hint">{[it.creators, it.date, it.publicationTitle].filter(Boolean).join(' · ')}</span>
-              </div>
-              {openKey === it.key && (
-                <div className="zattach">
-                  {attachments.length === 0 && <p className="hint">无附件</p>}
-                  {attachments.map((a: any) => (
-                    <div key={a.key} className="zattach-row">
-                      <span className="zattach-name">{a.filename || a.contentType || a.key}</span>
-                      <span className="zattach-actions">
-                        {/\.pdf$/i.test(a.filename || '') && (
-                          <Button variant="primary" disabled={busy || busy2} onClick={() => void importAttachment(a)}>
-                            导入拆解
-                          </Button>
-                        )}
-                        <Button disabled={busy2} onClick={() => void copyPath(a)}>复制路径</Button>
-                      </span>
-                    </div>
-                  ))}
-                </div>
+      {msg && <p className="hint">{msg}</p>}
+      <div className="zgrid">
+        <div className="ztree">
+          <div
+            className={mode === 'collection' && !collKey ? 'collbtn on' : 'collbtn'}
+            onClick={() => { setMode('collection'); setSel(new Set()); }}
+          >
+            按分类浏览
+          </div>
+          <CollTree nodes={colls} active={collKey} onPick={(k, n) => void openColl(k, n)} />
+        </div>
+        <div className="zlist zlistpick">
+          {list.length === 0 && (
+            <p className="hint">{mode === 'collection' ? '选择左侧分类加载条目，或用搜索。' : '搜索无结果。'}</p>
+          )}
+          {list.map((it) => (
+            <label key={it.key} className="zrow">
+              <input type="checkbox" checked={sel.has(it.key)} onChange={() => toggle(it.key)} />
+              <span className="zrow-main">
+                <b>{it.title || '（无题名）'}</b>
+                <span className="hint">{[it.authors, it.year].filter(Boolean).join(' · ')}</span>
+              </span>
+              <button
+                className="linkbtn"
+                onClick={(e) => { e.preventDefault(); void copyPathFor(it.key); }}
+              >
+                路径
+              </button>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="qhead">
+        <b>导入队列</b>
+        <span className="hint">
+          {total ? `${finished}/${total} 完成 · 运行 ${(snap?.running ?? 0) + (snap?.stopping ?? 0)} · 排队 ${snap?.pending ?? 0}${snap?.paused ? ' · 已暂停' : ''}` : '队列为空'}
+        </span>
+        <span className="qhead-actions">
+          <Button disabled={!snap || total === 0} onClick={() => void qa(snap?.paused ? 'resume' : 'pause')}>
+            {snap?.paused ? '继续' : '暂停'}
+          </Button>
+          <Button disabled={!snap || ((snap?.done ?? 0) + (snap?.cancelled ?? 0)) === 0} onClick={() => void qa('clear-done')}>
+            清理已完成
+          </Button>
+        </span>
+      </div>
+      {queue.length === 0 ? (
+        <p className="hint">勾选文献点「加入队列」开始批量导入；运行中可继续追加，支持单篇停止/开始与拖拽排序。</p>
+      ) : (
+        <div className="qlist">
+          {queue.map((it) => (
+            <div
+              key={it.key}
+              className={dragKey === it.key ? 'qrow dragging' : 'qrow'}
+              draggable={it.status === 'pending'}
+              onDragStart={() => setDragKey(it.key)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => onDrop(it.key)}
+              onDragEnd={() => setDragKey(null)}
+            >
+              <span className="qhandle" title="拖拽排序（仅排队中）">☰</span>
+              <span className="qstatus">{QSTATUS[it.status] || it.status}</span>
+              <span className="qlabel" title={it.message || it.file || ''}>{it.label}</span>
+              {(it.status === 'pending' || it.status === 'running') && (
+                <Button onClick={() => void qa('cancel', it.key)}>停止</Button>
               )}
+              {it.status === 'stopping' && <span className="hint">停止中…</span>}
+              {(it.status === 'cancelled' || it.status === 'failed') && (
+                <Button onClick={() => void qa('start', it.key)}>开始</Button>
+              )}
+              {it.status !== 'running' && it.status !== 'stopping' && (
+                <Button onClick={() => void qa('remove', it.key)}>移除</Button>
+              )}
+              {it.status === 'failed' && it.message && <span className="qerr">{it.message}</span>}
+              {it.status === 'done' && <span className="qok">已入库</span>}
             </div>
           ))}
         </div>

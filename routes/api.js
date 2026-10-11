@@ -396,6 +396,17 @@ export function registerApiRoutes(app, ctx) {
       }
       return c.json({ ok: false, message: `状态 ${it.status} 不可开始` });
     }
+    if (action === "reorder") {
+      if (it.status === "running" || it.status === "stopping") return c.json({ ok: false, message: "运行中的条目不参与排序" });
+      const before = Number(body.before);
+      const rest = importQueue.items.filter((i) => i.key !== it.key);
+      let bIdx = before > 0 ? rest.findIndex((i) => i.key === before) : rest.length;
+      if (bIdx < 0) bIdx = rest.length;
+      rest.splice(bIdx, 0, it);
+      rest.forEach((x, i) => { x.order = i + 1; });
+      importQueue.items = rest;
+      return ok();
+    }
     if (action === "remove") {
       if (it.status === "running" || it.status === "stopping") return c.json({ ok: false, message: "运行中请先停止" });
       importQueue.items = importQueue.items.filter((i) => i.key !== it.key);
@@ -499,7 +510,7 @@ export function registerApiRoutes(app, ctx) {
         .map((x) => zoteroSearch.unwrapItem(x))
         .filter((it) => it.itemType && !["annotation", "note", "attachment"].includes(it.itemType))
         .map((it) => ({ key: it.key, title: it.title || "（无题名）", authors: it.creators, year: (it.date || "").slice(0, 4), itemType: it.itemType }));
-      return c.json({ ok: true, items, total, limit, returned: items.length, truncated: total > items.length });
+      return c.json({ ok: true, items, total, limit, returned: items.length, truncated: items.length >= limit });
     } catch (e) {
       return c.json({ ok: false, message: e?.message || String(e) });
     }
