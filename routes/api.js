@@ -497,7 +497,7 @@ export function registerApiRoutes(app, ctx) {
       const total = Number(res.headers.get("Total-Results") || 0);
       const items = (Array.isArray(raw) ? raw : [])
         .map((x) => zoteroSearch.unwrapItem(x))
-        .filter((it) => it.itemType && it.itemType !== "annotation" && it.itemType !== "note")
+        .filter((it) => it.itemType && !["annotation", "note", "attachment"].includes(it.itemType))
         .map((it) => ({ key: it.key, title: it.title || "（无题名）", authors: it.creators, year: (it.date || "").slice(0, 4), itemType: it.itemType }));
       return c.json({ ok: true, items, total, limit, returned: items.length, truncated: total > items.length });
     } catch (e) {
