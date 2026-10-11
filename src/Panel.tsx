@@ -329,22 +329,61 @@ function QueueTab({ tick }: { tick: number }) {
   );
 }
 
+// ---- 通用 md 编辑器（篇目 / 写作模型手动修订；轻校验 + 尾部修订留痕，库主可自行删除留痕）----
+function EditMd({ initial, savePath, onSaved }: { initial: string; savePath: string; onSaved: (newText: string) => void }) {
+  const [text, setText] = useState(initial);
+  const [err, setErr] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (!text.startsWith('#')) { setErr('首行须为 # 标题（防存入半截文件）'); return; }
+    let out = text;
+    if (out !== initial) {
+      const stamp = new Date().toISOString().slice(0, 10);
+      const line = /^> 人工修订：(.+)$/m;
+      out = line.test(out) ? out.replace(line, `> 人工修订：${stamp}`) : out.trimEnd() + `\n\n> 人工修订：${stamp}\n`;
+    }
+    setSaving(true);
+    setErr('');
+    try {
+      const r = await apiPost('/api/library/write-file', { path: savePath, content: out });
+      if (r && r.ok) { hana.toast.show({ message: '已保存', type: 'success' }); onSaved(out); }
+      else setErr(r?.message || '保存失败');
+    } catch (e: any) {
+      setErr(String(e?.message || e));
+    }
+    setSaving(false);
+  }
+
+  return (
+    <div className="editor">
+      {err && <p className="err">{err}</p>}
+      <textarea className="editbox" value={text} onChange={(e) => setText(e.currentTarget.value)} rows={22} spellCheck={false} />
+      <div className="import-row">
+        <Button variant="primary" disabled={saving} onClick={() => void save()}>保存</Button>
+        <span className="hint">首行须为 # 标题；改动会在尾部留一行修订日期（可自行删除）。改标签：编辑「- 标签：」行。</span>
+      </div>
+    </div>
+  );
+}
+
 // ---- 3 篇目（一套导航：条目即按钮，显示题目 / 作者 · 年份）----
 function BrowseTab({ tick }: { tick: number }) {
   const [items, setItems] = useState<{ id: string; title: string; meta: string }[]>([]);
   const [sel, setSel] = useState('');
   const [md, setMd] = useState('');
-  useEffect(() => {
-    void listDir('篇目').then(async (fs) => {
-      const list = await Promise.all(
-        fs.map(async (f) => {
-          const { title, meta } = parseEntryHead(await readEntryHead(f), f.replace(/\.md$/, ''));
-          return { id: f, title, meta: meta || f.replace(/\.md$/, '') };
-        }),
-      );
-      setItems(list);
-    });
-  }, [tick]);
+  const [editing, setEditing] = useState(false);
+  const loadItems = useCallback(async () => {
+    const fs = await listDir('篇目');
+    const list = await Promise.all(
+      fs.map(async (f) => {
+        const { title, meta } = parseEntryHead(await readEntryHead(f), f.replace(/\.md$/, ''));
+        return { id: f, title, meta: meta || f.replace(/\.md$/, '') };
+      }),
+    );
+    setItems(list);
+  }, []);
+  useEffect(() => { void loadItems(); }, [loadItems, tick]);
   useEffect(() => {
     if (!sel) { setMd(''); return; }
     void apiGet(fileApi(`篇目/${sel}`)).then((r) => setMd(r.ok ? r.content : r.message || '读取失败'));
@@ -367,7 +406,26 @@ function BrowseTab({ tick }: { tick: number }) {
           ))}
         </div>
       </div>
-      <div className="main">{sel ? <Doc md={md} /> : <p className="hint">左侧选篇查看（每条登记都带位置与原文引文）。</p>}</div>
+      <div className="main">
+        {sel && (
+          <div className="import-row">
+            <Button onClick={() => setEditing((v) => !v)}>{editing ? '返回预览' : '编辑本篇'}</Button>
+          </div>
+        )}
+        {sel ? (
+          editing ? (
+            <EditMd
+              initial={md}
+              savePath={`篇目/${sel}`}
+              onSaved={(t) => { setMd(t); setEditing(false); void loadItems(); }}
+            />
+          ) : (
+            <Doc md={md} />
+          )
+        ) : (
+          <p className="hint">左侧选篇查看（每条登记都带位置与原文引文）。</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -471,6 +529,7 @@ function ModelsTab({ tick }: { tick: number }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [histOpen, setHistOpen] = useState<Record<string, boolean>>({});
+  const [editingModel, setEditingModel] = useState(false);
 
   // 挂载恢复：建模中切页回来，接管轮询到收尾
   useEffect(() => {
@@ -576,7 +635,24 @@ function ModelsTab({ tick }: { tick: number }) {
               )}
             </div>
           ))}
-          {sel ? <Doc md={md} /> : <p className="hint">选择版本查看（每类默认最新；旧版折叠在「历史」里可对照）。</p>}
+          {sel ? (
+            editingModel ? (
+              <EditMd
+                initial={md}
+                savePath={`写作模型/${sel}`}
+                onSaved={(t) => { setMd(t); setEditingModel(false); load(); }}
+              />
+            ) : (
+              <>
+                <div className="import-row">
+                  <Button onClick={() => setEditingModel(true)}>编辑本模型</Button>
+                </div>
+                <Doc md={md} />
+              </>
+            )
+          ) : (
+            <p className="hint">选择版本查看（每类默认最新；旧版折叠在「历史」里可对照）。</p>
+          )}
         </>
       )}
     </div>

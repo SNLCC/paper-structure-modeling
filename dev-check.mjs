@@ -1,7 +1,7 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
 import { extractJson, isProviderRejection } from "./lib/import.js";
-import { sampleFingerprint } from "./lib/model.js";
+import { sampleFingerprint, extractSkillSection } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
 import { parseTagLib, patchTagLib, appendQueueRow } from "./lib/taglib.js";
@@ -60,6 +60,8 @@ _plOk.paragraphLogic = [{ location: '¶3', logic: '设问句间推进', quote: '
 console.log("paragraphLogic valid ok:", validateExtraction(_plOk).ok);
 console.log("paragraphLogic optional absent ok:", v1.ok);
 console.log("model fingerprint scope-sensitive:", sampleFingerprint(["a.md"], [["x"]], "v1") !== sampleFingerprint(["a.md"], [["x"]], "v2"));
+const _sk = "# 框架\n\n## 拆解流程（无关）\n改这里不应变指纹\n\n## 建模与生成（管线）\n建模规则 A\n\n## 其他节\n无关 B\n";
+console.log("skill section extract:", extractSkillSection(_sk, "建模与生成").includes("建模规则 A") && !extractSkillSection(_sk, "建模与生成").includes("无关 B"));
 console.log("render header:", md.startsWith("# 示例论文标题"));
 console.log("render slot row:", md.includes("| §2 ¶3 | 对照 |"));
 console.log("render anchor note:", md.includes("无锚点参照"));

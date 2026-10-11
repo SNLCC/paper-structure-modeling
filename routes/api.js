@@ -119,6 +119,27 @@ export function registerApiRoutes(app, ctx) {
     }
   });
 
+  // 结构库文件手动编辑（库主权）：白名单目录 + 轻校验；“只增不改”红线约束的是模型与工具的自动行为，不约束库主
+  app.post("/api/library/write-file", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const abs = safeResolve(body.path);
+    const content = String(body.content ?? "");
+    if (!abs) return c.json({ ok: false, message: "非法路径" }, 400);
+    const allowed = [`${STRUCT_ROOT}/篇目/`, `${STRUCT_ROOT}/写作模型/`];
+    if (!allowed.some((p) => abs.startsWith(p))) {
+      return c.json({ ok: false, message: "白名单仅允许编辑 篇目/ 与 写作模型/ 下的文件" }, 403);
+    }
+    if (!content.trim()) return c.json({ ok: false, message: "内容为空" }, 400);
+    if (!content.startsWith("#")) return c.json({ ok: false, message: "首行须为 # 标题（防存入半截文件）" });
+    try {
+      await ctx.resources.write(ref(abs), content);
+      return c.json({ ok: true, path: body.path });
+    } catch (e) {
+      return c.json({ ok: false, message: `写入失败：${e?.message || e}` });
+    }
+  });
+
   // 共用检索层的 UI 入口：与 search_structure 工具走同一 searchLibrary，
   // 不各存一套。语义精筛仍由前端/模型做，本端点只给物理命中排序。
   app.get("/api/search", async (c) => {

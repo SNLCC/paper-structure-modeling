@@ -232,6 +232,25 @@ body[data-surface="widget"] .plugin-panel {
   margin-left: 6px;
   font-size: 10px;
 }
+/* ---- 通用 md 编辑器 ---- */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.editbox {
+  width: 100%;
+  font-size: 12.5px;
+  line-height: 1.55;
+  border: 1px solid rgba(120, 110, 90, 0.45);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  padding: 10px;
+  resize: vertical;
+  min-height: 320px;
+  font-family: inherit;
+}
 .filebtns {
   display: flex;
   flex-wrap: wrap;
