@@ -194,5 +194,7 @@ console.log("json valid untouched:", extractJson(_full).extraction.id === "x-202
 console.log("json repair missing colon:", extractJson('{"a：b","c":1}').a === "b");
 console.log("model fingerprint order-insensitive:", sampleFingerprint(["b.md", "a.md"], [["y", "x"], ["q"]]) === sampleFingerprint(["a.md", "b.md"], [["x", "y"], ["q"]]));
 console.log("model fingerprint content-sensitive:", sampleFingerprint(["a.md"], [["x"]]) !== sampleFingerprint(["a.md"], [["y"]]));
+console.log("json trailing junk ignored:", extractJson('{"a":1}\n后面还有复读 } 和残渣').a === 1);
+console.log("json unwrap extraction wrapper:", extractJson('{"extraction":{"id":"x-2020","meta":{"t":1}}}').id === "x-2020");
 
 console.log("done");
