@@ -484,13 +484,13 @@ export function registerApiRoutes(app, ctx) {
 
   app.get("/api/zotero/collection-items", async (c) => {
     const key = c.req.query("key");
-    const start = Math.max(Number(c.req.query("start")) || 0, 0);
     const limit = Math.min(Math.max(Number(c.req.query("limit")) || 100, 1), 100);
     if (!key) return c.json({ ok: false, message: "缺 key" }, 400);
     try {
+      // 不拼 start（Zotero 本地集合端点带 start 会 400）：单页 limit=100，超量用搜索收窄
       const res = await zoteroSearch.zoteroFetch(
         ctx,
-        `/users/0/collections/${encodeURIComponent(key)}/items?limit=${limit}&start=${start}&sort=-dateAdded`,
+        `/users/0/collections/${encodeURIComponent(key)}/items?limit=${limit}&sort=-dateAdded`,
       );
       const raw = await res.json();
       const total = Number(res.headers.get("Total-Results") || 0);
@@ -498,7 +498,7 @@ export function registerApiRoutes(app, ctx) {
         .map((x) => zoteroSearch.unwrapItem(x))
         .filter((it) => it.itemType && it.itemType !== "annotation" && it.itemType !== "note")
         .map((it) => ({ key: it.key, title: it.title || "（无题名）", authors: it.creators, year: (it.date || "").slice(0, 4), itemType: it.itemType }));
-      return c.json({ ok: true, items, total, start, limit, returned: items.length });
+      return c.json({ ok: true, items, total, limit, returned: items.length, truncated: total > items.length });
     } catch (e) {
       return c.json({ ok: false, message: e?.message || String(e) });
     }
