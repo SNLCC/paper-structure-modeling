@@ -51,6 +51,14 @@ const v3 = validateExtraction(low);
 console.log("case3 low-decomp exempt:", v3.ok, v3.errors.map((e) => e.field).join(", "));
 
 const md = renderExtraction(good);
+const _plBad = JSON.parse(JSON.stringify(good));
+_plBad.paragraphLogic = [{ location: '', logic: '', quote: '短' }];
+const _v4 = validateExtraction(_plBad);
+console.log("paragraphLogic invalid caught:", !_v4.ok && _v4.errors.some((e) => e.field.startsWith("paragraphLogic")));
+const _plOk = JSON.parse(JSON.stringify(good));
+_plOk.paragraphLogic = [{ location: '¶3', logic: '设问句间推进', quote: '此处引文八个字以上' }];
+console.log("paragraphLogic valid ok:", validateExtraction(_plOk).ok);
+console.log("paragraphLogic optional absent ok:", v1.ok);
 console.log("render header:", md.startsWith("# 示例论文标题"));
 console.log("render slot row:", md.includes("| §2 ¶3 | 对照 |"));
 console.log("render anchor note:", md.includes("无锚点参照"));

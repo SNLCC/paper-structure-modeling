@@ -41,7 +41,7 @@ const tool = {
   description:
     "Validate and commit one paper-extraction record into the structure library. This is THE single write gate shared by path A (in-chat extraction) and path C (offline plugin session): validation runs before any file is written, and failure rejects the write. " +
     "Input `extraction` fields: id (slug-year, e.g. sample-2020); meta.{title,authors,year,venue,discipline,boundary:{result:single|collection|volume_chapter,cut},extractor:A|C,date,tags:[{name,action}],toVerify:[],anchorStatus:{has,entry},lowDecomposability:bool}; " +
-    "understanding (free text); slots:[{location:'§2.1 或 ¶4',action,object,evidence(原文引文≥8字),purpose}]; emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,paragraphFunctions,openingClosing,densityDistribution}; " +
+    "understanding (free text); slots:[{location:'§2.1 或 ¶4',action,object,evidence(原文引文≥8字),purpose}]; emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,paragraphFunctions,openingClosing,densityDistribution}; paragraphLogic?:[{location:'¶3',logic:'句间如何推进/衔接/转折',quote:'关键句引文≥8字'}](可选，仅关键段：开篇/转折/收束，按必要性取 0~3 段，不设硬上限); " +
     "scores:[{level:article|node|fragment,target,score:1-10,rationale,anchorRef}]; appreciation.{gems:[{location,note}],patterns:[],weaknesses:[{location,note}]}; newTypeProposal?.{name,definition,relation,basis}. " +
     "Mirrors 结构库/篇目/_模板.md. Use dryRun to check without writing.",
   parameters: {
