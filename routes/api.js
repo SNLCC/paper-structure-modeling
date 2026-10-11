@@ -463,7 +463,7 @@ export function registerApiRoutes(app, ctx) {
   // ---- Zotero 分类与条目列表（M2）：浏览取数，供批量入队 ----
   app.get("/api/zotero/collections", async (c) => {
     try {
-      const res = await zoteroSearch.zoteroFetch(ctx, "/users/0/collections?limit=200&sort=name");
+      const res = await zoteroSearch.zoteroFetch(ctx, "/users/0/collections?limit=100&sort=title");
       const raw = await res.json();
       const nodes = (Array.isArray(raw) ? raw : []).map((x) => ({
         key: x.key || x.data?.key || "",
