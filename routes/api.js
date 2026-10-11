@@ -191,9 +191,51 @@ export function registerApiRoutes(app, ctx) {
     }
   });
 
+  // 单篇执行（单篇端点与批量队列共用同一条链）：可选 PDF 提取 → runImport → 失败存储
+  async function runOneImport(body, fromTs, shouldAbort) {
+    let text = String(body.text || "");
+    let pdfEngine;
+    if (!text && (body.pdfPath || body.pdfBase64)) {
+      try {
+        const bytes = body.pdfPath
+          ? ((await ctx.resources.read(ref(String(body.pdfPath)))).content ?? new Uint8Array())
+          : Buffer.from(String(body.pdfBase64), "base64");
+        const ex = await extractPdfText(bytes);
+        text = ex.text;
+        pdfEngine = ex.engine;
+      } catch (e) {
+        // 提取失败属换料问题（扫描版/损坏/超限），不进待办（同 too_short/too_long）
+        return { ok: false, stage: "pdf_extract", message: e?.message || String(e), attempts: 0 };
+      }
+    }
+    let r;
+    try {
+      r = await runImport(ctx, { text, shouldAbort });
+    } catch (e) {
+      r = { ok: false, stage: "model", message: `模型调用失败：${e?.message || e}`, attempts: 0 };
+    }
+    if (pdfEngine) r.pdfEngine = pdfEngine;
+    if (r.ok && fromTs != null) removeFailure(fromTs);
+    if (!r.ok && !["too_short", "too_long", "input", "pdf_extract", "cancelled"].includes(r.stage)) {
+      // 存提取后的 text：重试原样重投模型链，不重复提取；source 记来源便于追查
+      const item = addFailure({
+        stage: r.stage,
+        message: r.message,
+        attempts: r.attempts || 0,
+        errors: r.errors || [],
+        output: r.output || undefined,
+        text,
+        source: body.filename || body.pdfPath,
+      });
+      r.failureTs = item.ts;
+    }
+    r.maxImportChars = MAX_IMPORT_CHARS;
+    return r;
+  }
+
   // 导入拆解（异步单任务）：宿主普通 RPC 30 秒硬超时，分钟级模型链只能后台跑；
   // POST 立即返回 started，面板轮询 /api/import/status 取最终结果。
-  // 失败进待办（too_short/too_long/input/pdf_extract 属入参或换料问题不落待办）。
+  // 失败进待办（too_short/too_long/input/pdf_extract/cancelled 属入参、换料或主动停止，不落待办）。
   let importJob = { running: false, startedAt: 0, finishedAt: 0, lastResult: null };
 
   app.post("/api/import", async (c) => {
@@ -206,7 +248,6 @@ export function registerApiRoutes(app, ctx) {
     const text = String(body.text || "");
     const pdfPath = body.pdfPath ? String(body.pdfPath) : undefined;
     const pdfBase64 = body.pdfBase64 ? String(body.pdfBase64) : undefined;
-    const filename = body.filename ? String(body.filename) : undefined;
     const fromTs = body.fromTs !== undefined && body.fromTs !== null ? body.fromTs : null;
     if (!text && !pdfPath && !pdfBase64) {
       return c.json({ ok: false, stage: "input", message: "请先粘贴文献全文，或选择 / 拖入 md、txt、pdf 文件" });
@@ -214,52 +255,15 @@ export function registerApiRoutes(app, ctx) {
     if (importJob.running) {
       return c.json({ ok: false, stage: "busy", message: "已有拆解任务进行中，完成后会自动提示，请稍候" });
     }
+    if (queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "批量导入队列正在运行，等它完成或先停止队列" });
+    }
     const startedAt = Date.now();
     importJob = { running: true, startedAt, finishedAt: 0, lastResult: null };
-
-    // 后台执行：PDF 提取（若源是 PDF）→ 模型链（分钟级，远超普通 RPC 的 30 秒上限）→ 结果落盘
     void (async () => {
-      let r = null;
-      let pdfEngine;
-      let content = text;
-      if (!content && (pdfPath || pdfBase64)) {
-        try {
-          const bytes = pdfPath
-            ? ((await ctx.resources.read(ref(pdfPath))).content ?? new Uint8Array())
-            : Buffer.from(String(pdfBase64), "base64");
-          const ex = await extractPdfText(bytes);
-          content = ex.text;
-          pdfEngine = ex.engine;
-        } catch (e) {
-          // 提取失败属换料问题（扫描版/损坏/超限），不进待办（同 too_short/too_long）
-          r = { ok: false, stage: "pdf_extract", message: e?.message || String(e), attempts: 0 };
-        }
-      }
-      try {
-        if (!r) r = await runImport(ctx, { text: content });
-      } catch (e) {
-        r = { ok: false, stage: "model", message: `模型调用失败：${e?.message || e}`, attempts: 0 };
-      }
-      if (pdfEngine) r.pdfEngine = pdfEngine;
-      if (r.ok) {
-        if (fromTs !== null) removeFailure(fromTs);
-      } else if (!["too_short", "too_long", "input", "pdf_extract"].includes(r.stage)) {
-        // PDF 源存提取后的 content：重试原样重投模型链，不重复提取；source 记来源便于追查
-        const item = addFailure({
-          stage: r.stage,
-          message: r.message,
-          attempts: r.attempts || 0,
-          errors: r.errors || [],
-          output: r.output || undefined,
-          text: content,
-          source: filename || pdfPath,
-        });
-        r.failureTs = item.ts;
-      }
-      r.maxImportChars = MAX_IMPORT_CHARS;
+      const r = await runOneImport(body, fromTs, null);
       importJob = { running: false, startedAt, finishedAt: Date.now(), lastResult: r };
     })();
-
     return c.json({
       ok: true,
       started: true,
@@ -270,12 +274,142 @@ export function registerApiRoutes(app, ctx) {
   // 后台任务状态（面板轮询收尾结果）
   app.get("/api/import/status", (c) => c.json({ ok: true, ...importJob }));
 
+  // ---- 批量导入队列（M1）：有限并发、单项启停、原子停止零残留 ----
+  // 停止语义：链只在终态原子写库，pending 停止=直接移出；running 停止=下一次调用前中止、
+  // 已飞调用返回后丢弃结果——中途停止不产生任何落盘中间物，Zotero 与本地原文始终不被触碰。
+  const MAX_QUEUE_CONCURRENT = 1; // 有限并行：默认串行（token 与进度可控），上限可调到 2
+  const importQueue = { items: [], nextKey: 1, paused: false, pumping: false };
+  const queueRunning = () => importQueue.items.some((i) => i.status === "running" || i.status === "stopping");
+  function queueSnapshot() {
+    const c = { pending: 0, running: 0, stopping: 0, done: 0, failed: 0, cancelled: 0 };
+    for (const i of importQueue.items) if (c[i.status] !== undefined) c[i.status]++;
+    return { ...c, total: importQueue.items.length, paused: importQueue.paused };
+  }
+  async function queuePump() {
+    if (importQueue.pumping || importQueue.paused) return;
+    importQueue.pumping = true;
+    try {
+      while (true) {
+        if (importQueue.paused) break;
+        if (importJob.running || modelJob.running) break; // 与其他模型任务互斥
+        if (queueRunning() && importQueue.items.filter((i) => i.status === "running").length >= MAX_QUEUE_CONCURRENT) break;
+        const next = importQueue.items
+          .filter((i) => i.status === "pending")
+          .sort((a, b) => a.order - b.order)[0];
+        if (!next) break;
+        next.status = "running";
+        void (async () => {
+          try {
+            const stopReq = () => next.status === "stopping";
+            const r = await runOneImport({ text: next.text, pdfPath: next.pdfPath, pdfBase64: next.pdfBase64, filename: next.label }, null, stopReq);
+            if (r.stage === "cancelled" || next.status === "stopping") {
+              next.status = "cancelled";
+              next.message = "已停止（未写库，无残留）";
+            } else if (r.ok) {
+              next.status = "done";
+              next.file = r.file;
+              next.attempts = r.attempts;
+            } else {
+              next.status = "failed";
+              next.message = r.message;
+              next.attempts = r.attempts;
+              next.failureTs = r.failureTs;
+            }
+          } catch (e) {
+            next.status = "failed";
+            next.message = String(e?.message || e);
+          } finally {
+            void queuePump();
+          }
+        })();
+      }
+    } finally {
+      importQueue.pumping = false;
+    }
+  }
+
+  // 批量入队（Zotero 分类批量 / 多选逐篇均走此口）
+  app.post("/api/import/enqueue", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const list = Array.isArray(body.items) ? body.items : [];
+    if (!list.length) return c.json({ ok: false, message: "items 为空" }, 400);
+    const added = [];
+    for (const it of list) {
+      const text = it.text ? String(it.text) : "";
+      const pdfPath = it.pdfPath ? String(it.pdfPath) : undefined;
+      const pdfBase64 = it.pdfBase64 ? String(it.pdfBase64) : undefined;
+      if (!text && !pdfPath && !pdfBase64) continue;
+      const key = importQueue.nextKey++;
+      importQueue.items.push({
+        key,
+        order: importQueue.items.length + 1,
+        label: String(it.label || `条目 ${key}`),
+        text, pdfPath, pdfBase64,
+        source: it.source,
+        status: "pending",
+        attempts: 0,
+        message: "",
+        file: "",
+      });
+      added.push(key);
+    }
+    if (!added.length) return c.json({ ok: false, message: "无可入队内容" }, 400);
+    void queuePump();
+    return c.json({ ok: true, queued: added.length, snapshot: queueSnapshot() });
+  });
+
+  // 队列状态（面板轮询；附带驱动 pump，兼作恢复驱动）
+  app.get("/api/import/queue", (c) => {
+    void queuePump();
+    return c.json({
+      ok: true,
+      ...queueSnapshot(),
+      items: importQueue.items.map(({ text, pdfPath, pdfBase64, ...rest }) => rest),
+    });
+  });
+
+  // 队列动作：cancel / start / remove / pause / resume / clear-done
+  app.post("/api/import/queue-action", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const action = String(body.action || "");
+    const it = importQueue.items.find((i) => i.key === Number(body.key));
+    const ok = (extra = {}) => c.json({ ok: true, snapshot: queueSnapshot(), ...extra });
+    if (action === "pause") { importQueue.paused = true; return ok(); }
+    if (action === "resume") { importQueue.paused = false; void queuePump(); return ok(); }
+    if (action === "clear-done") {
+      importQueue.items = importQueue.items.filter((i) => i.status !== "done" && i.status !== "cancelled");
+      return ok();
+    }
+    if (!it) return c.json({ ok: false, message: `队列中无 key=${body.key} 的条目` }, 404);
+    if (action === "cancel") {
+      if (it.status === "pending") { it.status = "cancelled"; it.message = "已停止（未开始，零成本）"; return ok(); }
+      if (it.status === "running") { it.status = "stopping"; it.message = "停止中（等当前调用返回后丢弃）…"; return ok(); }
+      return c.json({ ok: false, message: `状态 ${it.status} 不可停止` });
+    }
+    if (action === "start") {
+      if (it.status === "cancelled" || it.status === "failed") {
+        it.status = "pending"; it.message = ""; it.file = "";
+        void queuePump();
+        return ok();
+      }
+      return c.json({ ok: false, message: `状态 ${it.status} 不可开始` });
+    }
+    if (action === "remove") {
+      if (it.status === "running" || it.status === "stopping") return c.json({ ok: false, message: "运行中请先停止" });
+      importQueue.items = importQueue.items.filter((i) => i.key !== it.key);
+      return ok();
+    }
+    return c.json({ ok: false, message: `未知动作：${action}` }, 400);
+  });
+
   // 建模链（异步单任务，同导入模式）：每类型一次模型调用，写闸 commit_model（版本递增）
   // kind 区分 generate/propose，面板轮询各认各的 lastResult
   let modelJob = { running: false, kind: null, startedAt: 0, finishedAt: 0, lastResult: null };
   app.post("/api/model/generate", async (c) => {
-    if (modelJob.running) {
-      return c.json({ ok: false, stage: "busy", message: "模型任务进行中，完成后会自动提示，请稍候" });
+    if (modelJob.running || queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中（含批量队列），完成后会自动提示，请稍候" });
     }
     const startedAt = Date.now();
     modelJob = { running: true, kind: "generate", startedAt, finishedAt: 0, lastResult: null };
@@ -293,8 +427,8 @@ export function registerApiRoutes(app, ctx) {
 
   // 语义提议（异步，与生成共用单任务闸）：模型找相似标签对入队，裁决仍在队列页
   app.post("/api/model/propose-merges", async (c) => {
-    if (modelJob.running) {
-      return c.json({ ok: false, stage: "busy", message: "模型任务进行中，完成后会自动提示，请稍候" });
+    if (modelJob.running || queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中（含批量队列），完成后会自动提示，请稍候" });
     }
     const startedAt = Date.now();
     modelJob = { running: true, kind: "propose", startedAt, finishedAt: 0, lastResult: null };
@@ -324,6 +458,50 @@ export function registerApiRoutes(app, ctx) {
     if (body.ts === undefined || body.ts === null) return c.json({ ok: false, message: "缺少 ts" }, 400);
     removeFailure(body.ts);
     return c.json({ ok: true });
+  });
+
+  // ---- Zotero 分类与条目列表（M2）：浏览取数，供批量入队 ----
+  app.get("/api/zotero/collections", async (c) => {
+    try {
+      const res = await zoteroSearch.zoteroFetch(ctx, "/users/0/collections?limit=200&sort=name");
+      const raw = await res.json();
+      const nodes = (Array.isArray(raw) ? raw : []).map((x) => ({
+        key: x.key || x.data?.key || "",
+        name: x.data?.name || x.key || "",
+        parent: typeof x.data?.parentCollection === "string" ? x.data.parentCollection : null,
+      })).filter((n) => n.key);
+      const byKey = new Map(nodes.map((n) => [n.key, { ...n, children: [] }]));
+      const roots = [];
+      for (const n of byKey.values()) {
+        if (n.parent && byKey.has(n.parent)) byKey.get(n.parent).children.push(n);
+        else roots.push(n);
+      }
+      return c.json({ ok: true, collections: roots, total: nodes.length });
+    } catch (e) {
+      return c.json({ ok: false, message: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/zotero/collection-items", async (c) => {
+    const key = c.req.query("key");
+    const start = Math.max(Number(c.req.query("start")) || 0, 0);
+    const limit = Math.min(Math.max(Number(c.req.query("limit")) || 100, 1), 100);
+    if (!key) return c.json({ ok: false, message: "缺 key" }, 400);
+    try {
+      const res = await zoteroSearch.zoteroFetch(
+        ctx,
+        `/users/0/collections/${encodeURIComponent(key)}/items?limit=${limit}&start=${start}&sort=-dateAdded`,
+      );
+      const raw = await res.json();
+      const total = Number(res.headers.get("Total-Results") || 0);
+      const items = (Array.isArray(raw) ? raw : [])
+        .map((x) => zoteroSearch.unwrapItem(x))
+        .filter((it) => it.itemType && it.itemType !== "annotation" && it.itemType !== "note")
+        .map((it) => ({ key: it.key, title: it.title || "（无题名）", authors: it.creators, year: (it.date || "").slice(0, 4), itemType: it.itemType }));
+      return c.json({ ok: true, items, total, start, limit, returned: items.length });
+    } catch (e) {
+      return c.json({ ok: false, message: e?.message || String(e) });
+    }
   });
 
   // spike（v2 走 models.utility，v2 禁 model:sample-text）：
