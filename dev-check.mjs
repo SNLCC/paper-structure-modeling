@@ -163,7 +163,7 @@ console.log("search no-hit:", s3.ok && s3.results.length === 0);
 const s4 = await searchLibrary(mockCtx, "  ");
 console.log("search empty query rejected:", s4.ok === false);
 const s5 = await searchLibrary(mockCtx, "镜像");
-console.log("search head-bridge tag hit (body has no such word):", s5.ok && s5.results.some((x) => x.kind === "写作模型" && x.hits.some((h) => h.excerpt.includes("标签命中"))));
+console.log("search head-bridge tag hit (body has no such word):", s5.ok && s5.results.some((x) => x.kind === "写作模型" && x.score >= 3 && x.hits.some((h) => h.text.includes("关联标签"))));
 // ---- 通道三三闸纯逻辑 ----
 console.log("push factory fn:", typeof pushFactory === "function");
 console.log("g1 empty markers silent:", matchMarker([], "写作") === null);
