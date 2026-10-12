@@ -211,4 +211,18 @@ console.log("json trailing junk ignored:", extractJson('{"a":1}\n后面还有复
 console.log("json unwrap extraction wrapper:", extractJson('{"extraction":{"id":"x-2020","meta":{"t":1}}}').id === "x-2020");
 console.log("provider rejection detected:", isProviderRejection("The request was rejected because it was considered high risk") && !isProviderRejection('{"a":1}'));
 
+// ---- 第 97 轮：id 三要素（标题-作者-年份，中文直入）+ sectionTitles（方案 A）----
+const zh97 = JSON.parse(JSON.stringify(good));
+zh97.id = "示例论文标题-示例作者-2020";
+zh97.emergent.sectionTitles = [{ location: "§1", title: "第一章 示例节" }];
+const zh97v = validateExtraction(zh97);
+console.log("97 zh id + sectionTitles valid:", zh97v.ok, zh97v.ok ? "" : JSON.stringify(zh97v.errors));
+const zh97bad = JSON.parse(JSON.stringify(zh97));
+zh97bad.id = "示例-2020-16";
+zh97bad.emergent.sectionTitles = [{ location: "第1章", title: "" }];
+const zh97badv = validateExtraction(zh97bad);
+console.log("97 bad id / bad sectionTitles rejected:", !zh97badv.ok && zh97badv.errors.some((e) => e.field === "id") && zh97badv.errors.some((e) => e.field.startsWith("emergent.sectionTitles")));
+console.log("97 render sectionTitles:", renderExtraction(zh97).includes("章节标题（表层结构）：§1 第一章 示例节"));
+console.log("97 legacy id still valid:", validateExtraction(good).ok);
+
 console.log("done");

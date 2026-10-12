@@ -39,15 +39,15 @@ function mergeTags(md, tags, id) {
 // 描述中的格式规则必须与 lib/extraction.js 的 validateExtraction 保持同源（提示层与校验层同一来源）；
 // 校验逻辑改动时同步更新此处描述。
 const LOCATION_RULE =
-  "FORMAT RULE (enforced by the write gate): location must be §<digits>(.<digits>)* — e.g. §2.1, §2.2.1, or multiple segments separated by a single space like §2 §4 — or ¶<digits>. ASCII digits only: no Chinese numerals (§一 / §三.2 are rejected), no page numbers (p.11 rejected), no headings or other text. The same rule applies to scores[].target (node/fragment levels) and paragraphLogic[].location. Quote rules: slots[].evidence must be verbatim source text of ≥8 characters (paraphrase rejected); paragraphLogic[].quote ≥8 characters or empty.";
+  "FORMAT RULE (enforced by the write gate): location is a multi-level number, segments separated by single spaces; each segment starts with § or ¶, e.g. §2.1, §2.2.1, ¶4, or mixed like §2 ¶3. ASCII digits only: no Chinese numerals (§一 / §三.2 are rejected), no page numbers (p.11 rejected), no headings or other text. The same rule applies to scores[].target (node/fragment levels), paragraphLogic[].location, and emergent.sectionTitles[].location. Quote rules: slots[].evidence must be verbatim source text of ≥8 characters (paraphrase rejected); paragraphLogic[].quote ≥8 characters or empty.";
 
 const tool = {
   name: "commit_extraction",
   description:
     "Validate and commit one paper-extraction record into the structure library. This is THE single write gate shared by path A (in-chat extraction) and path C (offline plugin session): validation runs before any file is written, and failure rejects the write.\n\n" +
     "Input: `extraction` (object) OR `extractionJsonPath` (string) — exactly one of them. For large records pass `extractionJsonPath`: an absolute path to a UTF-8 JSON file (write it first with your file-write tool) containing the extraction object; this avoids oversized tool-call payloads.\n\n" +
-    "Input `extraction` fields: id (slug-year, e.g. sample-2020, all-lowercase+hyphens); meta.{title,authors,year,venue,discipline,boundary:{result:single|collection|volume_chapter,cut},extractor:A|C,date(YYYY-MM-DD),tags:[{name,action}],toVerify:[],anchorStatus:{has,entry},lowDecomposability:bool}; " +
-    "understanding (free text); slots:[{location,action,object,evidence(原文引文≥8字),purpose}] (at least 1); emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,paragraphFunctions,openingClosing,densityDistribution}; paragraphLogic?:[{location,logic,quote}] (可选，仅关键段：开篇/转折/收束，0~3 段常见); " +
+    "Input `extraction` fields: id (<标题>-<作者>-<年份>, Chinese allowed, punctuation stripped from the title, e.g. 示例论文标题-示例作者-2016 or sample-2016); meta.{title,authors,year,venue,discipline,boundary:{result:single|collection|volume_chapter,cut},extractor:A|C,date(YYYY-MM-DD),tags:[{name,action}],toVerify:[],anchorStatus:{has,entry},lowDecomposability:bool}; " +
+    "understanding (free text; include an appraisal of the article title's naming intent); slots:[{location,action,object,evidence(原文引文≥8字),purpose}] (at least 1); emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,sectionTitles?:[{location,title}] (optional: section-title text with location),paragraphFunctions,openingClosing,densityDistribution}; paragraphLogic?:[{location,logic,quote}] (可选，仅关键段：开篇/转折/收束，0~3 段常见); " +
     "scores:[{level:article|node|fragment,target,score:1-10,rationale,anchorRef}] (at least one article-level); appreciation.{gems:[{location,note}],patterns:[],weaknesses:[{location,note}]}; newTypeProposal?.{name,definition,relation,basis}.\n\n" +
     LOCATION_RULE + "\n\n" +
     "meta.tags semantics: pass ONLY tags that are NEW to 标签库 (first do a semantic lookup against existing tags; if one matches, reuse it and do not include it). Each element: {name: 标签名, action: 该标签指向的处置动作描述} — `action` is written verbatim into the 标签库 '指向的处置动作' column, so write the action description (e.g. \"以形式符号分步建构方案\"), NOT a status word like new/reuse.\n\n" +
@@ -101,7 +101,7 @@ const tool = {
       return json({
         ok: false,
         stage: "conflict",
-        message: `篇目已存在：${path}。写定即稳定；修订请直接修改该文件并在其元信息追加修订记录。`,
+        message: `篇目已存在：${path}——id 三要素（标题-作者-年份）相同视为同一篇：确系同一篇的重复提交请忽略；确系不同文献，请核对标题/作者/年份是否有误并换 id 重投。修订请直接修改该文件并在其元信息追加修订记录。`,
       });
     }
 

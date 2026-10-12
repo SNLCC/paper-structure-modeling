@@ -804,13 +804,34 @@ function ImportZone({ onDone }: { onDone: () => void }) {
     setBusy(false);
   }
 
-  async function run(text: string, fromTs?: number) {
+  // 第 97 轮：三种导入源统一入队（粘贴/拖拽/文件 → enqueue，入队即 pump 自动开跑）
+  async function enqueueOne(item: Record<string, unknown>, labelText: string) {
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await apiPost('/api/import/enqueue', { items: [item] });
+      if (r && r.ok) {
+        setResult({ ok: true, stage: 'queued', message: `已入队：${labelText}（队列串行执行，进度看下方「导入队列」）` });
+        hana.toast.show({ message: `已入队 ${r.queued} 篇，队列开始执行`, type: 'success' });
+        onDone();
+      } else {
+        setResult({ ok: false, stage: 'input', message: r?.message || '入队失败' });
+      }
+    } catch (e: any) {
+      setResult({ ok: false, stage: 'network', message: String(e?.message || e) });
+    }
+    setBusy(false);
+  }
+
+  async function run(text: string) {
     const t = String(text || '').trim();
     if (!t) {
       setResult({ ok: false, stage: 'input', message: '请先粘贴文献全文，或选择 / 拖入 md、txt、pdf 文件' });
       return;
     }
-    await submit({ text: t }, fromTs);
+    const head = (t.split('\n')[0] || '').replace(/^#+\s*/, '').trim().slice(0, 30);
+    const labelText = head || '粘贴文献';
+    await enqueueOne({ label: labelText, text: t, source: 'paste' }, labelText);
   }
 
   async function readFile(f: File) {
@@ -826,7 +847,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
           rd.onerror = () => rej(new Error('文件读取失败'));
           rd.readAsDataURL(f);
         });
-        await submit({ pdfBase64: b64, filename: f.name });
+        await enqueueOne({ label: f.name, pdfBase64: b64, source: 'file' }, f.name);
       } catch (e: any) {
         setResult({ ok: false, stage: 'input', message: String(e?.message || e) });
       }
@@ -836,7 +857,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
       setResult({ ok: false, stage: 'input', message: '支持 md / txt / pdf 文件' });
       return;
     }
-    await submit({ text: await f.text() });
+    await enqueueOne({ label: f.name, text: await f.text(), source: 'file' }, f.name);
   }
 
   return (
@@ -885,15 +906,17 @@ function ImportZone({ onDone }: { onDone: () => void }) {
       />
       <div className="import-row">
         <Button variant="primary" disabled={busy || !paste.trim()} onClick={() => void run(paste)}>
-          一键拆解
+          加入队列并开始
         </Button>
-        {busy && <span className="hint">正在拆解：提取（PDF 先转文本）→ 落格校验 → 入库（约 1-3 分钟，可离开本页，完成后有提示）…</span>}
+        {busy && <span className="hint">正在入队…</span>}
       </div>
       {result && (
         <pre className={result.ok ? 'ok' : 'err'}>
           {result.ok
             ? result.stage === 'running'
               ? `${result.message || '拆解进行中…'}`
+              : result.stage === 'queued'
+              ? result.message
               : `已入库：${result.file}（第 ${result.attempts} 次通过${result.tagsAdded?.length ? `，新增标签 ${result.tagsAdded.join('、')}` : ''}）` +
               (result.pdfEngine
                 ? `\nPDF 引擎：${
@@ -909,6 +932,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
               }${result.failureTs ? '\n（已记入待办，可到「待办 · 导入失败」重试）' : ''}`}
         </pre>
       )}
+      <QueueBox />
     </div>
   );
 }
@@ -942,29 +966,14 @@ function CollTree({ nodes, active, onPick, depth = 0 }: { nodes: CollNode[]; act
   );
 }
 
-function ZoteroBox() {
-  const [colls, setColls] = useState<CollNode[]>([]);
-  const [collKey, setCollKey] = useState<string | null>(null);
-  const [cItems, setCItems] = useState<ZItem[]>([]);
-  const [q, setQ] = useState('');
-  const [mode, setMode] = useState<'collection' | 'search'>('collection');
-  const [sItems, setSItems] = useState<ZItem[] | null>(null);
-  const [sel, setSel] = useState<Set<string>>(new Set());
+// ---- 导入队列（第 97 轮抽离：脱离 ZoteroBox 条件挂载，首页常驻）----
+function QueueBox() {
   const [queue, setQueue] = useState<QItem[]>([]);
   const [snap, setSnap] = useState<any>(null);
-  const [msg, setMsg] = useState('');
-  const [busy2, setBusy2] = useState(false);
+  const [qmsg, setQmsg] = useState('');
   const [dragKey, setDragKey] = useState<number | null>(null);
 
-  // 分类树（挂载一次）
-  useEffect(() => {
-    void apiGet('/api/zotero/collections').then((r) => {
-      if (r && r.ok) setColls(r.collections || []);
-      else setMsg(r?.message || '分类读取失败（Zotero 桌面端在运行吗？）');
-    }).catch(() => setMsg('分类读取失败'));
-  }, []);
-
-  // 队列轮询（3 秒；卸载停）
+  // 队列轮询（3 秒；卸载停；挂载即拉，切页回来即恢复）
   useEffect(() => {
     let alive = true;
     const tickQ = () =>
@@ -974,6 +983,102 @@ function ZoteroBox() {
     tickQ();
     const t = setInterval(tickQ, 3000);
     return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  async function refreshQ() {
+    const s = await apiGet('/api/import/queue').catch(() => null);
+    if (s && s.ok) { setQueue(s.items || []); setSnap(s); }
+  }
+
+  async function qa(action: string, key?: number, extra: Record<string, unknown> = {}) {
+    const r = await apiPost('/api/import/queue-action', key !== undefined ? { action, key, ...extra } : { action });
+    if (r && r.ok) { setSnap(r.snapshot); void refreshQ(); return true; }
+    setQmsg(r?.message || '操作失败');
+    return false;
+  }
+
+  // 拖拽排序（原生 HTML5）：拖到目标项之前
+  function onDrop(targetKey: number) {
+    const from = dragKey;
+    setDragKey(null);
+    if (from === null || from === targetKey) return;
+    void qa('reorder', from, { before: targetKey });
+  }
+
+  const total = snap?.total ?? queue.length;
+  const finished = (snap?.done ?? 0) + (snap?.failed ?? 0) + (snap?.cancelled ?? 0);
+
+  return (
+    <div className="queuebox">
+      <div className="qhead">
+        <b>导入队列</b>
+        <span className="hint">
+          {total ? `${finished}/${total} 完成 · 运行 ${(snap?.running ?? 0) + (snap?.stopping ?? 0)} · 排队 ${snap?.pending ?? 0}${snap?.paused ? ' · 已暂停' : ''}` : '队列为空'}
+        </span>
+        <span className="qhead-actions">
+          <Button disabled={!snap || total === 0} onClick={() => void qa(snap?.paused ? 'resume' : 'pause')}>
+            {snap?.paused ? '继续' : '暂停'}
+          </Button>
+          <Button disabled={!snap || ((snap?.done ?? 0) + (snap?.cancelled ?? 0)) === 0} onClick={() => void qa('clear-done')}>
+            清理已完成
+          </Button>
+        </span>
+      </div>
+      {qmsg && <p className="hint">{qmsg}</p>}
+      {queue.length === 0 ? (
+        <p className="hint">拖入文件、粘贴全文或从 Zotero 加入后，条目在这里串行拆解；支持单篇停止/开始与拖拽排序。</p>
+      ) : (
+        <div className="qlist">
+          {queue.map((it) => (
+            <div
+              key={it.key}
+              className={dragKey === it.key ? 'qrow dragging' : 'qrow'}
+              draggable={it.status === 'pending'}
+              onDragStart={() => setDragKey(it.key)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => onDrop(it.key)}
+              onDragEnd={() => setDragKey(null)}
+            >
+              <span className="qhandle" title="拖拽排序（仅排队中）">☰</span>
+              <span className="qstatus">{QSTATUS[it.status] || it.status}</span>
+              <span className="qlabel" title={it.message || it.file || ''}>{it.label}</span>
+              {(it.status === 'pending' || it.status === 'running') && (
+                <Button onClick={() => void qa('cancel', it.key)}>停止</Button>
+              )}
+              {it.status === 'stopping' && <span className="hint">停止中…</span>}
+              {(it.status === 'cancelled' || it.status === 'failed') && (
+                <Button onClick={() => void qa('start', it.key)}>开始</Button>
+              )}
+              {it.status !== 'running' && it.status !== 'stopping' && (
+                <Button onClick={() => void qa('remove', it.key)}>移除</Button>
+              )}
+              {it.status === 'failed' && it.message && <span className="qerr">{it.message}</span>}
+              {it.status === 'done' && <span className="qok">已入库</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ZoteroBox() {
+  const [colls, setColls] = useState<CollNode[]>([]);
+  const [collKey, setCollKey] = useState<string | null>(null);
+  const [cItems, setCItems] = useState<ZItem[]>([]);
+  const [q, setQ] = useState('');
+  const [mode, setMode] = useState<'collection' | 'search'>('collection');
+  const [sItems, setSItems] = useState<ZItem[] | null>(null);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [msg, setMsg] = useState('');
+  const [busy2, setBusy2] = useState(false);
+
+  // 分类树（挂载一次）
+  useEffect(() => {
+    void apiGet('/api/zotero/collections').then((r) => {
+      if (r && r.ok) setColls(r.collections || []);
+      else setMsg(r?.message || '分类读取失败（Zotero 桌面端在运行吗？）');
+    }).catch(() => setMsg('分类读取失败'));
   }, []);
 
   async function openColl(key: string, name: string) {
@@ -1048,18 +1153,6 @@ function ZoteroBox() {
     setBusy2(false);
   }
 
-  async function refreshQ() {
-    const s = await apiGet('/api/import/queue').catch(() => null);
-    if (s && s.ok) { setQueue(s.items || []); setSnap(s); }
-  }
-
-  async function qa(action: string, key?: number, extra: Record<string, unknown> = {}) {
-    const r = await apiPost('/api/import/queue-action', key !== undefined ? { action, key, ...extra } : { action });
-    if (r && r.ok) { setSnap(r.snapshot); void refreshQ(); return true; }
-    setMsg(r?.message || '操作失败');
-    return false;
-  }
-
   async function copyPathFor(itemKey: string) {
     setBusy2(true);
     try {
@@ -1074,17 +1167,6 @@ function ZoteroBox() {
     } catch (e: any) { setMsg(String(e?.message || e)); }
     setBusy2(false);
   }
-
-  // 拖拽排序（原生 HTML5）：拖到目标项之前
-  function onDrop(targetKey: number) {
-    const from = dragKey;
-    setDragKey(null);
-    if (from === null || from === targetKey) return;
-    void qa('reorder', from, { before: targetKey });
-  }
-
-  const total = snap?.total ?? queue.length;
-  const finished = (snap?.done ?? 0) + (snap?.failed ?? 0) + (snap?.cancelled ?? 0);
 
   return (
     <div className="zbox">
@@ -1137,53 +1219,6 @@ function ZoteroBox() {
         </div>
       </div>
 
-      <div className="qhead">
-        <b>导入队列</b>
-        <span className="hint">
-          {total ? `${finished}/${total} 完成 · 运行 ${(snap?.running ?? 0) + (snap?.stopping ?? 0)} · 排队 ${snap?.pending ?? 0}${snap?.paused ? ' · 已暂停' : ''}` : '队列为空'}
-        </span>
-        <span className="qhead-actions">
-          <Button disabled={!snap || total === 0} onClick={() => void qa(snap?.paused ? 'resume' : 'pause')}>
-            {snap?.paused ? '继续' : '暂停'}
-          </Button>
-          <Button disabled={!snap || ((snap?.done ?? 0) + (snap?.cancelled ?? 0)) === 0} onClick={() => void qa('clear-done')}>
-            清理已完成
-          </Button>
-        </span>
-      </div>
-      {queue.length === 0 ? (
-        <p className="hint">勾选文献点「加入队列」开始批量导入；运行中可继续追加，支持单篇停止/开始与拖拽排序。</p>
-      ) : (
-        <div className="qlist">
-          {queue.map((it) => (
-            <div
-              key={it.key}
-              className={dragKey === it.key ? 'qrow dragging' : 'qrow'}
-              draggable={it.status === 'pending'}
-              onDragStart={() => setDragKey(it.key)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => onDrop(it.key)}
-              onDragEnd={() => setDragKey(null)}
-            >
-              <span className="qhandle" title="拖拽排序（仅排队中）">☰</span>
-              <span className="qstatus">{QSTATUS[it.status] || it.status}</span>
-              <span className="qlabel" title={it.message || it.file || ''}>{it.label}</span>
-              {(it.status === 'pending' || it.status === 'running') && (
-                <Button onClick={() => void qa('cancel', it.key)}>停止</Button>
-              )}
-              {it.status === 'stopping' && <span className="hint">停止中…</span>}
-              {(it.status === 'cancelled' || it.status === 'failed') && (
-                <Button onClick={() => void qa('start', it.key)}>开始</Button>
-              )}
-              {it.status !== 'running' && it.status !== 'stopping' && (
-                <Button onClick={() => void qa('remove', it.key)}>移除</Button>
-              )}
-              {it.status === 'failed' && it.message && <span className="qerr">{it.message}</span>}
-              {it.status === 'done' && <span className="qok">已入库</span>}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
