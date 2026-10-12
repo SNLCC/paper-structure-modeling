@@ -49,7 +49,7 @@ const tool = {
   async execute(input = {}, ctx) {
     const q = typeof input.query === "string" ? input.query.trim() : "";
     const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
-    const params = new URLSearchParams({ limit: String(limit), sort: "-dateAdded" });
+    const params = new URLSearchParams({ limit: String(limit), sort: "dateAdded", direction: "desc" });
     if (q) {
       params.set("q", q);
       params.set("qmode", "titleCreatorYear");
