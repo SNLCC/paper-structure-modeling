@@ -3,7 +3,7 @@ import { zoteroFetch } from "./zotero-search.js";
 
 const tool = {
   name: "zotero_attachment_path",
-  description: "Resolve a Zotero attachment item to its absolute local file path (PDF etc.) and check that the file exists. Use the returned path with document-reading tools.",
+  description: "Resolve a Zotero attachment item to its absolute local file path (PDF etc.) and check that the file exists. Use the returned `path` with a document-reading tool; the response's `readWith` field names the reader verified to work on Zotero storage paths.",
   parameters: {
     type: "object",
     properties: {
@@ -37,7 +37,12 @@ const tool = {
       }
     }
     return {
-      content: [{ type: "text", text: JSON.stringify({ attachmentKey: key, path: filePath, exists }, null, 2) }],
+      content: [{ type: "text", text: JSON.stringify({
+        attachmentKey: key,
+        path: filePath,
+        exists,
+        readWith: "office_read-document (filePath 参数) 可直读 Zotero storage 路径；file extract 受工作台授权根限制，会在 Zotero 目录上报 outside allowed roots。",
+      }, null, 2) }],
     };
   },
 };

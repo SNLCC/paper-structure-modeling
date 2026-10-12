@@ -36,24 +36,35 @@ function mergeTags(md, tags, id) {
   return { md: lines.join("\n"), added };
 }
 
+// 描述中的格式规则必须与 lib/extraction.js 的 validateExtraction 保持同源（提示层与校验层同一来源）；
+// 校验逻辑改动时同步更新此处描述。
+const LOCATION_RULE =
+  "FORMAT RULE (enforced by the write gate): location must be §<digits>(.<digits>)* — e.g. §2.1, §2.2.1, or multiple segments separated by a single space like §2 §4 — or ¶<digits>. ASCII digits only: no Chinese numerals (§一 / §三.2 are rejected), no page numbers (p.11 rejected), no headings or other text. The same rule applies to scores[].target (node/fragment levels) and paragraphLogic[].location. Quote rules: slots[].evidence must be verbatim source text of ≥8 characters (paraphrase rejected); paragraphLogic[].quote ≥8 characters or empty.";
+
 const tool = {
   name: "commit_extraction",
   description:
-    "Validate and commit one paper-extraction record into the structure library. This is THE single write gate shared by path A (in-chat extraction) and path C (offline plugin session): validation runs before any file is written, and failure rejects the write. " +
-    "Input `extraction` fields: id (slug-year, e.g. sample-2020); meta.{title,authors,year,venue,discipline,boundary:{result:single|collection|volume_chapter,cut},extractor:A|C,date,tags:[{name,action}],toVerify:[],anchorStatus:{has,entry},lowDecomposability:bool}; " +
-    "understanding (free text); slots:[{location:'§2.1 或 ¶4',action,object,evidence(原文引文≥8字),purpose}]; emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,paragraphFunctions,openingClosing,densityDistribution}; paragraphLogic?:[{location:'¶3',logic:'句间如何推进/衔接/转折',quote:'关键句引文≥8字'}](可选，仅关键段：开篇/转折/收束，按必要性取 0~3 段，不设硬上限); " +
-    "scores:[{level:article|node|fragment,target,score:1-10,rationale,anchorRef}]; appreciation.{gems:[{location,note}],patterns:[],weaknesses:[{location,note}]}; newTypeProposal?.{name,definition,relation,basis}. " +
+    "Validate and commit one paper-extraction record into the structure library. This is THE single write gate shared by path A (in-chat extraction) and path C (offline plugin session): validation runs before any file is written, and failure rejects the write.\n\n" +
+    "Input: `extraction` (object) OR `extractionJsonPath` (string) — exactly one of them. For large records pass `extractionJsonPath`: an absolute path to a UTF-8 JSON file (write it first with your file-write tool) containing the extraction object; this avoids oversized tool-call payloads.\n\n" +
+    "Input `extraction` fields: id (slug-year, e.g. sample-2020, all-lowercase+hyphens); meta.{title,authors,year,venue,discipline,boundary:{result:single|collection|volume_chapter,cut},extractor:A|C,date(YYYY-MM-DD),tags:[{name,action}],toVerify:[],anchorStatus:{has,entry},lowDecomposability:bool}; " +
+    "understanding (free text); slots:[{location,action,object,evidence(原文引文≥8字),purpose}] (at least 1); emergent.{coreThesis,skeleton,objectionHandling,theoryUse,hiddenPremises,sectionFunctions,paragraphFunctions,openingClosing,densityDistribution}; paragraphLogic?:[{location,logic,quote}] (可选，仅关键段：开篇/转折/收束，0~3 段常见); " +
+    "scores:[{level:article|node|fragment,target,score:1-10,rationale,anchorRef}] (at least one article-level); appreciation.{gems:[{location,note}],patterns:[],weaknesses:[{location,note}]}; newTypeProposal?.{name,definition,relation,basis}.\n\n" +
+    LOCATION_RULE + "\n\n" +
+    "meta.tags semantics: pass ONLY tags that are NEW to 标签库 (first do a semantic lookup against existing tags; if one matches, reuse it and do not include it). Each element: {name: 标签名, action: 该标签指向的处置动作描述} — `action` is written verbatim into the 标签库 '指向的处置动作' column, so write the action description (e.g. \"以形式符号分步建构方案\"), NOT a status word like new/reuse.\n\n" +
     "Mirrors 结构库/篇目/_模板.md. Use dryRun to check without writing.",
   parameters: {
     type: "object",
     properties: {
       extraction: {
         type: "object",
-        description: "Structured extraction record (see tool description for the field list).",
+        description: "Structured extraction record (see tool description for the field list). Provide this OR extractionJsonPath, not both.",
+      },
+      extractionJsonPath: {
+        type: "string",
+        description: "Absolute path to a UTF-8 JSON file containing the extraction record. Alternative to the extraction object; use for large records to avoid oversized tool-call payloads.",
       },
       dryRun: { type: "boolean", description: "Validate only; do not write any file." },
     },
-    required: ["extraction"],
   },
   sessionPermission: {
     kind: "workspace_write",
@@ -64,7 +75,18 @@ const tool = {
     }),
   },
   async execute(input = {}, ctx) {
-    const d = input.extraction;
+    let d = input.extraction;
+    if ((d === undefined || d === null) && typeof input.extractionJsonPath === "string" && input.extractionJsonPath.trim()) {
+      try {
+        const file = await ctx.resources.read(ref(input.extractionJsonPath.trim()));
+        d = JSON.parse(decoder.decode(file.content ?? new Uint8Array()));
+      } catch (e) {
+        return json({ ok: false, stage: "read_json", message: `extractionJsonPath 读取或解析失败：${e?.message || e}` });
+      }
+    }
+    if (d === undefined || d === null) {
+      return json({ ok: false, stage: "input", message: "需要 extraction（对象）或 extractionJsonPath（JSON 文件路径）二者之一。" });
+    }
     const v = validateExtraction(d);
     if (!v.ok) return json({ ok: false, stage: "validate", errors: v.errors });
     if (input.dryRun) return json({ ok: true, stage: "dry_run", errors: [], lowDecomposability: v.lowDecomposability });

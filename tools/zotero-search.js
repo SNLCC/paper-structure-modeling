@@ -11,7 +11,11 @@ async function zoteroFetch(ctx, pathAndQuery) {
   if (res.status === 403) {
     throw new Error("Zotero 返回 403：请在 Zotero 设置 → 高级 → 勾选 Allow other applications on this computer to communicate with Zotero。");
   }
-  if (!res.ok) throw new Error(`Zotero 返回 ${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    const url = `${BASE}${pathAndQuery}`;
+    const body = await res.text().catch(() => "");
+    throw new Error(`Zotero 返回 ${res.status} ${res.statusText}；请求 URL：${url}${body ? `；响应：${body.slice(0, 200)}` : ""}`);
+  }
   return res;
 }
 
