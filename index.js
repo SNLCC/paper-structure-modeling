@@ -1,9 +1,12 @@
 import { defineApp } from "./sdk/app-contract/server-client.js";
+import * as applyPairIndependent from "./tools/apply-pair-independent.js";
 import * as applyTagMerge from "./tools/apply-tag-merge.js";
+import * as applyTypeRuling from "./tools/apply-type-ruling.js";
 import * as commitAnchor from "./tools/commit-anchor.js";
 import * as commitExtraction from "./tools/commit-extraction.js";
 import * as commitModel from "./tools/commit-model.js";
 import * as compareAnchorScore from "./tools/compare-anchor-score.js";
+import * as generateTacticModel from "./tools/generate-tactic-model.js";
 import * as normalizeMapping from "./tools/normalize-mapping.js";
 import * as searchStructure from "./tools/search-structure.js";
 import * as suggestTagMerges from "./tools/suggest-tag-merges.js";
@@ -17,11 +20,14 @@ export const name = "paper-structure-modeling";
 // tools 仍是 v1 的 execute(input, ctx) 双参形状（v2 args 平铺即 input），
 // deps 与 v1 plugin ctx 同形注入（resources/network/models/dataDir），函数体零改动。
 const TOOLS = [
+  applyPairIndependent,
   applyTagMerge,
+  applyTypeRuling,
   commitAnchor,
   commitExtraction,
   commitModel,
   compareAnchorScore,
+  generateTacticModel,
   normalizeMapping,
   searchStructure,
   suggestTagMerges,

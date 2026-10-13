@@ -65,14 +65,15 @@ const tool = {
     const candidates = [];
     for (const [key, set] of co) {
       const [a, b] = key.split("||");
-      const sharedAction = actionOf.get(a) && actionOf.get(a) === actionOf.get(b);
+      // sharedAction = 共享的处置动作文本（无则 null）——证据与字段同源，不再渲染布尔值
+      const sharedAction = actionOf.get(a) && actionOf.get(a) === actionOf.get(b) ? actionOf.get(a) : null;
       if (set.size < threshold && !sharedAction) continue;
       const pair = `${a} vs ${b}`;
       if (queued.has(pair)) continue;
       candidates.push({
         pair,
         sharedPapers: [...set],
-        sharedAction: sharedAction ? actionOf.get(a) : null,
+        sharedAction,
         evidence: `共现 ${set.size} 篇（${[...set].join("、") || "无"}）${sharedAction ? `；同指处置动作「${sharedAction}」` : ""}`,
       });
     }

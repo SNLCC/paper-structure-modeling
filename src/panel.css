@@ -63,6 +63,11 @@ body[data-surface="widget"] .plugin-panel {
   font-size: 13px;
   margin: 4px 0 10px;
 }
+/* 第 98 轮：pre 状态行（模型生成等）长文本折行，防单行溢出被裁 */
+pre.hint {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .split {
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -534,3 +539,30 @@ pre.err {
 .zattach-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
 .zattach-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zattach-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* 第 100 轮（§5.9 设计 A）：队列分组标题 + 已裁决折叠区 */
+.queue-group { margin: 16px 0 6px; font-weight: 600; }
+.queue-decided-zone { margin-top: 20px; padding-top: 8px; border-top: 1px dashed rgba(128,128,128,.4); }
+
+/* 第 102 轮（§5.9 设计 B）：簇卡标签行、分区编辑框、证据折叠 */
+.cluster-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.tag-chip { display: inline-block; padding: 2px 8px; border: 1px solid rgba(128,128,128,.45); border-radius: 10px; font-size: 12px; }
+.group-card { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+.group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pool-box { border: 1px dashed rgba(128,128,128,.5); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+.tag-chip.sel { border-color: #6b7fd7; background: rgba(107,127,215,.18); cursor: pointer; }
+.tag-chip { cursor: pointer; }
+.chip-x { border: none; background: none; cursor: pointer; margin-left: 4px; padding: 0 2px; opacity: .65; }
+.chip-x:hover { opacity: 1; }
+.weak-zone { opacity: .88; margin-top: 14px; }
+.cluster-evidence { margin: 6px 0 10px; }
+.cluster-evidence summary { cursor: pointer; font-size: 13px; opacity: .8; }
+
+/* 第 105 轮：存活名可自定义输入（datalist 快选成员） */
+.target-input { border: 1px solid rgba(128,128,128,.45); border-radius: 6px; padding: 2px 8px; background: transparent; color: inherit; font: 13px/1.4 inherit; max-width: 220px; }
+
+.chip-star { border: none; background: none; cursor: pointer; margin-right: 4px; padding: 0; font-size: 12px; opacity: .9; }
+
+/* 第 114 轮：原生下拉（自绘 Select 裁切 bug 的替换） */
+.native-sel { border: 1px solid rgba(128,128,128,.45); border-radius: 6px; padding: 4px 8px; background: transparent; color: inherit; font: 13px/1.4 inherit; max-width: 260px; }
+.suggest-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

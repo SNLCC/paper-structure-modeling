@@ -3,15 +3,19 @@
 import * as commitExtraction from "../tools/commit-extraction.js";
 import * as commitAnchor from "../tools/commit-anchor.js";
 import * as compareAnchor from "../tools/compare-anchor-score.js";
+import * as applyPairIndependent from "../tools/apply-pair-independent.js";
 import * as applyTagMerge from "../tools/apply-tag-merge.js";
+import * as applyTypeRuling from "../tools/apply-type-ruling.js";
+import * as generateTacticModel from "../tools/generate-tactic-model.js";
 import * as normalizeMapping from "../tools/normalize-mapping.js";
 import * as suggestTagMerges from "../tools/suggest-tag-merges.js";
 import * as commitModel from "../tools/commit-model.js";
-import { ref, STRUCT_ROOT } from "../lib/paths.js";
+import { ref, STRUCT_ROOT, META_DIR } from "../lib/paths.js";
+import { parseTypeCandidate } from "../lib/typelib.js";
 import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
-import { runModelGeneration, runMergeProposal } from "../lib/model.js";
+import { runModelGeneration, runMergeProposal, runPartitionProposal, runTypeTargets, runTacticBatch } from "../lib/model.js";
 import { extractPdfText } from "../lib/pdf-text.js";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -79,7 +83,10 @@ const TOOLS = {
   commit_extraction: commitExtraction,
   commit_anchor: commitAnchor,
   compare_anchor_score: compareAnchor,
+  apply_pair_independent: applyPairIndependent,
   apply_tag_merge: applyTagMerge,
+  apply_type_ruling: applyTypeRuling,
+  generate_tactic_model: generateTacticModel,
   normalize_mapping: normalizeMapping,
   suggest_tag_merges: suggestTagMerges,
   commit_model: commitModel,
@@ -142,6 +149,36 @@ export function registerApiRoutes(app, ctx) {
 
   // 共用检索层的 UI 入口：与 search_structure 工具走同一 searchLibrary，
   // 不各存一套。语义精筛仍由前端/模型做，本端点只给物理命中排序。
+  // 类型裁决页数据（§5.9 设计 D，第 103 轮）：篇目 2.5 候选宣告聚合 + 类型库现状；只读
+  app.get("/api/types/candidates", async (c) => {
+    try {
+      const listing = await ctx.resources.list(ref(META_DIR));
+      const names = (listing.items || []).map((x) => x.name).filter((n) => n.endsWith(".md") && !n.startsWith("_"));
+      const byName = new Map();
+      for (const n of names) {
+        const md = decoder.decode((await ctx.resources.read(ref(`${META_DIR}/${n}`))).content ?? new Uint8Array());
+        const cand = parseTypeCandidate(md);
+        if (!cand || !cand.name) continue;
+        const g = byName.get(cand.name) || { name: cand.name, definition: "", ruledStatus: "", papers: [] };
+        if (!g.definition && cand.definition) g.definition = cand.definition;
+        if (!cand.status.includes("候选")) g.ruledStatus = cand.status;
+        g.papers.push(n.replace(/\.md$/, ""));
+        byName.set(cand.name, g);
+      }
+      const all = [...byName.values()];
+      const typeMd = decoder.decode((await ctx.resources.read(ref(`${STRUCT_ROOT}/类型库.md`))).content ?? new Uint8Array());
+      const types = [];
+      for (const l of typeMd.split(/\r?\n/)) {
+        if (!l.startsWith("|") || /^\|\s*-+/.test(l)) continue;
+        const cc = l.split("|").slice(1, -1).map((s) => s.trim());
+        if (cc[0] && cc[0] !== "类型" && !cc[0].includes("暂无")) types.push({ type: cc[0], definition: cc[1] || "", status: cc[4] || "" });
+      }
+      return c.json({ ok: true, pending: all.filter((g) => !g.ruledStatus), ruled: all.filter((g) => g.ruledStatus), types });
+    } catch (e) {
+      return c.json({ ok: false, message: String(e?.message || e) }, 500);
+    }
+  });
+
   app.get("/api/search", async (c) => {
     try {
       const r = await searchLibrary(ctx, c.req.query("query"), {
@@ -457,6 +494,73 @@ export function registerApiRoutes(app, ctx) {
     return c.json({ ok: true, started: true, message: "建模已开始（每个类型一次模型调用，可离开本页）" });
   });
 
+  // 战术模型批量链（§5.10 修订，第 124 轮）：面板一键；双闸约束（携带篇目 ≥2 + 指纹跳过未变），未变零调用
+  app.post("/api/model/generate-tactic", async (c) => {
+    if (modelJob.running || queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中（含批量队列），完成后会自动提示，请稍候" });
+    }
+    const startedAt = Date.now();
+    modelJob = { running: true, kind: "tactic", startedAt, finishedAt: 0, lastResult: null };
+    void (async () => {
+      let r;
+      try {
+        r = await runTacticBatch(ctx, (p) => { modelJob = { ...modelJob, progress: p }; });
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `战术建模链异常：${e?.message || e}` };
+      }
+      modelJob = { running: false, kind: "tactic", startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+    return c.json({ ok: true, started: true, message: "战术建模已开始（3 路并发，未变的自动跳过，进度实时可见）" });
+  });
+
+  // 建模产物删除（第 125 轮，库主权利）：白名单限 写作模型/ 目录的 .md；版本规则约束生成不约束删除
+  app.post("/api/library/delete-file", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const rel = String(body.path || "").replace(/\\/g, "/").replace(/^\/+/, "");
+    const abs = safeResolve(rel);
+    if (!abs || !abs.startsWith(`${STRUCT_ROOT}/写作模型/`) || !abs.endsWith(".md")) {
+      return c.json({ ok: false, message: "仅允许删除 写作模型/ 目录下的 .md 文件" }, 403);
+    }
+    try {
+      await ctx.resources.delete(ref(abs));
+      return c.json({ ok: true, path: rel });
+    } catch (e) {
+      return c.json({ ok: false, message: `删除失败：${e?.message || e}` });
+    }
+  });
+
+  // 模型族随归并改名（第 126 轮）：原名被裁决合并后，整组文件迁移到新名（版本保留、头部同步）；
+  // 目标名已有版本则拒绝（防覆盖）；展示层不改写历史，迁移是库主显式动作。
+  app.post("/api/library/rename-models", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const from = String(body.from || "").trim();
+    const to = String(body.to || "").trim();
+    const bad = (s) => !s || /[\\/:*?"<>|]/.test(s);
+    if (bad(from) || bad(to)) return c.json({ ok: false, message: "from/to 必填且不含路径非法字符" }, 400);
+    if (from === to) return c.json({ ok: false, message: "from 与 to 相同" }, 400);
+    const esc2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const list = await ctx.resources.list(ref(`${STRUCT_ROOT}/写作模型`));
+    const names = (list.items || []).map((i) => i.name).filter((n) => typeof n === "string");
+    const reFrom = new RegExp(`^${esc2(from)}-写作模型-v(\\d+)\\.md$`);
+    const reTo = new RegExp(`^${esc2(to)}-写作模型-v(\\d+)\\.md$`);
+    const files = names.filter((n) => reFrom.test(n));
+    if (!files.length) return c.json({ ok: false, message: `未找到模型族「${from}」的任何版本` });
+    if (names.some((n) => reTo.test(n))) return c.json({ ok: false, message: `目标名「${to}」已有模型版本，拒绝迁移（防覆盖）；可先删除或换个名字` });
+    const moved = [];
+    for (const f of files) {
+      const rd = await ctx.resources.read(ref(`${STRUCT_ROOT}/写作模型/${f}`));
+      let text = decoder.decode(rd.content ?? new Uint8Array());
+      text = text.split(`# ${from} 写作模型`).join(`# ${to} 写作模型`).split(`- 类型：${from}`).join(`- 类型：${to}`);
+      const nf = `${to}-写作模型-v${reFrom.exec(f)[1]}.md`;
+      await ctx.resources.write(ref(`${STRUCT_ROOT}/写作模型/${nf}`), text);
+      await ctx.resources.delete(ref(`${STRUCT_ROOT}/写作模型/${f}`));
+      moved.push(nf);
+    }
+    return c.json({ ok: true, from, to, moved });
+  });
+
   // 语义提议（异步，与生成共用单任务闸）：模型找相似标签对入队，裁决仍在队列页
   app.post("/api/model/propose-merges", async (c) => {
     if (modelJob.running || queueRunning()) {
@@ -474,6 +578,46 @@ export function registerApiRoutes(app, ctx) {
       modelJob = { running: false, kind: "propose", startedAt, finishedAt: Date.now(), lastResult: r };
     })();
     return c.json({ ok: true, started: true, message: "模型提议中（读标签库语义找对子，约半分钟）" });
+  });
+  // 簇内子族提议（§5.9 设计 B，第 102 轮）：模型只出分组提案、零写库；分区提交与裁决仍在面板（库主权）
+  app.post("/api/model/propose-partition", async (c) => {
+    if (modelJob.running || queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中（含批量队列），完成后会自动提示，请稍候" });
+    }
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const startedAt = Date.now();
+    modelJob = { running: true, kind: "partition", startedAt, finishedAt: 0, lastResult: null };
+    void (async () => {
+      let r;
+      try {
+        r = await runPartitionProposal(ctx, body);
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `分族提议链异常：${e?.message || e}` };
+      }
+      modelJob = { running: false, kind: "partition", startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+    return c.json({ ok: true, started: true, message: "模型分族提议中（约半分钟）" });
+  });
+  // 类型并入推荐（§5.9 D 补强，第 114 轮）：模型只给建议、零写库；裁决仍在面板（库主权）
+  app.post("/api/model/type-targets", async (c) => {
+    if (modelJob.running || queueRunning()) {
+      return c.json({ ok: false, stage: "busy", message: "模型任务进行中（含批量队列），完成后会自动提示，请稍候" });
+    }
+    let body;
+    try { body = await c.req.json(); } catch { body = {}; }
+    const startedAt = Date.now();
+    modelJob = { running: true, kind: "typehint", startedAt, finishedAt: 0, lastResult: null };
+    void (async () => {
+      let r;
+      try {
+        r = await runTypeTargets(ctx, body);
+      } catch (e) {
+        r = { ok: false, stage: "model", message: `类型推荐链异常：${e?.message || e}` };
+      }
+      modelJob = { running: false, kind: "typehint", startedAt, finishedAt: Date.now(), lastResult: r };
+    })();
+    return c.json({ ok: true, started: true, message: "AI 推荐并入对象中（读候选与类型库定义，约半分钟）" });
   });
   app.get("/api/model/status", (c) => c.json({ ok: true, ...modelJob }));
 

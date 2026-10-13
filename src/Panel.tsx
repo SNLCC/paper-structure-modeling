@@ -6,7 +6,6 @@ import {
   CardShell,
   EmptyState,
   HanaThemeProvider,
-  Select,
   TextInput,
 } from '@hana/plugin-components';
 import '@hana/plugin-components/styles.css';
@@ -37,6 +36,18 @@ async function apiPost(path: string, body: unknown): Promise<any> {
   });
   return parseAny(r);
 }
+// 第 110 轮：提交链专用——带超时，桥接/网络挂起不再把按钮永久卡死
+async function apiPostT(path: string, body: unknown, ms = 30000): Promise<any> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      apiPost(path, body),
+      new Promise<never>((_, rej) => { timer = setTimeout(() => rej(new Error(`请求超时（${ms / 1000}s）`)), ms); }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 // 后台任务轮询（导入/建模共用；切页后由挂载恢复接管，各认各的 kind）
 async function pollJob(statusPath: string, opts: { kind?: string; timeoutMs?: number } = {}): Promise<any> {
@@ -57,6 +68,42 @@ async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
 function parseEntryHead(firstLine: string, fallbackId: string) {
   const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4}[^)）]*)）$/.exec(String(firstLine || '').trim());
   return { title: m ? m[1] : fallbackId, meta: m ? `${m[2].trim()} · ${m[3]}` : '' };
+}
+
+// 第 114 轮（ui 交互 bug 修复）：插件自绘 Select 在长列表下被容器裁切且压住下方内容——
+// 换原生 select（系统级弹层，永不裁切），外观统一收敛到 .native-sel。
+function NativeSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  return (
+    <select className="native-sel" value={value} onChange={(e) => onChange(e.currentTarget.value)}>
+      {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+    </select>
+  );
+}
+
+// 第 119 轮：长列表换组合框（input + datalist）——输入即过滤（解列表过长），且目标可自由编辑；
+// allowCustom=false 时只在输入与选项精确匹配时才提交（下拉选中即精确匹配），防非法值入库。
+function ComboSelect({ id, value, onChange, options, placeholder, allowCustom = false }: {
+  id: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[];
+  placeholder?: string; allowCustom?: boolean;
+}) {
+  return (
+    <>
+      <input
+        className="native-sel"
+        list={id}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => {
+          const v = e.currentTarget.value;
+          if (allowCustom || options.some((o) => o.value === v)) onChange(v);
+        }}
+        onKeyDown={(e) => e.stopPropagation()}
+      />
+      <datalist id={id}>
+        {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+      </datalist>
+    </>
+  );
 }
 async function readEntryHead(file: string): Promise<string> {
   const r = await apiGet(fileApi(`篇目/${file}`)).catch(() => null);
@@ -86,6 +133,7 @@ const SUBS: Record<'use' | 'library' | 'todo', { id: string; label: string }[]> 
   todo: [
     { id: 'score', label: '录评分' },
     { id: 'queue', label: '标签裁决' },
+    { id: 'types', label: '类型裁决' },
     { id: 'import-fail', label: '导入失败' },
   ],
 };
@@ -185,11 +233,33 @@ async function loadStats(): Promise<Stats> {
 }
 
 // ---- 1 录评分 ----
+// 第 113 轮：库主问「必须录还是主动录」——答：主动（锚点=库主自己的总分，评分链起点；
+// 不录不报错，只是模型分数永无锚点参照、置信度停在冷启动）。录入体验补强：
+// 已导入篇目下拉直选并预填（id/标题/作者/年份），手输保留——锚点也可为未拆解的文献。
 function ScoreTab() {
   const today = new Date().toISOString().slice(0, 10);
   const [f, setF] = useState({ id: '', title: '', authors: '', year: '', venue: '', textType: '', score: '9', rationale: '', date: today, recordedBy: '' });
   const [result, setResult] = useState<any>(null);
+  const [entries, setEntries] = useState<{ id: string; title: string; label: string; authors: string; year: string }[]>([]);
   const set = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const r = await apiGet('/api/list?dir=篇目').catch(() => null);
+      if (!r?.ok) return;
+      const names: string[] = (r.items || []).map((x: any) => x.name).filter((n: string) => n.endsWith('.md') && !n.startsWith('_'));
+      const parsed = await Promise.all(names.map(async (n) => {
+        const h = await apiGet(fileApi(`篇目/${n}`)).catch(() => null);
+        const first = h?.ok ? String(h.content || '').split(/\r?\n/, 1)[0] : '';
+        const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4})[^)）]*）$/.exec(String(first || '').trim());
+        const id = n.replace(/\.md$/, '');
+        return { id, title: m ? m[1] : id, label: m ? `${m[1]}（${m[2].trim()} · ${m[3]}）` : id, authors: m ? m[2].trim() : '', year: m ? m[3] : '' };
+      }));
+      if (alive) setEntries(parsed);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   async function submit() {
     const anchor = {
@@ -204,7 +274,21 @@ function ScoreTab() {
 
   return (
     <div className="form">
-      <p className="hint">你自己的总分和理由是整条评分链的起点：只增不改，理由至少 10 字，后续归纳评分指引全靠它。</p>
+      <p className="hint">你自己的总分和理由是整条评分链的起点：只增不改，理由至少 10 字，后续归纳评分指引全靠它。不录也不阻断——只是模型分数永远无锚点参照。</p>
+      <div className="import-row">
+        <ComboSelect
+          id="cb-score-entry"
+          value=""
+          placeholder={entries.length ? `输入过滤或选择篇目（${entries.length} 篇，选中即预填）` : '读取篇目中…'}
+          onChange={(v) => {
+            const e = entries.find((x) => x.id === v);
+            if (!e) return;
+            setF((p) => ({ ...p, id: e.id, title: e.title, authors: e.authors, year: e.year }));
+          }}
+          options={entries.map((e) => ({ value: e.id, label: e.label }))}
+        />
+        <span className="hint">也可不选直接手填（锚点可以是尚未拆解的文献）。</span>
+      </div>
       <div className="grid2">
         <TextInput label="篇目 id（slug-年）" value={f.id} onChange={(e) => set('id', e.currentTarget.value)} placeholder="sample-2020" />
         <TextInput label="文本类型（你判）" value={f.textType} onChange={(e) => set('textType', e.currentTarget.value)} placeholder="论证型 / 阐释型…" />
@@ -228,11 +312,75 @@ function ScoreTab() {
 }
 
 // ---- 2 标签裁决 ----
-function QueueTab({ tick }: { tick: number }) {
+// 第 104 轮（§5.9 修订·丙）：边加权分簇——语义相近提议边 3、共现≥3 边 2、其余 1；
+// 只按权 ≥2 连通，权 1 的弱桥不再把语义族焊成大簇；弱桥对单列，逐对裁决。
+const edgeWeight = (r: QueueRow): number => {
+  if (r.evidence.startsWith('语义相近')) return 3;
+  const m = /共现\s*(\d+)\s*篇/.exec(r.evidence);
+  return m && Number(m[1]) >= 3 ? 2 : 1;
+};
+type Cluster = { rows: QueueRow[]; labels: string[] };
+function clusterQueue(rowsIn: QueueRow[]): { clusters: Cluster[]; weak: QueueRow[] } {
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    let r = x;
+    while ((parent.get(r) || r) !== r) r = parent.get(r) || r;
+    return r;
+  };
+  const labelsOf = (pair: string) => pair.split(' vs ').filter(Boolean);
+  for (const r of rowsIn) for (const l of labelsOf(r.pair)) if (!parent.has(l)) parent.set(l, l);
+  for (const r of rowsIn) {
+    if (edgeWeight(r) < 2) continue;
+    const [a, b] = labelsOf(r.pair);
+    if (a && b) {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent.set(ra, rb);
+    }
+  }
+  const byRoot = new Map<string, Cluster>();
+  const weak: QueueRow[] = [];
+  for (const r of rowsIn) {
+    const [a, b] = labelsOf(r.pair);
+    if (a && b && find(a) === find(b)) {
+      const root = find(a);
+      let c = byRoot.get(root);
+      if (!c) { c = { rows: [], labels: [] }; byRoot.set(root, c); }
+      c.rows.push(r);
+    } else {
+      weak.push(r);
+    }
+  }
+  for (const c of byRoot.values()) {
+    const ls = new Set<string>();
+    for (const r of c.rows) for (const l of labelsOf(r.pair)) ls.add(l);
+    c.labels = [...ls];
+  }
+  // 簇序：最早进队的簇在前，同日按簇内对数多的在前
+  const clusters = [...byRoot.values()].sort((x, y) => {
+    const dx = x.rows.map((r) => r.date).sort()[0] || '';
+    const dy = y.rows.map((r) => r.date).sort()[0] || '';
+    if (dx !== dy) return dx < dy ? -1 : 1;
+    return y.rows.length - x.rows.length;
+  });
+  return { clusters, weak };
+}
+
+// 第 104 轮（§5.9 修订·甲）：组卡状态——每簇一份；键 = 簇标签集排序串（提交后簇变化不串组）
+type GState = { groups: { target: string; members: string[] }[]; pool: string[]; sel: string[] };
+const clusterKey = (cl: Cluster) => cl.labels.slice().sort().join('|');
+
+function QueueTab({ tick, onChanged }: { tick: number; onChanged?: () => void }) {
   const [rows, setRows] = useState<QueueRow[]>([]);
   const [note, setNote] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState('');
   const [proposing, setProposing] = useState(false);
+  const [scanStage, setScanStage] = useState<'' | 'co' | 'semantic'>(''); // 一键查重阶段（第 112 轮）
+  const [showDecided, setShowDecided] = useState(false); // §5.9 设计 A：已裁决默认折叠
+  const [gState, setGState] = useState<Record<string, GState>>({}); // 第 104 轮 甲：各簇组卡 + 池
+  const [partBusy, setPartBusy] = useState<number | null>(null); // 分族提议进行中的簇
+  const [submitting, setSubmitting] = useState(false); // 分区提交进行中
+  const [prog, setProg] = useState(''); // 提交链实时进度（第 110 轮）
 
   // 挂载恢复：提议中切页回来，接管轮询到收尾
   useEffect(() => {
@@ -241,7 +389,7 @@ function QueueTab({ tick }: { tick: number }) {
       const s = await apiGet('/api/model/status').catch(() => null);
       if (cancelled || !s || !s.running || s.kind !== 'propose') return;
       setProposing(true);
-      setMsg('模型提议进行中（接管切页前的任务）…');
+      setMsg('AI 语义查重进行中（接管切页前的任务）…');
       const fin = await pollJob('/api/model/status', { kind: 'propose', timeoutMs: 3 * 60 * 1000 });
       if (cancelled) return;
       setMsg(fin.ok ? `已入队 ${fin.queued?.length || 0} 对` : (fin.message || '未产出建议'));
@@ -261,70 +409,501 @@ function QueueTab({ tick }: { tick: number }) {
     const evidence = note[pair] || `裁决执行：${pair}`;
     const r = await apiPost('/api/tool/apply_tag_merge', { mergedLabel: merged, target, date, evidence });
     setMsg(r.ok ? `已执行：${merged} → ${r.now}` : (r.message || JSON.stringify(r)));
-    if (r.ok) await load();
+    if (r.ok) { await load(); onChanged?.(); }
   }
 
-  async function propose() {
-    setProposing(true);
+  async function decideIndependent(pair: string) {
+    const date = new Date().toISOString().slice(0, 10);
+    const reason = note[pair] || '';
+    const r = await apiPost('/api/tool/apply_pair_independent', { pair, date, reason });
+    setMsg(r.ok ? `已判定独立，两标签都保留：${pair}` : (r.message || JSON.stringify(r)));
+    if (r.ok) { await load(); onChanged?.(); }
+  }
+
+  const setGs = (key: string, labels: string[], fn: (s: GState) => GState) =>
+    setGState((p) => ({ ...p, [key]: fn(p[key] || { groups: [], pool: labels.slice(), sel: [] }) }));
+
+  async function proposePartition(ci: number, cl: Cluster) {
+    const key = clusterKey(cl);
+    setPartBusy(ci);
     setMsg('');
     try {
-      const start = await apiPost('/api/model/propose-merges', {});
-      if (!start.started) { setMsg(start.message || '发起失败'); setProposing(false); return; }
-      const fin = await pollJob('/api/model/status', { kind: 'propose', timeoutMs: 3 * 60 * 1000 });
-      if (fin.stage === 'timeout') { setMsg(fin.message); setProposing(false); return; }
-      setMsg(fin.ok
-        ? `已入队 ${fin.queued.length} 对：${fin.queued.join('；')}`
-        : (fin.message || '未产出建议'));
-      if (fin.ok) await load();
+      const start = await apiPost('/api/model/propose-partition', {
+        labels: cl.labels,
+        pairs: cl.rows.map((r) => ({ pair: r.pair, evidence: r.evidence })),
+      });
+      if (!start.started) { setMsg(start.message || '发起失败'); setPartBusy(null); return; }
+      const fin = await pollJob('/api/model/status', { kind: 'partition', timeoutMs: 3 * 60 * 1000 });
+      if (fin.stage === 'timeout') { setMsg(fin.message); setPartBusy(null); return; }
+      if (fin.ok && Array.isArray(fin.groups)) {
+        const groups = (fin.groups as string[][])
+          .filter((arr) => Array.isArray(arr) && arr.length > 0)
+          .map((arr) => ({ target: arr[0], members: arr.slice() }));
+        setGs(key, cl.labels, (s) => ({ ...s, groups, pool: [], sel: [] }));
+        setMsg(fin.message ? `分族提案已给出（${fin.message}）——点选标签可调整分组` : '分族提案已给出，核对后提交');
+      } else {
+        setMsg(fin.message || '未产出分族提案');
+      }
     } catch (e: any) {
       setMsg(`请求失败：${String(e?.message || e)}`);
     }
-    setProposing(false);
+    setPartBusy(null);
   }
 
-  async function cooccur() {
-    const r = await apiPost('/api/tool/suggest_tag_merges', {});
-    setMsg(r.ok
-      ? (r.written ? `共现入队 ${r.written} 对` : '共现提示无新候选（语义相近的对请用模型提议）')
-      : (r.message || JSON.stringify(r)));
-    if (r.ok) await load();
+  async function submitPartition(ci: number, cl: Cluster) {
+    const key = clusterKey(cl);
+    const gs = gState[key] || { groups: [], pool: cl.labels.slice(), sel: [] };
+    if (gs.pool.length > 0) { setMsg(`还有 ${gs.pool.length} 个标签未分组（可「全部各自成组」）`); return; }
+    if (!gs.groups.length) { setMsg('先分组再提交'); return; }
+    const flat = gs.groups.flatMap((gr) => gr.members);
+    const missing = cl.labels.filter((l) => !flat.includes(l));
+    const dup = flat.filter((l, i) => flat.indexOf(l) !== i);
+    if (missing.length || dup.length) { setMsg(`分组与标签清单不符 — 缺：${missing.join('、') || '无'}；重复：${dup.join('、') || '无'}`); return; }
+    for (const gr of gs.groups) {
+      const t = String(gr.target ?? '');
+      if (gr.members.length > 0 && !t.trim()) { setMsg('有组的存活名为空——补填，或把该组成员移回池'); return; }
+      if (t.includes(' vs ')) { setMsg('存活名不能包含「 vs 」（会破坏对的解析）'); return; }
+    }
+    setSubmitting(true);
+    setMsg('');
+    const date = new Date().toISOString().slice(0, 10);
+    const groupOf = new Map<string, number>();
+    gs.groups.forEach((gr, gi) => gr.members.forEach((l) => groupOf.set(l, gi)));
+    let merged = 0; let independent = 0; let skipped = 0; let failed = '';
+    try {
+      // ① 组内合并（非存活名 → 存活名）：合并回填会顺带关闭含被并标签的跨组对（对随标签消失而失效，记「并入」即正确）
+      for (const gr of gs.groups) {
+        if (gr.members.length < 2) continue;
+        const t = String(gr.target);
+        for (const m of gr.members) {
+          if (m === t) continue;
+          setProg(`正在合并：「${m}」→「${t}」…`);
+          const r = await apiPostT('/api/tool/apply_tag_merge', {
+            mergedLabel: m, target: t, date,
+            evidence: `相关组分区提交：组内「${m}」并入「${t}」`,
+          });
+          if (!r.ok) { failed = `合并「${m}→${t}」失败：${r.message || JSON.stringify(r)}`; break; }
+          merged++;
+        }
+        if (failed) break;
+      }
+      // ② 跨组且仍待裁的对 → 判定独立（已被①带过的跳过，不算失败）
+      if (!failed) {
+        for (const row of cl.rows) {
+          const [a, b] = row.pair.split(' vs ');
+          if (groupOf.get(a) === groupOf.get(b)) continue;
+          setProg(`正在判定独立：${row.pair}…`);
+          const r = await apiPostT('/api/tool/apply_pair_independent', {
+            pair: row.pair, date, reason: '相关组分区提交：分属不同组',
+          });
+          if (r.ok) { independent++; continue; }
+          const m = String(r.message || '');
+          if (m.includes('已有裁决') || m.includes('无此对')) { skipped++; continue; }
+          failed = `判定独立「${row.pair}」失败：${m || JSON.stringify(r)}`;
+          break;
+        }
+      }
+    } catch (e: any) {
+      failed = `提交中断（网络/桥接异常）：${String(e?.message || e)}`;
+    }
+    setMsg(failed
+      ? `${failed}（此前已完成：${merged} 合并、${independent} 独立；直接再点提交即可续跑——已并入的标签重试幂等，不会重复执行）`
+      : `已提交本组裁决：${merged} 合并、${independent} 独立${skipped ? `、${skipped} 对已随合并关闭` : ''}`);
+    try { await load(); } catch { /* 刷新失败不卡提交态 */ }
+    onChanged?.(); // 任何写入（含部分成功）都要刷新导航角标（第 113 轮）
+    if (!failed) setGState((p) => ({ ...p, [key]: { groups: [], pool: cl.labels.slice(), sel: [] } }));
+    setProg('');
+    setSubmitting(false);
+  }
+
+  async function oneClickScan() {
+    setProposing(true);
+    setMsg('');
+    setScanStage('co');
+    let coMsg = '';
+    try {
+      // 阶段一：共现查重（同步，秒出，免费）
+      const r = await apiPost('/api/tool/suggest_tag_merges', {});
+      coMsg = r.ok
+        ? (r.written ? `共现入队 ${r.written} 对` : '共现无新候选')
+        : `共现扫描失败：${r.message || JSON.stringify(r)}`;
+      if (r.ok) { try { await load(); } catch { /* 忽略刷新失败 */ } }
+      // 阶段二：AI 语义查重（异步任务，约半分钟；标签集未变时服务端指纹自动跳过）
+      setScanStage('semantic');
+      const start = await apiPost('/api/model/propose-merges', {});
+      if (!start.started) {
+        setMsg(`${coMsg}；语义查重未启动：${start.message || '发起失败'}`);
+      } else {
+        const fin = await pollJob('/api/model/status', { kind: 'propose', timeoutMs: 3 * 60 * 1000 });
+        if (fin.stage === 'timeout') {
+          setMsg(`${coMsg}；语义查重${fin.message || '等待超时'}`);
+        } else {
+          const semMsg = fin.ok
+            ? (fin.message || (fin.queued?.length ? `语义入队 ${fin.queued.length} 对：${fin.queued.join('；')}` : '语义未找到新对'))
+            : (fin.message || '语义查重未产出建议');
+          setMsg(`${coMsg}；${semMsg}`);
+          if (fin.ok && fin.queued?.length) { try { await load(); } catch { /* 忽略刷新失败 */ } }
+        }
+      }
+    } catch (e: any) {
+      setMsg(`${coMsg ? `${coMsg}；` : ''}查重中断：${String(e?.message || e)}`);
+    }
+    setScanStage('');
+    setProposing(false);
+    onChanged?.(); // 查重可能入队新对，刷新导航角标（第 113 轮）
   }
 
   const pending = rows.filter((r) => !r.decision);
+  const decided = rows.filter((r) => !!r.decision);
+  const { clusters, weak } = useMemo(() => clusterQueue(pending), [rows]);
+  const rowCard = (r: QueueRow) => (
+    <CardShell key={r.pair} title={r.pair} description={`${r.date} 进队 · ${r.evidence}`}>
+      {r.decision ? (
+        <p className="decided">已裁决：{r.decision}</p>
+      ) : (
+        <div className="queue-actions">
+          {[r.pair.split(' vs ')[0], r.pair.split(' vs ')[1]].filter(Boolean).map((merged, idx, arr) => (
+            <div key={merged} className="queue-op">
+              <Button onClick={() => decide(r.pair, merged, arr[1 - idx])}>
+                「{merged}」并入「{arr[1 - idx]}」
+              </Button>
+            </div>
+          ))}
+          <div className="queue-op">
+            <Button onClick={() => decideIndependent(r.pair)}>判定独立（都保留）</Button>
+          </div>
+          <TextInput label="依据（可空，判定独立时建议填）" value={note[r.pair] || ''} onChange={(e) => { const v = e.currentTarget.value; setNote((p) => ({ ...p, [r.pair]: v })); }} />
+        </div>
+      )}
+    </CardShell>
+  );
   return (
     <div>
       <p className="hint">
         {pending.length > 0 && <b>{pending.length} 对待裁决　</b>}
-        相近标签会进到这里，由你决定合并方向；裁决后库内归一，原始记录不动。
+        疑似重复（或高度共现）的标签对会进到这里。两种处理：合并（留一个名字，另一个成为它的别名）或判定独立（两个都留）；互相牵连的对归在同一组里批量处理。所有操作只新增记录，不改动原始拆解。
+        本页管标签层（同一个论证动作的多个名字）；把标签家族立成类型在下一页——两页可并行，不必等这页清空。
       </p>
+      {msg && <p className={msg.startsWith('已') ? 'ok' : 'err'}>{msg}</p>}
       <div className="import-row">
-        <Button variant="primary" disabled={proposing} onClick={() => void propose()}>
-          {proposing ? '提议中…' : '模型提议疑似对'}
+        <Button variant="primary" disabled={proposing} onClick={() => void oneClickScan()}>
+          {scanStage === 'co' ? '共现扫描中…' : scanStage === 'semantic' ? '语义查重中…' : '一键查重'}
         </Button>
-        <Button disabled={proposing} onClick={() => void cooccur()}>跑共现提示</Button>
-        <span className="hint">提议与共现只负责入队；合并方向由你在下方卡片上裁决。</span>
+        <span className="hint">一键查重：先扫共现（秒出），再跑 AI 语义（约半分钟，标签集未变自动跳过）；结果都进下方待裁决，每对来源写在证据里。</span>
       </div>
       {rows.length === 0 && <EmptyState title="暂无待裁决标签" description="篇目积累出相近标签后，候选会自动出现在这里。" />}
-      {rows.map((r) => (
-        <CardShell key={r.pair} title={r.pair} description={`${r.date} 进队 · ${r.evidence}`}>
-          {r.decision ? (
-            <p className="decided">已裁决：{r.decision}</p>
-          ) : (
-            <div className="queue-actions">
-              {[r.pair.split(' vs ')[0], r.pair.split(' vs ')[1]].filter(Boolean).map((merged, idx, arr) => (
-                <div key={merged} className="queue-op">
-                  <Button onClick={() => decide(r.pair, merged, arr[1 - idx])}>
-                    「{merged}」并入「{arr[1 - idx]}」
-                  </Button>
+      {clusters.map((cl, ci) => {
+        const key = clusterKey(cl);
+        const gs = gState[key] || { groups: [], pool: cl.labels.slice(), sel: [] };
+        const groupOf = new Map<string, number>();
+        gs.groups.forEach((gr, gi) => gr.members.forEach((l) => groupOf.set(l, gi)));
+        const mergeCount = gs.groups.reduce((n, gr) => n + (gr.members.includes(gr.target) ? Math.max(0, gr.members.length - 1) : gr.members.length), 0);
+        const indepCount = cl.rows.filter((r) => {
+          const [a, b] = r.pair.split(' vs ');
+          return groupOf.get(a) !== groupOf.get(b);
+        }).length;
+        return (
+          <div key={key} className="cluster">
+            <p className="hint queue-group">
+              <b>相关组 {ci + 1}</b> · {cl.rows.length} 对 · {cl.labels.length} 个标签
+            </p>
+            <div className="import-row">
+              <Button disabled={partBusy !== null || proposing} onClick={() => void proposePartition(ci, cl)}>
+                {partBusy === ci ? '分组中…' : '智能分组'}
+              </Button>
+              <Button disabled={submitting} onClick={() => setGs(key, cl.labels, (s) => ({ ...s, groups: cl.labels.map((l) => ({ target: l, members: [l] })), pool: [], sel: [] }))}>全部各自成组</Button>
+              <Button disabled={submitting} onClick={() => setGs(key, cl.labels, (s) => ({ ...s, groups: [{ target: cl.labels[0], members: cl.labels.slice() }], pool: [], sel: [] }))}>全部并入一组</Button>
+            </div>
+            {gs.groups.map((gr, gi) => (
+              <div key={`g${gi}`} className="group-card">
+                <div className="hint group-head">
+                  组 {gi + 1} · 存活名：
+                  <input
+                    className="target-input"
+                    value={gr.target}
+                    onChange={(e) => { const v = e.currentTarget.value; setGs(key, cl.labels, (s) => ({ ...s, groups: s.groups.map((x, i2) => (i2 === gi ? { ...x, target: v } : x)) })); }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    placeholder="点 ★ 快选，或直接输入新名"
+                  />
+                  <span className="hint">（{gr.members.length} 个标签；成员 chip 的 ★ 一键设为存活名，输入框可自定义新名）</span>
                 </div>
-              ))}
-              <TextInput label="依据（可空）" value={note[r.pair] || ''} onChange={(e) => setNote((p) => ({ ...p, [r.pair]: e.currentTarget.value }))} />
+                <p className="cluster-tags">
+                  {gr.members.map((l) => (
+                    <span
+                      key={l}
+                      className={gs.sel.includes(l) ? 'tag-chip sel' : 'tag-chip'}
+                      onClick={() => setGs(key, cl.labels, (s) => ({ ...s, sel: s.sel.includes(l) ? s.sel.filter((x) => x !== l) : [...s.sel, l] }))}
+                    >
+                      {l}
+                      <button
+                        className="chip-star"
+                        title="设为本组存活名"
+                        onClick={(e) => { e.stopPropagation(); setGs(key, cl.labels, (s) => ({ ...s, groups: s.groups.map((x, i2) => (i2 === gi ? { ...x, target: l } : x)) })); }}
+                      >{gr.target === l ? '★' : '☆'}</button>
+                      <button
+                        className="chip-x"
+                        onClick={(e) => { e.stopPropagation(); setGs(key, cl.labels, (s) => ({
+                          ...s,
+                          groups: s.groups.map((x, i2) => {
+                            if (i2 !== gi) return x;
+                            const rest = x.members.filter((m) => m !== l);
+                            return { ...x, members: rest, target: x.target === l ? (rest[0] || '') : x.target };
+                          }).filter((x) => x.members.length > 0),
+                          pool: [...s.pool, l],
+                        })); }}
+                      >×</button>
+                    </span>
+                  ))}
+                </p>
+                {gs.sel.length > 0 && (
+                  <Button onClick={() => setGs(key, cl.labels, (s) => {
+                    const mv = s.sel.filter((l) => cl.labels.includes(l));
+                    if (!mv.length) return s;
+                    const groups = s.groups
+                      .map((x, i) => {
+                        const rest = x.members.filter((m) => !mv.includes(m));
+                        if (i === gi) return { ...x, members: [...rest, ...mv.filter((m) => !rest.includes(m))], target: x.target || (rest[0] ?? mv[0]) };
+                        const target = x.target && mv.includes(x.target) ? (rest[0] || '') : x.target;
+                        return { ...x, members: rest, target };
+                      })
+                      .filter((x) => x.members.length > 0);
+                    return { ...s, groups, pool: s.pool.filter((l) => !mv.includes(l)), sel: [] };
+                  })}>把选中的 {gs.sel.length} 个放进本组</Button>
+                )}
+              </div>
+            ))}
+            {gs.pool.length > 0 && (
+              <div className="pool-box">
+                <p className="hint">
+                  未分组（{gs.pool.length}）：标签点选后用下方行动按钮分组；组间提交即判定独立。
+                </p>
+                <p className="cluster-tags">
+                  {gs.pool.map((l) => (
+                    <span
+                      key={l}
+                      className={gs.sel.includes(l) ? 'tag-chip sel' : 'tag-chip'}
+                      onClick={() => setGs(key, cl.labels, (s) => ({ ...s, sel: s.sel.includes(l) ? s.sel.filter((x) => x !== l) : [...s.sel, l] }))}
+                    >{l}</span>
+                  ))}
+                </p>
+              </div>
+            )}
+            {gs.sel.length > 0 && (
+              <div className="import-row sel-actions">
+                <Button onClick={() => setGs(key, cl.labels, (s) => {
+                  const mv = s.sel.filter((l) => cl.labels.includes(l));
+                  if (!mv.length) return s;
+                  const cleaned = s.groups
+                    .map((x) => {
+                      const rest = x.members.filter((m) => !mv.includes(m));
+                      const target = x.target && mv.includes(x.target) ? (rest[0] || '') : x.target;
+                      return { ...x, members: rest, target };
+                    })
+                    .filter((x) => x.members.length > 0);
+                  return { ...s, groups: [...cleaned, { target: mv[0], members: mv }], pool: s.pool.filter((l) => !mv.includes(l)), sel: [] };
+                })}>成新组（{gs.sel.length}）</Button>
+                <span className="hint">已选中 {gs.sel.length} 个标签：「成新组」拆出去（选 1 个即单独成组），或点目标组卡上的「放进本组」并入该组；再点标签取消选中。</span>
+              </div>
+            )}
+            <div className="import-row">
+              <Button variant="primary" disabled={submitting || gs.pool.length > 0 || gs.groups.length === 0} onClick={() => void submitPartition(ci, cl)}>
+                {submitting ? '提交中…' : `提交本组裁决（${mergeCount} 合并 + ${indepCount} 独立）`}
+              </Button>
+              <span className="hint">
+                {submitting && prog ? prog : (gs.pool.length > 0 ? '先把未分组标签分完（可「全部各自成组」）' : '先组内合并，再把跨组待裁对记为独立；存活名保留。')}
+              </span>
+            </div>
+            <details className="cluster-evidence">
+              <summary>共现证据（{cl.rows.length} 对）</summary>
+              {cl.rows.map((r) => (<p key={r.pair} className="hint">{r.pair} — {r.evidence}</p>))}
+            </details>
+            {cl.rows.map(rowCard)}
+          </div>
+        );
+      })}
+      {weak.length > 0 && (
+        <div className="cluster weak-zone">
+          <p className="hint queue-group"><b>弱关联对</b> · {weak.length} 对 · 单独裁决（合并或判定独立，不参与分组提交）</p>
+          {weak.map(rowCard)}
+        </div>
+      )}
+      {decided.length > 0 && (
+        <div className="queue-decided-zone">
+          <div className="import-row">
+            <Button onClick={() => setShowDecided((v) => !v)}>
+              {showDecided ? '收起' : '展开'}已裁决（{decided.length} 条）
+            </Button>
+            <span className="hint">裁决过的对折叠在此，可回看记录。</span>
+          </div>
+          {showDecided && decided.map(rowCard)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- 类型裁决页（§5.9 设计 D，第 103 轮）：候选类型批量四选项（新立/并入既有/改名/驳回），
+// 裁决即写闸（apply_type_ruling）：入类型库/记映射/驳回留痕，并同步盖章宣告篇目 2.5 状态行 ----
+function TypesTab({ tick, onChanged }: { tick: number; onChanged?: () => void }) {
+  type Cand = { name: string; definition: string; ruledStatus: string; papers: string[] };
+  type Data = { pending: Cand[]; ruled: Cand[]; types: { type: string; definition: string }[] };
+  const [data, setData] = useState<Data | null>(null);
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [targets, setTargets] = useState<Record<string, string>>({});
+  const [renames, setRenames] = useState<Record<string, string>>({});
+  const [showRuled, setShowRuled] = useState(false);
+  const [suggest, setSuggest] = useState<Record<string, { target: string; reason: string }>>({}); // AI 并入建议（第 114/115 轮）
+  const [hinting, setHinting] = useState<string | null>(null); // 正在推荐的候选名（逐卡，第 115 轮）
+  const [reopened, setReopened] = useState<Record<string, boolean>>({}); // 已裁决重开（第 116 轮）
+  const [reclass, setReclass] = useState<{ from: string; to: string }>({ from: '', to: '' }); // 已登记类型再归类（第 116 轮）
+
+  const load = useCallback(async () => {
+    const r = await apiGet('/api/types/candidates');
+    setData(r.ok ? r : null);
+  }, []);
+  useEffect(() => { void load(); }, [load, tick]);
+
+  async function rule(name: string, action: 'create' | 'merge' | 'reject', extra: Record<string, unknown> = {}) {
+    const date = new Date().toISOString().slice(0, 10);
+    setBusy(name);
+    setMsg('');
+    const r = await apiPost('/api/tool/apply_type_ruling', { action, name, date, ...extra });
+    setMsg(r.ok
+      ? `已${action === 'create' ? '新立进类型库' : action === 'merge' ? `并入「${r.now}」` : '驳回'}：${name}`
+      : (r.message || JSON.stringify(r)));
+    if (r.ok) { await load(); onChanged?.(); setSuggest({}); setReopened((ro) => { const c = { ...ro }; delete c[name]; return c; }); setReclass({ from: '', to: '' }); } // 裁决改变类型库，旧建议作废（第 115 轮）
+    setBusy(null);
+  }
+
+  async function typeTargets(name: string, definition: string) {
+    setHinting(name);
+    setMsg('');
+    try {
+      const start = await apiPost('/api/model/type-targets', {
+        candidates: [{ name, definition }],
+        types: (data?.types || []).map((t) => ({ type: t.type, definition: t.definition })),
+      });
+      if (!start.started) { setMsg(start.message || '发起失败'); setHinting(null); return; }
+      const fin = await pollJob('/api/model/status', { kind: 'typehint', timeoutMs: 3 * 60 * 1000 });
+      if (fin.stage === 'timeout') { setMsg(fin.message); setHinting(null); return; }
+      if (fin.ok && Array.isArray(fin.suggestions) && fin.suggestions.length) {
+        const s = fin.suggestions[0];
+        setSuggest((prev) => ({ ...prev, [name]: { target: String(s.target), reason: String(s.reason || '') } }));
+        setMsg(`「${name}」的建议已给出，见该候选卡`);
+      } else {
+        setMsg(fin.message || '未产出建议');
+      }
+    } catch (e: any) {
+      setMsg(`请求失败：${String(e?.message || e)}`);
+    }
+    setHinting(null);
+  }
+
+  async function rename(name: string) {
+    const to = (renames[name] || '').trim();
+    if (!to) { setMsg('改名：先在框里填新名称'); return; }
+    const def = data?.pending.find((p) => p.name === name)?.definition || '';
+    const date = new Date().toISOString().slice(0, 10);
+    setBusy(name);
+    setMsg('');
+    const c = await apiPost('/api/tool/apply_type_ruling', { action: 'create', name: to, date, definition: def });
+    if (!c.ok) { setMsg(`改名中断（新立「${to}」未过）：${c.message || JSON.stringify(c)}`); setBusy(null); return; }
+    const m = await apiPost('/api/tool/apply_type_ruling', { action: 'merge', name, target: to, date });
+    setMsg(m.ok ? `已改名：${name} → ${to}` : (m.message || JSON.stringify(m)));
+    if (m.ok) { await load(); onChanged?.(); setSuggest({}); setReopened((ro) => { const c = { ...ro }; delete c[name]; return c; }); }
+    setBusy(null);
+  }
+
+  if (!data) return <EmptyState title="读取候选中…" description="正在扫描篇目的新类型宣告。" />;
+  const active = [...data.pending, ...data.ruled.filter((p) => reopened[p.name])];
+  // 第 120 轮：目标名是否为「库外新名」——是则 merge 时带 targetFresh，工具自动登记为定义待补的新类型
+  const isFreshTarget = (v: string) => !!v && !(data.types || []).some((t) => t.type === v) && !(data.pending || []).some((q) => q.name === v);
+  return (
+    <div>
+      <p className="hint">
+        {active.length > 0 && <b>{active.length} 个候选待裁　</b>}
+        每个候选来自拆解时的「新类型宣告」。四选一：新立（进类型库）、并入（记闭包映射）、改名（先立新名再并入）、驳回（留痕不入表）。裁决即生效，宣告篇目同步盖章。
+        并入看箭头：「A → B」= A 并入 B、B 存活；候选名表述更佳时选反方向箭头即可。已裁决的可「重新裁决」，已登记类型用下方再归类工具——一切归类都可再次归类。
+        与上页的关系：标签裁决查的是重名标签，本页立的是写作模型的类型；标签层没清完也能裁——类型库「归并自」容纳多个共存标签。
+        建议逐个取：点候选卡上的「AI 推荐」，按此刻的类型库实时算；裁决一张卡后全部建议清空，下一张再点。
+      </p>
+      {msg && <p className={msg.startsWith('已') ? 'ok' : 'err'}>{msg}</p>}
+      <div className="import-row reclass-box">
+        <NativeSelect
+          value={reclass.from}
+          onChange={(v) => setReclass((s) => ({ ...s, from: v }))}
+          options={[{ value: '', label: '已登记类型再归类：选源…' }, ...(data.types || []).map((t) => ({ value: t.type, label: t.type }))]}
+        />
+        <ComboSelect
+          id="cb-reclass-to"
+          value={reclass.to}
+          placeholder="输入过滤，或直接输入新名…"
+          allowCustom
+          onChange={(v) => setReclass((s) => ({ ...s, to: v }))}
+          options={[
+            ...(data.types || []).map((t) => ({ value: t.type, label: t.type })),
+            ...(data.pending || []).map((p) => ({ value: p.name, label: `${p.name}（候选）` })),
+          ]}
+        />
+        <Button disabled={busy !== null || !reclass.from || !reclass.to} onClick={() => void rule(reclass.from, 'merge', { target: reclass.to, targetFresh: isFreshTarget(reclass.to) })}>执行归类</Button>
+      </div>
+      {active.length === 0 && <EmptyState title="暂无待裁候选" description="拆解宣告新类型后，候选会自动出现在这里。" />}
+      {active.map((p) => (
+        <CardShell key={p.name} title={p.name} description={`宣告于：${p.papers.join('、')}`}>
+          <p>{p.definition || '（定义待补）'}</p>
+          {suggest[p.name] && (
+            <div className="hint suggest-line">
+              AI 建议：{suggest[p.name].target === '新立' ? '新立（未匹配到既有类型）' : suggest[p.name].target === '驳回' ? '驳回（无独立价值）' : `并入「${suggest[p.name].target}」`}——{suggest[p.name].reason}
+              {(data.types || []).some((t) => t.type === suggest[p.name].target) && (
+                <Button onClick={() => setTargets((tg) => ({ ...tg, [p.name]: suggest[p.name].target }))}>采纳（填入目标）</Button>
+              )}
             </div>
           )}
+          <div className="import-row">
+            <Button disabled={hinting !== null || busy !== null} onClick={() => void typeTargets(p.name, p.definition)}>
+              {hinting === p.name ? '推荐中…' : 'AI 推荐'}
+            </Button>
+          </div>
+          <div className="import-row">
+            <Button variant="primary" disabled={busy !== null} onClick={() => void rule(p.name, 'create')}>
+              {busy === p.name ? '执行中…' : '新立进类型库'}
+            </Button>
+            <ComboSelect
+              id={`cb-merge-${p.name}`}
+              value={targets[p.name] || ''}
+              placeholder="输入过滤，或输入新名…"
+              allowCustom
+              onChange={(v) => setTargets((t) => ({ ...t, [p.name]: v }))}
+              options={[
+                ...(data.types || []).map((t2) => ({ value: t2.type, label: t2.type })),
+                ...(data.pending || []).filter((q) => q.name !== p.name).map((q) => ({ value: q.name, label: `${q.name}（候选）` })),
+              ]}
+            />
+            <Button disabled={busy !== null || !targets[p.name]} title="箭头左侧消失成为别名，右侧名字存活" onClick={() => void rule(p.name, 'merge', { target: targets[p.name], targetFresh: isFreshTarget(targets[p.name]) })}>{p.name} → {targets[p.name] || '…'}</Button>
+            <Button disabled={busy !== null || !targets[p.name]} title="反方向：右侧候选名存活，左侧所选类型归入它名下" onClick={() => void rule(targets[p.name], 'merge', { target: p.name })}>{targets[p.name] || '…'} → {p.name}</Button>
+            <Button disabled={busy !== null} onClick={() => void rule(p.name, 'reject')}>驳回</Button>
+          </div>
+          <div className="import-row">
+            <TextInput label="改名为" value={renames[p.name] || ''} onChange={(e) => { const v = e.currentTarget.value; setRenames((t) => ({ ...t, [p.name]: v })); }} placeholder="新类型名" />
+            <Button disabled={busy !== null || !(renames[p.name] || '').trim()} onClick={() => void rename(p.name)}>改名</Button>
+          </div>
         </CardShell>
       ))}
-      {pending.length > 0 && null}
-      {msg && <p className={msg.startsWith('已') ? 'ok' : 'err'}>{msg}</p>}
+      {data.ruled.length > 0 && (
+        <div className="queue-decided-zone">
+          <div className="import-row">
+            <Button onClick={() => setShowRuled((v) => !v)}>{showRuled ? '收起' : '展开'}已裁决（{data.ruled.length}）</Button>
+            <span className="hint">裁决过的候选折叠在此；明细查类型库与闭包映射表。</span>
+          </div>
+          {showRuled && data.ruled.map((p) => (
+            <CardShell key={p.name} title={p.name} description={`已裁决：${p.ruledStatus || ''}`}>
+              <p className="hint">{p.definition || ''}</p>
+              <Button disabled={busy !== null} onClick={() => setReopened((ro) => ({ ...ro, [p.name]: true }))}>重新裁决</Button>
+            </CardShell>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -462,8 +1041,8 @@ function CompareTab({ tick }: { tick: number }) {
   return (
     <div>
       <div className="grid2">
-        <Select value={a} onChange={setA} options={opts} />
-        <Select value={b} onChange={setB} options={opts} />
+        <ComboSelect id="cb-cmp-a" value={a} onChange={setA} options={opts} placeholder="输入过滤篇目…" />
+        <ComboSelect id="cb-cmp-b" value={b} onChange={setB} options={opts} placeholder="输入过滤篇目…" />
       </div>
       <div className="compare">
         <div className="col"><Doc md={mdA} /></div>
@@ -522,11 +1101,51 @@ function countTable(md: string, headerFirst: string): string[] {
 }
 
 // ---- 6 写作模型（浏览 + 生成/更新入口：管线第 4-5 环，版本递增历史不覆盖）----
+// 第 124 轮：建模结果汇总——只详列成功与失败，跳过归计数（类型/标签越来越多，逐条刷屏是噪声）
+function fmtTypeResults(list: any[]): string {
+  const wins = list.filter((x) => x.ok);
+  const skips = list.filter((x) => !x.ok && x.skipped);
+  const fails = list.filter((x) => !x.ok && !x.skipped);
+  const parts: string[] = [];
+  if (wins.length) parts.push(`✓ 生成 ${wins.length} 个类型：${wins.map((x) => `${x.type} v${x.version}`).join('、')}`);
+  if (skips.length) parts.push(`跳过 ${skips.length} 个（样本不足或未变）`);
+  if (fails.length) parts.push(`✗ 失败：${fails.map((x) => `${x.type}：${x.error || '未知'}`).join('；')}`);
+  return parts.join('；') || '没有可处理的类型';
+}
+function fmtTacticResults(fin: any): string {
+  const list = fin.results || [];
+  const wins = list.filter((x: any) => x.ok);
+  const skips = list.filter((x: any) => !x.ok && (x.stage === 'unchanged' || x.stage === 'size'));
+  const fails = list.filter((x: any) => !x.ok && x.stage !== 'unchanged' && x.stage !== 'size');
+  const parts: string[] = [];
+  if (wins.length) parts.push(`✓ 生成 ${wins.length} 个战术：${wins.map((x: any) => `战术-${x.label} v${x.version}`).join('、')}`);
+  if (skips.length) parts.push(`跳过 ${skips.length} 个（未变或超素材上限）`);
+  if (fails.length) parts.push(`✗ 失败：${fails.map((x: any) => `${x.label}：${x.message || x.stage}`).join('；')}`);
+  const head = parts.join('；') || '无产出';
+  const below = Number(fin.belowThreshold || 0);
+  return below ? `${head}（另有 ${below} 个标签携带篇目 <2，未达门槛）` : head;
+}
+// 第 126 轮：闭包映射表 → from→to 平表（仅 3 列的映射行，排除 4 列的复核队列与日志行）
+function parseMappingSimple(md: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of String(md || '').split(/\r?\n/)) {
+    if (!line.startsWith('|') || /^\|\s*-+/.test(line)) continue;
+    const c = line.split('|').slice(1, -1).map((s) => s.trim());
+    if (c.length === 3 && c[0] && c[0] !== '原始类型' && c[1] && c[0] !== c[1]) out[c[0]] = c[1];
+  }
+  return out;
+}
+
 function ModelsTab({ tick }: { tick: number }) {
   const [files, setFiles] = useState<string[]>([]);
   const [sel, setSel] = useState('');
   const [md, setMd] = useState('');
   const [busy, setBusy] = useState(false);
+  const [tacticBusy, setTacticBusy] = useState(false);
+  const [mapping, setMapping] = useState<Record<string, string>>({}); // 第 126 轮：归并映射（识别已并入的原名）
+  const [migFrom, setMigFrom] = useState(''); // 随归并改名的两段确认
+  const [secOpen, setSecOpen] = useState<Record<string, boolean>>({}); // 第 127 轮：两区可折叠
+  const [viewMode, setViewMode] = useState<'list' | 'preview'>('list'); // 第 128 轮：列表屏 ↔ 预览屏，一次只显示一件事
   const [msg, setMsg] = useState('');
   const [histOpen, setHistOpen] = useState<Record<string, boolean>>({});
   const [editingModel, setEditingModel] = useState(false);
@@ -561,7 +1180,10 @@ function ModelsTab({ tick }: { tick: number }) {
       return { type, latest: list[list.length - 1], history: list.slice(0, -1).reverse() };
     });
   }, [files]);
-  const load = useCallback(() => { void listDir('写作模型').then(setFiles); }, []);
+  const load = useCallback(() => {
+    void listDir('写作模型').then(setFiles);
+    void apiGet(fileApi('闭包映射表.md')).then((r) => setMapping(r.ok ? parseMappingSimple(r.content) : {}));
+  }, []);
   useEffect(() => { void load(); }, [load, tick]);
   useEffect(() => {
     if (!sel) { setMd(''); return; }
@@ -577,15 +1199,8 @@ function ModelsTab({ tick }: { tick: number }) {
       setMsg('建模中：归属 → 归纳 → 逐类型生成（每个类型一次模型调用，可离开本页）…');
       const fin = await pollJob('/api/model/status', { kind: 'generate' });
       if (fin.stage === 'timeout') { setMsg(fin.message); setBusy(false); return; }
-      const lines = (fin.results || []).map((x: any) =>
-        x.ok
-          ? `✓ ${x.type} → v${x.version}（样本 ${x.samples} 篇${x.previous ? `，原 v${x.previous}` : ''}）`
-          : x.skipped
-            ? `· ${x.type}：${x.skipped}`
-            : `✗ ${x.type}：${x.error || '失败'}`);
-      const wins = lines.filter((l: string) => l.startsWith('✓')).length;
-      setMsg((wins ? (lines.length === wins ? '完成：' : '部分完成：') : '未生成：') + (lines.join('；') || fin.message || ''));
-      if (wins) {
+      setMsg(fmtTypeResults(fin.results || []) || fin.message || '');
+      if ((fin.results || []).some((x: any) => x.ok)) {
         hana.toast.show({ message: '写作模型已生成/更新', type: 'success' });
         load();
       }
@@ -595,64 +1210,158 @@ function ModelsTab({ tick }: { tick: number }) {
     setBusy(false);
   }
 
+  async function generateTactic() {
+    setTacticBusy(true);
+    setMsg('');
+    try {
+      const start = await apiPost('/api/model/generate-tactic', {});
+      if (!start.started) { setMsg(start.message || '发起失败'); setTacticBusy(false); return; }
+      // 第 125 轮：实时进度轮询（3 路并发，完成一个跳一个）
+      const t0 = Date.now();
+      while (Date.now() - t0 < 20 * 60 * 1000) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const s = await apiGet('/api/model/status').catch(() => null);
+        if (!s || s.kind !== 'tactic') continue;
+        if (s.running) {
+          const p = s.progress || {};
+          setMsg(`战术建模中：${p.done ?? 0}/${p.total ?? '?'}　当前：${p.current || '…'}`);
+        } else if (s.lastResult) {
+          const fin = s.lastResult;
+          setMsg(fmtTacticResults(fin) || fin.message || '');
+          if ((fin.results || []).some((x: any) => x.ok)) {
+            hana.toast.show({ message: '战术模型已生成/更新', type: 'success' });
+            load();
+          }
+          setTacticBusy(false);
+          return;
+        }
+      }
+      setMsg('等待超时（20 分钟），任务可能仍在运行；稍后刷新查看结果。');
+    } catch (e: any) {
+      setMsg(`请求失败：${String(e?.message || e)}`);
+    }
+    setTacticBusy(false);
+  }
+
+  // 第 125 轮：建模产物删除（两段确认；库主权利，版本规则约束生成不约束删除）
+  const [delGroup, setDelGroup] = useState('');
+  const [delFile, setDelFile] = useState('');
+  async function deleteModels(files: string[]) {
+    const out: string[] = [];
+    for (const f of files) {
+      const r = await apiPost('/api/library/delete-file', { path: `写作模型/${f}` });
+      out.push(r.ok ? `✓ ${f}` : `✗ ${f}：${r.message || '失败'}`);
+    }
+    setMsg(`删除结果：${out.join('；')}`);
+    setSel('');
+    load();
+  }
+
+  // 第 126 轮：映射链解析（A→B→C 取终点）与随归并改名
+  const resolveTo = (name: string) => {
+    let cur = name;
+    const seen = new Set<string>();
+    while (mapping[cur] && mapping[cur] !== cur && !seen.has(cur)) { seen.add(cur); cur = mapping[cur]; }
+    return cur;
+  };
+  async function migrateModels(fromBase: string, toBase: string) {
+    const r = await apiPost('/api/library/rename-models', { from: fromBase, to: toBase });
+    setMsg(r.ok ? `已随归并改名：${fromBase} → ${toBase}（${(r.moved || []).length} 个文件，版本保留）` : (r.message || JSON.stringify(r)));
+    if (r.ok) { setSel(''); load(); }
+  }
+
   return (
     <div>
       <div className="import-row">
-        <Button variant="primary" disabled={busy} onClick={() => void generate()}>
+        <Button variant="primary" disabled={busy || tacticBusy} onClick={() => void generate()}>
           {busy ? '建模中…' : '生成 / 更新写作模型'}
         </Button>
-        <span className="hint">同类型样本 ≥2 篇才生成；新文献入库后再次点击即得新版本（v+1，历史保留）。</span>
+        <Button disabled={busy || tacticBusy} onClick={() => void generateTactic()}>
+          {tacticBusy ? '战术建模中…' : '生成 / 更新战术模型'}
+        </Button>
+        <span className="hint">两个按钮同理：样本 ≥2 才生成，再点得新版本（v+1，历史保留），样本未变自动跳过零浪费。类型模型的样本看归并自与宣告篇，战术模型的样本看携带该标签的篇目。</span>
       </div>
       {msg && <pre className="hint">{msg}</pre>}
-      {!groups.length ? (
+      {viewMode === 'preview' && sel ? (
+        <div className="model-preview">
+          <div className="import-row">
+            <Button onClick={() => setViewMode('list')}>← 返回列表</Button>
+            <span className="hint">正在查看：{sel}</span>
+          </div>
+          {editingModel ? (
+            <EditMd initial={md} savePath={`写作模型/${sel}`} onSaved={(t) => { setMd(t); setEditingModel(false); load(); }} />
+          ) : (
+            <>
+              <div className="import-row">
+                <Button onClick={() => setEditingModel(true)}>编辑本模型</Button>
+                <Button disabled={busy || tacticBusy} onClick={() => { if (delFile !== sel) { setDelFile(sel); return; } setDelFile(''); void deleteModels([sel]); }}>
+                  {delFile === sel ? '再点一次确认删除' : '删除本版本'}
+                </Button>
+              </div>
+              <Doc md={md} />
+            </>
+          )}
+        </div>
+      ) : !groups.length ? (
         <EmptyState title="暂无写作模型" description="点上方按钮归纳生成；样本不足或样本未变的类型会跳过并说明。" />
       ) : (
         <>
-          {groups.map((g) => (
-            <div key={g.type} className="model-group">
-              <div className="model-group-head">
-                <span className="model-grouptitle">{g.type}</span>
-                <button
-                  className={sel === g.latest.file ? 'filebtn on' : 'filebtn'}
-                  onClick={() => setSel(g.latest.file)}
-                >
-                  v{g.latest.v}（最新）
-                </button>
-                {g.history.length > 0 && (
-                  <button className="linkbtn" onClick={() => setHistOpen((p) => ({ ...p, [g.type]: !p[g.type] }))}>
-                    {histOpen[g.type] ? '收起历史' : `历史 ${g.history.length} 版`}
-                  </button>
-                )}
+          {(['类型', '战术'] as const).map((kind) => {
+            const list = groups.filter((g) => (kind === '战术') === g.type.startsWith('战术-'));
+            if (!list.length) return null;
+            const open = !secOpen[kind];
+            return (
+              <div key={kind} className="model-section">
+                <div className="import-row section-toggle">
+                  <Button onClick={() => setSecOpen((p) => ({ ...p, [kind]: !p[kind] }))}>
+                    {open ? '收起' : '展开'} {kind}模型（{list.length} 组）
+                  </Button>
+                </div>
+                {open && list.map((g) => {
+                  const bare = g.type.startsWith('战术-') ? g.type.slice(2) : g.type;
+                  const cur = resolveTo(bare);
+                  const absorbed = cur !== bare;
+                  const newBase = g.type.startsWith('战术-') ? `战术-${cur}` : cur;
+                  return (
+                    <div key={g.type} className="model-group">
+                      <div className="model-group-head">
+                        {absorbed && <span className="badge">已并入</span>}
+                        <span className="model-grouptitle">{absorbed ? `${g.type} → ${cur}` : g.type}</span>
+                        <button
+                          className={sel === g.latest.file ? 'filebtn on' : 'filebtn'}
+                          onClick={() => { setSel(g.latest.file); setViewMode('preview'); }}
+                        >
+                          v{g.latest.v}（最新）
+                        </button>
+                        {g.history.length > 0 && (
+                          <button className="linkbtn" onClick={() => setHistOpen((p) => ({ ...p, [g.type]: !p[g.type] }))}>
+                            {histOpen[g.type] ? '收起历史' : `历史 ${g.history.length} 版`}
+                          </button>
+                        )}
+                        {absorbed && (
+                          <button className="linkbtn" onClick={() => { if (migFrom !== g.type) { setMigFrom(g.type); return; } setMigFrom(''); void migrateModels(g.type, newBase); }}>
+                            {migFrom === g.type ? `再点一次确认改名为 ${newBase}` : '随归并改名'}
+                          </button>
+                        )}
+                        <button className="linkbtn" onClick={() => { if (delGroup !== g.type) { setDelGroup(g.type); return; } setDelGroup(''); void deleteModels([g.latest.file, ...g.history.map((h) => h.file)]); }}>
+                          {delGroup === g.type ? '再点一次确认删除整组' : '删除'}
+                        </button>
+                      </div>
+                      {histOpen[g.type] && (
+                        <div className="filebtns">
+                          {g.history.map((h) => (
+                            <button key={h.file} className={sel === h.file ? 'filebtn on' : 'filebtn'} onClick={() => { setSel(h.file); setViewMode('preview'); }}>
+                              v{h.v}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              {histOpen[g.type] && (
-                <div className="filebtns">
-                  {g.history.map((h) => (
-                    <button key={h.file} className={sel === h.file ? 'filebtn on' : 'filebtn'} onClick={() => setSel(h.file)}>
-                      v{h.v}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {sel ? (
-            editingModel ? (
-              <EditMd
-                initial={md}
-                savePath={`写作模型/${sel}`}
-                onSaved={(t) => { setMd(t); setEditingModel(false); load(); }}
-              />
-            ) : (
-              <>
-                <div className="import-row">
-                  <Button onClick={() => setEditingModel(true)}>编辑本模型</Button>
-                </div>
-                <Doc md={md} />
-              </>
-            )
-          ) : (
-            <p className="hint">选择版本查看（每类默认最新；旧版折叠在「历史」里可对照）。</p>
-          )}
+            );
+          })}
         </>
       )}
     </div>
@@ -1390,7 +2099,8 @@ function Panel() {
         if (sub === 'board') return <BoardTab tick={tick} />;
         return <BrowseTab tick={tick} />;
       case 'todo':
-        if (sub === 'queue') return <QueueTab tick={tick} />;
+        if (sub === 'queue') return <QueueTab tick={tick} onChanged={bump} />;
+        if (sub === 'types') return <TypesTab tick={tick} onChanged={bump} />;
         if (sub === 'import-fail') return <ImportFailTab tick={tick} bump={bump} />;
         return <ScoreTab />;
       case 'settings': return <SettingsTab />;

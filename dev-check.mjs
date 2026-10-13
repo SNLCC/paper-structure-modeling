@@ -4,7 +4,8 @@ import { extractJson, isProviderRejection } from "./lib/import.js";
 import { sampleFingerprint, extractSkillSection } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
-import { parseTagLib, patchTagLib, appendQueueRow } from "./lib/taglib.js";
+import { parseTagLib, patchTagLib, appendQueueRow, setQueueDecision, appendTagRow } from "./lib/taglib.js";
+import { parseTypeCandidate, upsertTypeRow, patchTypeRowStatus, patchDeclaringStatus } from "./lib/typelib.js";
 import { tokenize, searchLibrary } from "./lib/search.js";
 import { STRUCT_ROOT, ANCHOR_DIR, MODEL_DIR, MAPPING_FILE } from "./lib/paths.js";
 import pushFactory, { matchMarker, extractRecentText, buildMessage, resolveSessionName } from "./extensions/push.js";
@@ -129,6 +130,33 @@ console.log("queue append to existing row:", aq.appended && aq.md.includes("| A 
 const emptyQueueMd = "# t\n\n## 复核队列（共现提示）\n\n| 疑似对 | 证据 | 提示日期 | 裁决 |\n|---|---|---|---|\n";
 const aq2 = appendQueueRow(emptyQueueMd, { pair: "C vs D", evidence: "同指反驳", date: "2026-09-28" });
 console.log("queue append to empty:", aq2.appended && parseTagLib(aq2.md).queue.length === 1);
+// ---- 判定独立（§5.9 设计 C 终态，第 101 轮）----
+const di1 = setQueueDecision(tagMd, "驳论型结构 vs 反驳型论证", "判定独立（2026-10-13）：两者分属不同层面");
+console.log("independent set:", di1.ok && di1.md.includes("判定独立（2026-10-13）：两者分属不同层面"));
+const di2 = setQueueDecision(di1.md, "驳论型结构 vs 反驳型论证", "再次裁决");
+console.log("independent guard already-decided:", !di2.ok && di2.md === di1.md);
+const di3 = setQueueDecision(tagMd, "不存在的对", "判定独立（2026-10-13）");
+console.log("independent guard not-found:", !di3.ok && di3.md === tagMd);
+console.log("independent leaves tags untouched:", parseTagLib(di1.md).tags[0].status === "active" && parseTagLib(di1.md).tags.length === 1);
+// ---- 类型裁决（§5.9 设计 D，第 103 轮）----
+const candMd = "# x\n\n### 2.5 新类型宣告（若有）\n\n- 候选名 / 定义：示例立破型——以示例方式立论的整篇模式\n- 与既有类型库的关系：新类型\n- 依据（本篇何处、引文）：§1\n- 状态：候选（待库主裁决，模型不拍板）\n";
+const cand = parseTypeCandidate(candMd);
+console.log("type candidate parse:", !!cand && cand.name === "示例立破型" && cand.definition.startsWith("以示例方式") && cand.status.includes("候选"));
+const typeLibMd = "# 类型库\n\n| 类型 | 定义 | 归并自 | 子语法 | 状态 | 出现篇数 |\n|---|---|---|---|---|---|\n| （暂无） |  |  |  |  |  |\n";
+const up1 = upsertTypeRow(typeLibMd, { type: "示例立破型", definition: "以示例方式立论", mergedFrom: "示例立破型", status: "在用", count: 1 });
+console.log("type row replace placeholder:", up1.action === "replaced-placeholder" && up1.md.includes("| 示例立破型 |"));
+const up2 = upsertTypeRow(up1.md, { type: "第二型", definition: "d", mergedFrom: "第二型", status: "在用", count: 2 });
+console.log("type row insert:", up2.action === "inserted" && up2.md.indexOf("第二型") > up2.md.indexOf("示例立破型"));
+const ps1 = patchDeclaringStatus(candMd, "示例立破型", "新立为类型库「示例立破型」（库主 2026-10-13）");
+console.log("declaring stamp:", ps1.changed && ps1.md.includes("新立为类型库") && !ps1.md.includes("候选（待库主裁决"));
+console.log("declaring stamp idempotent:", !patchDeclaringStatus(ps1.md, "示例立破型", "新立为类型库「示例立破型」（库主 2026-10-13）").changed);
+console.log("declaring re-stamp allowed (第116轮改判):", patchDeclaringStatus(ps1.md, "示例立破型", "并入「X」（库主 2026-10-13）").changed);
+const ts1 = patchTypeRowStatus(up1.md, "示例立破型", "并入→X");
+console.log("type status patch:", ts1.changed && ts1.md.includes("| 并入→X | 1 |"));
+// ---- 标签表补行（第 111 轮，缺行自愈）----
+const arr1 = appendTagRow(tagMd, "| 幽灵标签 | sample-2020 | （待补） | active |  |");
+console.log("tag row append:", arr1.appended && parseTagLib(arr1.md).tags.length === 2 && arr1.md.indexOf("幽灵标签") < arr1.md.indexOf("复核队列"));
+console.log("tag row append keeps queue intact:", parseTagLib(arr1.md).queue.length === parseTagLib(tagMd).queue.length);
 
 // ---- 共用检索层（M8）----
 console.log("paths exports complete:", typeof ANCHOR_DIR === "string" && typeof MODEL_DIR === "string" && MAPPING_FILE.endsWith("闭包映射表.md"));
