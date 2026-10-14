@@ -252,5 +252,13 @@ const zh97badv = validateExtraction(zh97bad);
 console.log("97 bad id / bad sectionTitles rejected:", !zh97badv.ok && zh97badv.errors.some((e) => e.field === "id") && zh97badv.errors.some((e) => e.field.startsWith("emergent.sectionTitles")));
 console.log("97 render sectionTitles:", renderExtraction(zh97).includes("章节标题（表层结构）：§1 第一章 示例节"));
 console.log("97 legacy id still valid:", validateExtraction(good).ok);
+// ---- 章节/段落功能标注渲染与校验（第 128 轮修 [object Object]）----
+const sfGood = { ...good, emergent: { ...good.emergent, sectionFunctions: [{ location: "§1", title: "立问题", function: "点明问题域" }, { location: "§2", title: "批判", function: "分层击破" }], paragraphFunctions: [{ location: "¶3", action: "设反驳槽位" }] } };
+const sfMd = renderExtraction(sfGood);
+console.log("located render no object-object:", !sfMd.includes("[object Object]") && sfMd.includes("§1 立问题｜点明问题域；§2 批判｜分层击破") && sfMd.includes("¶3 设反驳槽位"));
+console.log("located validate ok:", validateExtraction(sfGood).ok);
+console.log("located validate rejects string:", !validateExtraction({ ...good, emergent: { ...good.emergent, sectionFunctions: "§1 立问题" } }).ok);
+console.log("located validate rejects bad location:", !validateExtraction({ ...good, emergent: { ...good.emergent, sectionFunctions: [{ location: "一、", title: "x" }] } }).ok);
+console.log("located validate rejects empty item:", !validateExtraction({ ...good, emergent: { ...good.emergent, paragraphFunctions: [{ location: "§1" }] } }).ok);
 
 console.log("done");
