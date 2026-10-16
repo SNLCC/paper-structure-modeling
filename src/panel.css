@@ -565,4 +565,29 @@ pre.err {
 
 /* 第 114 轮：原生下拉（自绘 Select 裁切 bug 的替换） */
 .native-sel { border: 1px solid rgba(128,128,128,.45); border-radius: 6px; padding: 4px 8px; background: transparent; color: inherit; font: 13px/1.4 inherit; max-width: 260px; }
+/* 第 127 轮：自绘下拉弹层（portal 到 body）——不进容器裁剪面，超高时内部滚动 */
+.combo-pop {
+  position: fixed;
+  z-index: 9999;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--hana-plugin-bg, #f8f5ed);
+  color: var(--hana-plugin-text, #3b3d3f);
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  padding: 3px;
+}
+.combo-opt {
+  padding: 5px 8px;
+  font: 13px/1.4 inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.combo-opt.on { background: var(--hana-accent, #537d96); color: #fff; }
+.combo-opt.muted { opacity: 0.6; cursor: default; }
 .suggest-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

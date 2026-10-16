@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import { hana } from '@hana/app-sdk/ui';
 import {
   Button,
@@ -70,38 +71,119 @@ function parseEntryHead(firstLine: string, fallbackId: string) {
   return { title: m ? m[1] : fallbackId, meta: m ? `${m[2].trim()} · ${m[3]}` : '' };
 }
 
-// 第 114 轮（ui 交互 bug 修复）：插件自绘 Select 在长列表下被容器裁切且压住下方内容——
-// 换原生 select（系统级弹层，永不裁切），外观统一收敛到 .native-sel。
-function NativeSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
-  return (
-    <select className="native-sel" value={value} onChange={(e) => onChange(e.currentTarget.value)}>
-      {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-    </select>
-  );
-}
-
-// 第 119 轮：长列表换组合框（input + datalist）——输入即过滤（解列表过长），且目标可自由编辑；
-// allowCustom=false 时只在输入与选项精确匹配时才提交（下拉选中即精确匹配），防非法值入库。
+// 第 127 轮（下拉裁切修复）：原生 select / datalist 的弹层在宿主 iframe 里会被视口边界裁掉，
+// 列表长了不能滚动（Chromium iframe 已知行为），矮屏看不全。改为自绘弹层 + portal 挂到 body：
+// 不进任何容器的裁剪面，按输入框位置算可用高度（下方不够就上翻），超出时弹层内部滚动。
+// 保留第 114 轮的教训：弹层不与容器 overflow 共面，关闭后不残留、不压住内容。
 function ComboSelect({ id, value, onChange, options, placeholder, allowCustom = false }: {
   id: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[];
   placeholder?: string; allowCustom?: boolean;
 }) {
+  const [text, setText] = useState(value);
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const [rect, setRect] = useState<{ left: number; width: number; top: number; maxH: number } | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const popRef = useRef<HTMLDivElement | null>(null);
+
+  // 外部改值（如「采纳建议」填入目标）时同步回输入框
+  useEffect(() => { setText(value); }, [value]);
+
+  const q = String(text || '').trim().toLowerCase();
+  const list = useMemo(() => {
+    if (!q) return options;
+    const hit = options.filter((o) => o.value.toLowerCase().includes(q) || o.label.toLowerCase().includes(q));
+    return hit.length ? hit : options;
+  }, [options, q]);
+
+  // 弹层定位：视口内可用高度（下方不够就上翻），高度封顶后内部滚动
+  const place = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 720;
+    const below = vh - r.bottom - 8;
+    const above = r.top - 8;
+    const up = below < 160 && above > below;
+    const maxH = Math.max(120, Math.min(340, Math.floor(up ? above : below)));
+    const top = up ? Math.max(4, r.top - maxH - 2) : Math.max(4, Math.min(r.bottom + 2, vh - maxH - 4));
+    setRect({ left: r.left, width: Math.max(r.width, 180), top, maxH });
+  }, []);
+
+  const openList = useCallback(() => { place(); setOpen(true); setHi(0); }, [place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (inputRef.current?.contains(t) || popRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onMove = () => place();
+    document.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true);
+      window.removeEventListener('scroll', onMove, true);
+      window.removeEventListener('resize', onMove);
+    };
+  }, [open, place]);
+
+  const pick = (v: string) => { setText(v); onChange(v); setOpen(false); };
+
   return (
     <>
       <input
+        ref={inputRef}
+        id={id}
         className="native-sel"
-        list={id}
-        value={value}
+        value={text}
         placeholder={placeholder}
+        onFocus={openList}
+        onClick={openList}
         onChange={(e) => {
           const v = e.currentTarget.value;
+          setText(v);
+          // 非自由场景只在精确匹配时才落值（防非法值入库）；自由场景直接落值
           if (allowCustom || options.some((o) => o.value === v)) onChange(v);
+          place(); setOpen(true); setHi(0);
         }}
-        onKeyDown={(e) => e.stopPropagation()}
+        onBlur={() => {
+          window.setTimeout(() => {
+            if (popRef.current?.contains(document.activeElement)) return;
+            setOpen(false);
+            if (!allowCustom) setText(value); // 非自由：失焦未选中则回滚到已提交值
+          }, 120);
+        }}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === 'ArrowDown') { e.preventDefault(); if (!open) openList(); else setHi((i) => Math.min(i + 1, list.length - 1)); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((i) => Math.max(i - 1, 0)); }
+          else if (e.key === 'Enter') { if (open && list[hi]) { e.preventDefault(); pick(list[hi].value); } }
+          else if (e.key === 'Escape') setOpen(false);
+        }}
       />
-      <datalist id={id}>
-        {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-      </datalist>
+      {open && rect && createPortal(
+        <div
+          ref={popRef}
+          className="combo-pop"
+          style={{ left: rect.left, top: rect.top, width: rect.width, maxHeight: rect.maxH }}
+        >
+          {list.length === 0 && <div className="combo-opt muted">（无匹配）</div>}
+          {list.map((o, i) => (
+            <div
+              key={o.value}
+              className={i === hi ? 'combo-opt on' : 'combo-opt'}
+              onMouseEnter={() => setHi(i)}
+              onMouseDown={(e) => { e.preventDefault(); pick(o.value); }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
     </>
   );
 }
@@ -830,10 +912,12 @@ function TypesTab({ tick, onChanged }: { tick: number; onChanged?: () => void })
       </p>
       {msg && <p className={msg.startsWith('已') ? 'ok' : 'err'}>{msg}</p>}
       <div className="import-row reclass-box">
-        <NativeSelect
+        <ComboSelect
+          id="cb-reclass-from"
           value={reclass.from}
+          placeholder="已登记类型再归类：选源…"
           onChange={(v) => setReclass((s) => ({ ...s, from: v }))}
-          options={[{ value: '', label: '已登记类型再归类：选源…' }, ...(data.types || []).map((t) => ({ value: t.type, label: t.type }))]}
+          options={(data.types || []).map((t) => ({ value: t.type, label: t.type }))}
         />
         <ComboSelect
           id="cb-reclass-to"
@@ -1480,6 +1564,7 @@ function ImportZone({ onDone }: { onDone: () => void }) {
       if (cancelled) return;
       setResult(fin);
       if (fin.ok) { hana.toast.show({ message: '拆解完成，已入库', type: 'success' }); onDone(); }
+      else if (fin.alreadyExists) { hana.toast.show({ message: '篇目已在库中，未重复导入', type: 'success' }); onDone(); }
       else if (fin.failureTs) { hana.toast.show({ message: '拆解失败，已记入待办', type: 'error' }); onDone(); }
       setBusy(false);
     })();
@@ -1502,6 +1587,9 @@ function ImportZone({ onDone }: { onDone: () => void }) {
       setResult(r);
       if (r.ok) {
         hana.toast.show({ message: '拆解完成，已入库', type: 'success' });
+        onDone();
+      } else if (r.alreadyExists) {
+        hana.toast.show({ message: '篇目已在库中，未重复导入', type: 'success' });
         onDone();
       } else if (r.failureTs) {
         hana.toast.show({ message: '拆解失败，已记入待办', type: 'error' });
@@ -1620,8 +1708,10 @@ function ImportZone({ onDone }: { onDone: () => void }) {
         {busy && <span className="hint">正在入队…</span>}
       </div>
       {result && (
-        <pre className={result.ok ? 'ok' : 'err'}>
-          {result.ok
+        <pre className={result.ok || result.alreadyExists ? 'ok' : 'err'}>
+          {result.alreadyExists
+            ? `${result.message || '篇目已在库中（id 三要素相同视为同一篇），未重复导入。'}`
+            : result.ok
             ? result.stage === 'running'
               ? `${result.message || '拆解进行中…'}`
               : result.stage === 'queued'
@@ -2001,16 +2091,29 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
   }, []);
 
   async function retry(item: any) {
+    const hasText = !!(item.text && String(item.text).trim());
+    if (!hasText && !item.pdfPath) {
+      setMsg(item.needsFile ? '该条目是文件拖入的 PDF，原文件未随记录保留，请把 PDF 重新拖入导入区' : '该条目无可重试内容（原文未保留），请重新提供文件');
+      return;
+    }
     setBusyTs(item.ts);
     setMsg('');
     try {
-      const start = await apiPost('/api/import', { text: item.text, fromTs: item.ts });
-      if (start.started) {
+      const body: Record<string, unknown> = { text: item.text, fromTs: item.ts, filename: item.source };
+      if (item.pdfPath) body.pdfPath = item.pdfPath;
+      const start = await apiPost('/api/import', body);
+      if (start.alreadyExists) {
+        setMsg(`已在库中，未重复导入${start.id ? `：${start.id}` : ''}；待办记录已清除`);
+        hana.toast.show({ message: '篇目已在库中，未重复导入', type: 'success' });
+      } else if (start.started) {
         setMsg('重试中（约 1-3 分钟，可离开本页）…');
         const r = await pollImport();
         if (r.ok) {
           setMsg(`重试成功：${r.file}`);
           hana.toast.show({ message: '重试成功，已入库', type: 'success' });
+        } else if (r.alreadyExists) {
+          setMsg(`已在库中，未重复导入${r.id ? `：${r.id}` : ''}；待办记录已清除`);
+          hana.toast.show({ message: '篇目已在库中，未重复导入', type: 'success' });
         } else {
           setMsg(`仍失败：${r.message || '未知错误'}${r.failureTs ? '（已刷新记录）' : ''}`);
         }
@@ -2044,10 +2147,17 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
       {items.map((it) => (
         <div key={it.ts} className="fail-item">
           <div className="fail-head">
-            <b>{new Date(it.ts).toLocaleString()}</b>
+            <b>{it.title || it.source || '（未识别条目）'}</b>
+            {(it.authors || it.year) && (
+              <span className="hint">{[it.authors, it.year].filter(Boolean).join(' · ')}</span>
+            )}
             <span className="badge">{it.stage}</span>
-            <span className="hint">尝试 {it.attempts} 次 · {(it.text || '').length} 字</span>
+            <span className="hint">{new Date(it.ts).toLocaleString()} · 尝试 {it.attempts} 次 · {(it.text || '').length} 字</span>
           </div>
+          {it.id && <div className="hint">id：{it.id}</div>}
+          {it.stage === 'pdf_extract' && (
+            <div className="hint">{it.needsFile ? 'PDF 提取失败；原文件未随记录保留，重试需把文件重新拖入' : 'PDF 提取失败；可重试或换带文字层的版本'}</div>
+          )}
           <div className="fail-msg">{it.message}</div>
           {(it.errors || []).slice(0, 4).map((e: any, i: number) => (
             <div key={i} className="hint">· {e.field}：{e.message}</div>
@@ -2060,7 +2170,7 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
           </div>
         </div>
       ))}
-      {msg && <p className={msg.startsWith('重试成功') ? 'ok' : 'err'}>{msg}</p>}
+      {msg && <p className={msg.startsWith('重试成功') || msg.startsWith('已在库中') ? 'ok' : 'err'}>{msg}</p>}
     </div>
   );
 }

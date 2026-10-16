@@ -262,8 +262,30 @@ export function registerApiRoutes(app, ctx) {
         text = ex.text;
         pdfEngine = ex.engine;
       } catch (e) {
-        // 提取失败属换料问题（扫描版/损坏/超限），不进待办（同 too_short/too_long）
-        return { ok: false, stage: "pdf_extract", message: e?.message || String(e), attempts: 0 };
+        // 提取失败（扫描版/字体映射缺失/损坏/超限）属换料问题：记入待办留痕，可重试或换料；
+        // 存 pdfPath（Zotero 来源可直接重试）；文件拖入的只有 base64，不入待办原件，标 needsFile。
+        const r = {
+          ok: false,
+          stage: "pdf_extract",
+          message: e?.message || String(e),
+          attempts: 0,
+          pdfEngine: e?.engine,
+          textLayerPresent: e?.textLayerPresent,
+        };
+        const item = await addFailure(ctx, {
+          stage: "pdf_extract",
+          message: r.message,
+          attempts: 0,
+          errors: [],
+          text: "",
+          source: body.filename || body.source || body.pdfPath,
+          pdfPath: body.pdfPath || undefined,
+          needsFile: body.pdfBase64 && !body.pdfPath ? true : undefined,
+          textLayerPresent: r.textLayerPresent,
+        });
+        r.failureTs = item.ts;
+        r.maxImportChars = MAX_IMPORT_CHARS;
+        return r;
       }
     }
     let r;
@@ -273,17 +295,32 @@ export function registerApiRoutes(app, ctx) {
       r = { ok: false, stage: "model", message: `模型调用失败：${e?.message || e}`, attempts: 0 };
     }
     if (pdfEngine) r.pdfEngine = pdfEngine;
-    if (r.ok && fromTs != null) removeFailure(fromTs);
+    // 篇目已在库中（id 三要素相同视为同一篇，见设计文档 §3.8）：终态、非失败——
+    // 清掉待办记录并回报“已在库中”，不再重复入库、不再新记一条失败（修 bug：重试报“已有重复条目”）。
+    if (r.stage === "conflict") {
+      if (fromTs != null) await removeFailure(ctx, fromTs);
+      r.alreadyExists = true;
+      r.id = r.id || r.candidate?.id;
+      r.message = `篇目已在库中（id 三要素相同视为同一篇），未重复导入${r.id ? `：${r.id}` : ""}。`;
+      r.maxImportChars = MAX_IMPORT_CHARS;
+      return r;
+    }
+    if (r.ok && fromTs != null) await removeFailure(ctx, fromTs);
     if (!r.ok && !["too_short", "too_long", "input", "pdf_extract", "cancelled"].includes(r.stage)) {
-      // 存提取后的 text：重试原样重投模型链，不重复提取；source 记来源便于追查
-      const item = addFailure({
+      // 存提取后的 text：重试原样重投模型链，不重复提取；source 记来源便于追查；
+      // 尽量带上标题/作者/年份（来自模型已解析出的候选），待办据此显示条目身份而不只有时间戳。
+      const item = await addFailure(ctx, {
         stage: r.stage,
         message: r.message,
         attempts: r.attempts || 0,
         errors: r.errors || [],
         output: r.output || undefined,
         text,
-        source: body.filename || body.pdfPath,
+        source: body.filename || body.source || body.pdfPath,
+        id: r.candidate?.id,
+        title: r.candidate?.title,
+        authors: r.candidate?.authors,
+        year: r.candidate?.year,
       });
       r.failureTs = item.ts;
     }
@@ -293,7 +330,8 @@ export function registerApiRoutes(app, ctx) {
 
   // 导入拆解（异步单任务）：宿主普通 RPC 30 秒硬超时，分钟级模型链只能后台跑；
   // POST 立即返回 started，面板轮询 /api/import/status 取最终结果。
-  // 失败进待办（too_short/too_long/input/pdf_extract/cancelled 属入参、换料或主动停止，不落待办）。
+  // 失败进待办（too_short/too_long/input/cancelled 属入参或主动停止，不落待办；
+  // PDF 提取失败也落待办留痕，便于回头换料或装主引擎后重试）。
   let importJob = { running: false, startedAt: 0, finishedAt: 0, lastResult: null };
 
   app.post("/api/import", async (c) => {
@@ -359,14 +397,17 @@ export function registerApiRoutes(app, ctx) {
         void (async () => {
           try {
             const stopReq = () => next.status === "stopping";
-            const r = await runOneImport({ text: next.text, pdfPath: next.pdfPath, pdfBase64: next.pdfBase64, filename: next.label }, null, stopReq);
+            // 带 next.failureTs：该条曾失败并入过待办，重试成功/已存在时一并清掉那条记录
+            const r = await runOneImport({ text: next.text, pdfPath: next.pdfPath, pdfBase64: next.pdfBase64, filename: next.label }, next.failureTs ?? null, stopReq);
             if (r.stage === "cancelled" || next.status === "stopping") {
               next.status = "cancelled";
               next.message = "已停止（未写库，无残留）";
-            } else if (r.ok) {
+            } else if (r.ok || r.alreadyExists) {
               next.status = "done";
-              next.file = r.file;
+              next.file = r.file || "";
               next.attempts = r.attempts;
+              next.failureTs = undefined;
+              next.message = r.alreadyExists ? "已在库中（未重复导入）" : "";
             } else {
               next.status = "failed";
               next.message = r.message;
@@ -622,7 +663,7 @@ export function registerApiRoutes(app, ctx) {
   app.get("/api/model/status", (c) => c.json({ ok: true, ...modelJob }));
 
   // 待办区：导入失败清单（含 text 供重试原样重投）
-  app.get("/api/import/failures", (c) => c.json({ ok: true, items: listFailures() }));
+  app.get("/api/import/failures", async (c) => c.json({ ok: true, items: await listFailures(ctx) }));
 
   app.post("/api/import/failures/dismiss", async (c) => {
     let body;
@@ -632,7 +673,7 @@ export function registerApiRoutes(app, ctx) {
       body = {};
     }
     if (body.ts === undefined || body.ts === null) return c.json({ ok: false, message: "缺少 ts" }, 400);
-    removeFailure(body.ts);
+    await removeFailure(ctx, body.ts);
     return c.json({ ok: true });
   });
 
