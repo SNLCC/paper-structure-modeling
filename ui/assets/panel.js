@@ -30,9 +30,9 @@ var dp;
 function d0() {
   if (dp) return xe;
   dp = 1;
-  var u = /* @__PURE__ */ Symbol.for("react.transitional.element"), r = /* @__PURE__ */ Symbol.for("react.portal"), o = /* @__PURE__ */ Symbol.for("react.fragment"), s = /* @__PURE__ */ Symbol.for("react.strict_mode"), d = /* @__PURE__ */ Symbol.for("react.profiler"), m = /* @__PURE__ */ Symbol.for("react.consumer"), g = /* @__PURE__ */ Symbol.for("react.context"), y = /* @__PURE__ */ Symbol.for("react.forward_ref"), S = /* @__PURE__ */ Symbol.for("react.suspense"), b = /* @__PURE__ */ Symbol.for("react.memo"), N = /* @__PURE__ */ Symbol.for("react.lazy"), p = /* @__PURE__ */ Symbol.for("react.activity"), I = /* @__PURE__ */ Symbol.for("react.view_transition"), A = Symbol.iterator;
-  function x(E) {
-    return E === null || typeof E != "object" ? null : (E = A && E[A] || E["@@iterator"], typeof E == "function" ? E : null);
+  var u = /* @__PURE__ */ Symbol.for("react.transitional.element"), r = /* @__PURE__ */ Symbol.for("react.portal"), o = /* @__PURE__ */ Symbol.for("react.fragment"), s = /* @__PURE__ */ Symbol.for("react.strict_mode"), d = /* @__PURE__ */ Symbol.for("react.profiler"), m = /* @__PURE__ */ Symbol.for("react.consumer"), g = /* @__PURE__ */ Symbol.for("react.context"), y = /* @__PURE__ */ Symbol.for("react.forward_ref"), S = /* @__PURE__ */ Symbol.for("react.suspense"), E = /* @__PURE__ */ Symbol.for("react.memo"), N = /* @__PURE__ */ Symbol.for("react.lazy"), p = /* @__PURE__ */ Symbol.for("react.activity"), B = /* @__PURE__ */ Symbol.for("react.view_transition"), A = Symbol.iterator;
+  function x(b) {
+    return b === null || typeof b != "object" ? null : (b = A && b[A] || b["@@iterator"], typeof b == "function" ? b : null);
   }
   var V = {
     isMounted: function() {
@@ -45,84 +45,84 @@ function d0() {
     enqueueSetState: function() {
     }
   }, L = Object.assign, le = {};
-  function ye(E, z, W) {
-    this.props = E, this.context = z, this.refs = le, this.updater = W || V;
+  function ye(b, z, W) {
+    this.props = b, this.context = z, this.refs = le, this.updater = W || V;
   }
-  ye.prototype.isReactComponent = {}, ye.prototype.setState = function(E, z) {
-    if (typeof E != "object" && typeof E != "function" && E != null)
+  ye.prototype.isReactComponent = {}, ye.prototype.setState = function(b, z) {
+    if (typeof b != "object" && typeof b != "function" && b != null)
       throw Error(
         "takes an object of state variables to update or a function which returns an object of state variables."
       );
-    this.updater.enqueueSetState(this, E, z, "setState");
-  }, ye.prototype.forceUpdate = function(E) {
-    this.updater.enqueueForceUpdate(this, E, "forceUpdate");
+    this.updater.enqueueSetState(this, b, z, "setState");
+  }, ye.prototype.forceUpdate = function(b) {
+    this.updater.enqueueForceUpdate(this, b, "forceUpdate");
   };
   function he() {
   }
   he.prototype = ye.prototype;
-  function Z(E, z, W) {
-    this.props = E, this.context = z, this.refs = le, this.updater = W || V;
+  function Z(b, z, W) {
+    this.props = b, this.context = z, this.refs = le, this.updater = W || V;
   }
   var ue = Z.prototype = new he();
   ue.constructor = Z, L(ue, ye.prototype), ue.isPureReactComponent = !0;
-  var ne = Array.isArray;
+  var ae = Array.isArray;
   function re() {
   }
   var ge = { H: null, A: null, T: null, S: null }, se = Object.prototype.hasOwnProperty;
-  function oe(E, z, W) {
+  function oe(b, z, W) {
     var P = W.ref;
     return {
       $$typeof: u,
-      type: E,
+      type: b,
       key: z,
       ref: P !== void 0 ? P : null,
       props: W
     };
   }
-  function Se(E, z) {
-    return oe(E.type, z, E.props);
+  function Se(b, z) {
+    return oe(b.type, z, b.props);
   }
-  function G(E) {
-    return typeof E == "object" && E !== null && E.$$typeof === u;
+  function G(b) {
+    return typeof b == "object" && b !== null && b.$$typeof === u;
   }
-  function me(E) {
+  function me(b) {
     var z = { "=": "=0", ":": "=2" };
-    return "$" + E.replace(/[=:]/g, function(W) {
+    return "$" + b.replace(/[=:]/g, function(W) {
       return z[W];
     });
   }
   var De = /\/+/g;
-  function H(E, z) {
-    return typeof E == "object" && E !== null && E.key != null ? me("" + E.key) : z.toString(36);
+  function H(b, z) {
+    return typeof b == "object" && b !== null && b.key != null ? me("" + b.key) : z.toString(36);
   }
-  function M(E) {
-    switch (E.status) {
+  function M(b) {
+    switch (b.status) {
       case "fulfilled":
-        return E.value;
+        return b.value;
       case "rejected":
-        throw E.reason;
+        throw b.reason;
       default:
-        switch (typeof E.status == "string" ? E.then(re, re) : (E.status = "pending", E.then(
+        switch (typeof b.status == "string" ? b.then(re, re) : (b.status = "pending", b.then(
           function(z) {
-            E.status === "pending" && (E.status = "fulfilled", E.value = z);
+            b.status === "pending" && (b.status = "fulfilled", b.value = z);
           },
           function(z) {
-            E.status === "pending" && (E.status = "rejected", E.reason = z);
+            b.status === "pending" && (b.status = "rejected", b.reason = z);
           }
-        )), E.status) {
+        )), b.status) {
           case "fulfilled":
-            return E.value;
+            return b.value;
           case "rejected":
-            throw E.reason;
+            throw b.reason;
         }
     }
-    throw E;
+    throw b;
   }
-  function te(E, z, W, P, ie) {
-    var be = typeof E;
-    (be === "undefined" || be === "boolean") && (E = null);
+  function te(b, z, W, P, ie) {
+    var be = typeof b;
+    (be === "undefined" || be === "boolean") && (b = null);
     var fe = !1;
-    if (E === null) fe = !0;
+    if (b === null) fe = !0;
     else
       switch (be) {
         case "bigint":
@@ -131,14 +131,14 @@ function d0() {
           fe = !0;
           break;
         case "object":
-          switch (E.$$typeof) {
+          switch (b.$$typeof) {
             case u:
             case r:
               fe = !0;
               break;
             case N:
-              return fe = E._init, te(
-                fe(E._payload),
+              return fe = b._init, te(
+                fe(b._payload),
                 z,
                 W,
                 P,
@@ -147,28 +147,28 @@ function d0() {
           }
       }
     if (fe)
-      return ie = ie(E), fe = P === "" ? "." + H(E, 0) : P, ne(ie) ? (W = "", fe != null && (W = fe.replace(De, "$&/") + "/"), te(ie, z, W, "", function(We) {
+      return ie = ie(b), fe = P === "" ? "." + H(b, 0) : P, ae(ie) ? (W = "", fe != null && (W = fe.replace(De, "$&/") + "/"), te(ie, z, W, "", function(We) {
         return We;
       })) : ie != null && (G(ie) && (ie = Se(
         ie,
-        W + (ie.key == null || E && E.key === ie.key ? "" : ("" + ie.key).replace(
+        W + (ie.key == null || b && b.key === ie.key ? "" : ("" + ie.key).replace(
           De,
           "$&/"
         ) + "/") + fe
       )), z.push(ie)), 1;
     fe = 0;
     var ee = P === "" ? "." : P + ":";
-    if (ne(E))
-      for (var de = 0; de < E.length; de++)
-        P = E[de], be = ee + H(P, de), fe += te(
+    if (ae(b))
+      for (var de = 0; de < b.length; de++)
+        P = b[de], be = ee + H(P, de), fe += te(
           P,
           z,
           W,
           be,
           ie
         );
-    else if (de = x(E), typeof de == "function")
-      for (E = de.call(E), de = 0; !(P = E.next()).done; )
+    else if (de = x(b), typeof de == "function")
+      for (b = de.call(b), de = 0; !(P = b.next()).done; )
         P = P.value, be = ee + H(P, de++), fe += te(
           P,
           z,
@@ -177,123 +177,123 @@ function d0() {
           ie
         );
     else if (be === "object") {
-      if (typeof E.then == "function")
+      if (typeof b.then == "function")
         return te(
-          M(E),
+          M(b),
           z,
           W,
           P,
           ie
         );
-      throw z = String(E), Error(
-        "Objects are not valid as a React child (found: " + (z === "[object Object]" ? "object with keys {" + Object.keys(E).join(", ") + "}" : z) + "). If you meant to render a collection of children, use an array instead."
+      throw z = String(b), Error(
+        "Objects are not valid as a React child (found: " + (z === "[object Object]" ? "object with keys {" + Object.keys(b).join(", ") + "}" : z) + "). If you meant to render a collection of children, use an array instead."
       );
     }
     return fe;
   }
-  function j(E, z, W) {
-    if (E == null) return E;
+  function j(b, z, W) {
+    if (b == null) return b;
     var P = [], ie = 0;
-    return te(E, P, "", "", function(be) {
+    return te(b, P, "", "", function(be) {
       return z.call(W, be, ie++);
     }), P;
   }
-  function F(E) {
-    if (E._status === -1) {
-      var z = E._result, W = z();
+  function F(b) {
+    if (b._status === -1) {
+      var z = b._result, W = z();
       W.then(
         function(P) {
-          (E._status === 0 || E._status === -1) && (E._status = 1, E._result = P, W.status === void 0 && (W.status = "fulfilled", W.value = P));
+          (b._status === 0 || b._status === -1) && (b._status = 1, b._result = P, W.status === void 0 && (W.status = "fulfilled", W.value = P));
         },
         function(P) {
-          (E._status === 0 || E._status === -1) && (E._status = 2, E._result = P, W.status === void 0 && (W.status = "rejected", W.reason = P));
+          (b._status === 0 || b._status === -1) && (b._status = 2, b._result = P, W.status === void 0 && (W.status = "rejected", W.reason = P));
         }
-      ), E._status === -1 && (E._status = 0, E._result = W);
+      ), b._status === -1 && (b._status = 0, b._result = W);
     }
-    if (E._status === 1) return E._result.default;
-    throw E._result;
+    if (b._status === 1) return b._result.default;
+    throw b._result;
   }
-  var B = typeof reportError == "function" ? reportError : function(E) {
+  var I = typeof reportError == "function" ? reportError : function(b) {
     if (typeof window == "object" && typeof window.ErrorEvent == "function") {
       var z = new window.ErrorEvent("error", {
         bubbles: !0,
         cancelable: !0,
-        message: typeof E == "object" && E !== null && typeof E.message == "string" ? String(E.message) : String(E),
-        error: E
+        message: typeof b == "object" && b !== null && typeof b.message == "string" ? String(b.message) : String(b),
+        error: b
       });
       if (!window.dispatchEvent(z)) return;
     } else if (typeof process == "object" && typeof process.emit == "function") {
-      process.emit("uncaughtException", E);
+      process.emit("uncaughtException", b);
       return;
     }
-    console.error(E);
+    console.error(b);
   };
-  function X(E) {
+  function X(b) {
     var z = ge.T, W = {};
     W.types = z !== null ? z.types : null, ge.T = W;
     try {
-      var P = E(), ie = ge.S;
-      ie !== null && ie(W, P), typeof P == "object" && P !== null && typeof P.then == "function" && P.then(re, B);
+      var P = b(), ie = ge.S;
+      ie !== null && ie(W, P), typeof P == "object" && P !== null && typeof P.then == "function" && P.then(re, I);
     } catch (be) {
-      B(be);
+      I(be);
     } finally {
       z !== null && W.types !== null && (z.types = W.types), ge.T = z;
     }
   }
-  function ae(E) {
+  function ne(b) {
     var z = ge.T;
     if (z !== null) {
       var W = z.types;
-      W === null ? z.types = [E] : W.indexOf(E) === -1 && W.push(E);
-    } else X(ae.bind(null, E));
+      W === null ? z.types = [b] : W.indexOf(b) === -1 && W.push(b);
+    } else X(ne.bind(null, b));
   }
-  var $ = {
+  var J = {
     map: j,
-    forEach: function(E, z, W) {
+    forEach: function(b, z, W) {
       j(
-        E,
+        b,
         function() {
           z.apply(this, arguments);
         },
         W
       );
     },
-    count: function(E) {
+    count: function(b) {
       var z = 0;
-      return j(E, function() {
+      return j(b, function() {
         z++;
       }), z;
     },
-    toArray: function(E) {
-      return j(E, function(z) {
+    toArray: function(b) {
+      return j(b, function(z) {
         return z;
       }) || [];
     },
-    only: function(E) {
-      if (!G(E))
+    only: function(b) {
+      if (!G(b))
         throw Error(
           "React.Children.only expected to receive a single React element child."
         );
-      return E;
+      return b;
     }
   };
-  return xe.Activity = p, xe.Children = $, xe.Component = ye, xe.Fragment = o, xe.Profiler = d, xe.PureComponent = Z, xe.StrictMode = s, xe.Suspense = S, xe.ViewTransition = I, xe.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = ge, xe.__COMPILER_RUNTIME = {
+  return xe.Activity = p, xe.Children = J, xe.Component = ye, xe.Fragment = o, xe.Profiler = d, xe.PureComponent = Z, xe.StrictMode = s, xe.Suspense = S, xe.ViewTransition = B, xe.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = ge, xe.__COMPILER_RUNTIME = {
     __proto__: null,
-    c: function(E) {
-      return ge.H.useMemoCache(E);
+    c: function(b) {
+      return ge.H.useMemoCache(b);
     }
-  }, xe.addTransitionType = ae, xe.cache = function(E) {
+  }, xe.addTransitionType = ne, xe.cache = function(b) {
     return function() {
-      return E.apply(null, arguments);
+      return b.apply(null, arguments);
     };
   }, xe.cacheSignal = function() {
     return null;
-  }, xe.cloneElement = function(E, z, W) {
-    if (E == null)
+  }, xe.cloneElement = function(b, z, W) {
+    if (b == null)
       throw Error(
-        "The argument must be a React element, but you passed " + E + "."
+        "The argument must be a React element, but you passed " + b + "."
       );
-    var P = L({}, E.props), ie = E.key;
+    var P = L({}, b.props), ie = b.key;
     if (z != null)
       for (be in z.key !== void 0 && (ie = "" + z.key), z)
         !se.call(z, be) || be === "key" || be === "__self" || be === "__source" || be === "ref" && z.ref === void 0 || (P[be] = z[be]);
@@ -304,20 +304,20 @@ function d0() {
         fe[ee] = arguments[ee + 2];
       P.children = fe;
     }
-    return oe(E.type, ie, P);
-  }, xe.createContext = function(E) {
-    return E = {
+    return oe(b.type, ie, P);
+  }, xe.createContext = function(b) {
+    return b = {
       $$typeof: g,
-      _currentValue: E,
-      _currentValue2: E,
+      _currentValue: b,
+      _currentValue2: b,
       _threadCount: 0,
       Provider: null,
       Consumer: null
-    }, E.Provider = E, E.Consumer = {
+    }, b.Provider = b, b.Consumer = {
       $$typeof: m,
-      _context: E
-    }, E;
-  }, xe.createElement = function(E, z, W) {
+      _context: b
+    }, b;
+  }, xe.createElement = function(b, z, W) {
     var P, ie = {}, be = null;
     if (z != null)
       for (P in z.key !== void 0 && (be = "" + z.key), z)
@@ -329,64 +329,64 @@ function d0() {
         ee[de] = arguments[de + 2];
       ie.children = ee;
     }
-    if (E && E.defaultProps)
-      for (P in fe = E.defaultProps, fe)
+    if (b && b.defaultProps)
+      for (P in fe = b.defaultProps, fe)
         ie[P] === void 0 && (ie[P] = fe[P]);
-    return oe(E, be, ie);
+    return oe(b, be, ie);
   }, xe.createRef = function() {
     return { current: null };
-  }, xe.forwardRef = function(E) {
-    return { $$typeof: y, render: E };
-  }, xe.isValidElement = G, xe.lazy = function(E) {
+  }, xe.forwardRef = function(b) {
+    return { $$typeof: y, render: b };
+  }, xe.isValidElement = G, xe.lazy = function(b) {
     return {
       $$typeof: N,
-      _payload: { _status: -1, _result: E },
+      _payload: { _status: -1, _result: b },
       _init: F
     };
-  }, xe.memo = function(E, z) {
+  }, xe.memo = function(b, z) {
     return {
-      $$typeof: b,
-      type: E,
+      $$typeof: E,
+      type: b,
       compare: z === void 0 ? null : z
     };
   }, xe.startTransition = X, xe.unstable_useCacheRefresh = function() {
     return ge.H.useCacheRefresh();
-  }, xe.use = function(E) {
-    return ge.H.use(E);
-  }, xe.useActionState = function(E, z, W) {
-    return ge.H.useActionState(E, z, W);
-  }, xe.useCallback = function(E, z) {
-    return ge.H.useCallback(E, z);
-  }, xe.useContext = function(E) {
-    return ge.H.useContext(E);
+  }, xe.use = function(b) {
+    return ge.H.use(b);
+  }, xe.useActionState = function(b, z, W) {
+    return ge.H.useActionState(b, z, W);
+  }, xe.useCallback = function(b, z) {
+    return ge.H.useCallback(b, z);
+  }, xe.useContext = function(b) {
+    return ge.H.useContext(b);
   }, xe.useDebugValue = function() {
-  }, xe.useDeferredValue = function(E, z) {
-    return ge.H.useDeferredValue(E, z);
-  }, xe.useEffect = function(E, z) {
-    return ge.H.useEffect(E, z);
-  }, xe.useEffectEvent = function(E) {
-    return ge.H.useEffectEvent(E);
+  }, xe.useDeferredValue = function(b, z) {
+    return ge.H.useDeferredValue(b, z);
+  }, xe.useEffect = function(b, z) {
+    return ge.H.useEffect(b, z);
+  }, xe.useEffectEvent = function(b) {
+    return ge.H.useEffectEvent(b);
   }, xe.useId = function() {
     return ge.H.useId();
-  }, xe.useImperativeHandle = function(E, z, W) {
-    return ge.H.useImperativeHandle(E, z, W);
-  }, xe.useInsertionEffect = function(E, z) {
-    return ge.H.useInsertionEffect(E, z);
-  }, xe.useLayoutEffect = function(E, z) {
-    return ge.H.useLayoutEffect(E, z);
-  }, xe.useMemo = function(E, z) {
-    return ge.H.useMemo(E, z);
-  }, xe.useOptimistic = function(E, z) {
-    return ge.H.useOptimistic(E, z);
-  }, xe.useReducer = function(E, z, W) {
-    return ge.H.useReducer(E, z, W);
-  }, xe.useRef = function(E) {
-    return ge.H.useRef(E);
-  }, xe.useState = function(E) {
-    return ge.H.useState(E);
-  }, xe.useSyncExternalStore = function(E, z, W) {
+  }, xe.useImperativeHandle = function(b, z, W) {
+    return ge.H.useImperativeHandle(b, z, W);
+  }, xe.useInsertionEffect = function(b, z) {
+    return ge.H.useInsertionEffect(b, z);
+  }, xe.useLayoutEffect = function(b, z) {
+    return ge.H.useLayoutEffect(b, z);
+  }, xe.useMemo = function(b, z) {
+    return ge.H.useMemo(b, z);
+  }, xe.useOptimistic = function(b, z) {
+    return ge.H.useOptimistic(b, z);
+  }, xe.useReducer = function(b, z, W) {
+    return ge.H.useReducer(b, z, W);
+  }, xe.useRef = function(b) {
+    return ge.H.useRef(b);
+  }, xe.useState = function(b) {
+    return ge.H.useState(b);
+  }, xe.useSyncExternalStore = function(b, z, W) {
     return ge.H.useSyncExternalStore(
-      E,
+      b,
       z,
       W
     );
@@ -406,9 +406,9 @@ function h0() {
       var j = M.length;
       M.push(te);
       e: for (; 0 < j; ) {
-        var F = j - 1 >>> 1, B = M[F];
-        if (0 < d(B, te))
-          M[F] = te, M[j] = B, j = F;
+        var F = j - 1 >>> 1, I = M[F];
+        if (0 < d(I, te))
+          M[F] = te, M[j] = I, j = F;
         else break e;
       }
     }
@@ -420,12 +420,12 @@ function h0() {
       var te = M[0], j = M.pop();
       if (j !== te) {
         M[0] = j;
-        e: for (var F = 0, B = M.length, X = B >>> 1; F < X; ) {
-          var ae = 2 * (F + 1) - 1, $ = M[ae], E = ae + 1, z = M[E];
-          if (0 > d($, j))
-            E < B && 0 > d(z, $) ? (M[F] = z, M[E] = j, F = E) : (M[F] = $, M[ae] = j, F = ae);
-          else if (E < B && 0 > d(z, j))
-            M[F] = z, M[E] = j, F = E;
+        e: for (var F = 0, I = M.length, X = I >>> 1; F < X; ) {
+          var ne = 2 * (F + 1) - 1, J = M[ne], b = ne + 1, z = M[b];
+          if (0 > d(J, j))
+            b < I && 0 > d(z, J) ? (M[F] = z, M[b] = j, F = b) : (M[F] = J, M[ne] = j, F = ne);
+          else if (b < I && 0 > d(z, j))
+            M[F] = z, M[b] = j, F = b;
           else break e;
         }
       }
@@ -446,49 +446,49 @@ function h0() {
         return g.now() - y;
       };
     }
-    var S = [], b = [], N = 1, p = null, I = 3, A = !1, x = !1, V = !1, L = !1, le = typeof setTimeout == "function" ? setTimeout : null, ye = typeof clearTimeout == "function" ? clearTimeout : null, he = typeof setImmediate < "u" ? setImmediate : null;
+    var S = [], E = [], N = 1, p = null, B = 3, A = !1, x = !1, V = !1, L = !1, le = typeof setTimeout == "function" ? setTimeout : null, ye = typeof clearTimeout == "function" ? clearTimeout : null, he = typeof setImmediate < "u" ? setImmediate : null;
     function Z(M) {
-      for (var te = o(b); te !== null; ) {
-        if (te.callback === null) s(b);
+      for (var te = o(E); te !== null; ) {
+        if (te.callback === null) s(E);
         else if (te.startTime <= M)
-          s(b), te.sortIndex = te.expirationTime, r(S, te);
+          s(E), te.sortIndex = te.expirationTime, r(S, te);
         else break;
-        te = o(b);
+        te = o(E);
       }
     }
     function ue(M) {
       if (V = !1, Z(M), !x)
         if (o(S) !== null)
-          x = !0, ne || (ne = !0, G());
+          x = !0, ae || (ae = !0, G());
         else {
-          var te = o(b);
+          var te = o(E);
           te !== null && H(ue, te.startTime - M);
         }
     }
-    var ne = !1, re = -1, ge = 5, se = -1;
+    var ae = !1, re = -1, ge = 5, se = -1;
     function oe() {
       return L ? !0 : !(u.unstable_now() - se < ge);
     }
     function Se() {
-      if (L = !1, ne) {
+      if (L = !1, ae) {
         var M = u.unstable_now();
         se = M;
         var te = !0;
         try {
           e: {
             x = !1, V && (V = !1, ye(re), re = -1), A = !0;
-            var j = I;
+            var j = B;
             try {
               t: {
                 for (Z(M), p = o(S); p !== null && !(p.expirationTime > M && oe()); ) {
                   var F = p.callback;
                   if (typeof F == "function") {
-                    p.callback = null, I = p.priorityLevel;
-                    var B = F(
+                    p.callback = null, B = p.priorityLevel;
+                    var I = F(
                       p.expirationTime <= M
                     );
-                    if (M = u.unstable_now(), typeof B == "function") {
-                      p.callback = B, Z(M), te = !0;
+                    if (M = u.unstable_now(), typeof I == "function") {
+                      p.callback = I, Z(M), te = !0;
                       break t;
                     }
                     p === o(S) && s(S), Z(M);
@@ -497,7 +497,7 @@ function h0() {
                 }
                 if (p !== null) te = !0;
                 else {
-                  var X = o(b);
+                  var X = o(E);
                   X !== null && H(
                     ue,
                     X.startTime - M
@@ -506,12 +506,12 @@ function h0() {
               }
               break e;
             } finally {
-              p = null, I = j, A = !1;
+              p = null, B = j, A = !1;
             }
             te = void 0;
           }
         } finally {
-          te ? G() : ne = !1;
+          te ? G() : ae = !1;
         }
       }
     }
@@ -541,23 +541,23 @@ function h0() {
         "forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported"
       ) : ge = 0 < M ? Math.floor(1e3 / M) : 5;
     }, u.unstable_getCurrentPriorityLevel = function() {
-      return I;
+      return B;
     }, u.unstable_next = function(M) {
-      switch (I) {
+      switch (B) {
         case 1:
         case 2:
         case 3:
           var te = 3;
           break;
         default:
-          te = I;
+          te = B;
       }
-      var j = I;
-      I = te;
+      var j = B;
+      B = te;
       try {
         return M();
       } finally {
-        I = j;
+        B = j;
       }
     }, u.unstable_requestPaint = function() {
       L = !0;
@@ -572,48 +572,48 @@ function h0() {
         default:
           M = 3;
       }
-      var j = I;
-      I = M;
+      var j = B;
+      B = M;
       try {
         return te();
       } finally {
-        I = j;
+        B = j;
       }
     }, u.unstable_scheduleCallback = function(M, te, j) {
       var F = u.unstable_now();
       switch (typeof j == "object" && j !== null ? (j = j.delay, j = typeof j == "number" && 0 < j ? F + j : F) : j = F, M) {
         case 1:
-          var B = -1;
+          var I = -1;
           break;
         case 2:
-          B = 250;
+          I = 250;
           break;
         case 5:
-          B = 1073741823;
+          I = 1073741823;
           break;
         case 4:
-          B = 1e4;
+          I = 1e4;
           break;
         default:
-          B = 5e3;
+          I = 5e3;
       }
-      return B = j + B, M = {
+      return I = j + I, M = {
         id: N++,
         callback: te,
         priorityLevel: M,
         startTime: j,
-        expirationTime: B,
+        expirationTime: I,
         sortIndex: -1
-      }, j > F ? (M.sortIndex = j, r(b, M), o(S) === null && M === o(b) && (V ? (ye(re), re = -1) : V = !0, H(ue, j - F))) : (M.sortIndex = B, r(S, M), x || A || (x = !0, ne || (ne = !0, G()))), M;
+      }, j > F ? (M.sortIndex = j, r(E, M), o(S) === null && M === o(E) && (V ? (ye(re), re = -1) : V = !0, H(ue, j - F))) : (M.sortIndex = I, r(S, M), x || A || (x = !0, ae || (ae = !0, G()))), M;
     }, u.unstable_shouldYield = oe, u.unstable_wrapCallback = function(M) {
-      var te = I;
+      var te = B;
       return function() {
-        var j = I;
-        I = te;
+        var j = B;
+        B = te;
         try {
           return M.apply(this, arguments);
         } finally {
-          I = j;
+          B = j;
         }
       };
     };
@@ -633,8 +633,8 @@ function p0() {
     var p = "https://react.dev/errors/" + N;
     if (1 < arguments.length) {
       p += "?args[]=" + encodeURIComponent(arguments[1]);
-      for (var I = 2; I < arguments.length; I++)
-        p += "&args[]=" + encodeURIComponent(arguments[I]);
+      for (var B = 2; B < arguments.length; B++)
+        p += "&args[]=" + encodeURIComponent(arguments[B]);
     }
     return "Minified React error #" + N + "; visit " + p + " for the full message or use the non-minified dev environment for full errors and additional helpful warnings.";
   }
@@ -657,18 +657,18 @@ function p0() {
     p: 0,
     findDOMNode: null
   }, d = /* @__PURE__ */ Symbol.for("react.portal"), m = /* @__PURE__ */ Symbol.for("react.recoverable"), g = /* @__PURE__ */ Symbol.for("react.optimistic_key");
-  function y(N, p, I) {
+  function y(N, p, B) {
     var A = 3 < arguments.length && arguments[3] !== void 0 ? arguments[3] : null;
     return {
       $$typeof: d,
       key: A == null ? null : A === g ? g : "" + A,
       children: N,
       containerInfo: p,
-      implementation: I
+      implementation: B
     };
   }
   var S = u.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
-  function b(N, p) {
+  function E(N, p) {
     if (N === "font") return "";
     if (typeof p == "string")
       return p === "use-credentials" ? p : "";
@@ -676,16 +676,16 @@ function p0() {
   return xt.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE = s, xt.browser = function(N) {
     return { $$typeof: m, _reason: N };
   }, xt.createPortal = function(N, p) {
-    var I = 2 < arguments.length && arguments[2] !== void 0 ? arguments[2] : null;
+    var B = 2 < arguments.length && arguments[2] !== void 0 ? arguments[2] : null;
     if (!p || p.nodeType !== 1 && p.nodeType !== 9 && p.nodeType !== 11)
       throw Error(r(299));
-    return y(N, p, null, I);
+    return y(N, p, null, B);
   }, xt.flushSync = function(N) {
-    var p = S.T, I = s.p;
+    var p = S.T, B = s.p;
     try {
       if (S.T = null, s.p = 2, N) return N();
     } finally {
-      S.T = p, s.p = I, s.d.f();
+      S.T = p, s.p = B, s.d.f();
     }
   }, xt.preconnect = function(N, p) {
     typeof N == "string" && (p ? (p = p.crossOrigin, p = typeof p == "string" ? p === "use-credentials" ? p : "" : void 0) : p = null, s.d.C(N, p));
@@ -693,8 +693,8 @@ function p0() {
     typeof N == "string" && s.d.D(N);
   }, xt.preinit = function(N, p) {
     if (typeof N == "string" && p && typeof p.as == "string") {
-      var I = p.as, A = b(I, p.crossOrigin), x = typeof p.integrity == "string" ? p.integrity : void 0, V = typeof p.fetchPriority == "string" ? p.fetchPriority : void 0;
-      I === "style" ? s.d.S(
+      var B = p.as, A = E(B, p.crossOrigin), x = typeof p.integrity == "string" ? p.integrity : void 0, V = typeof p.fetchPriority == "string" ? p.fetchPriority : void 0;
+      B === "style" ? s.d.S(
         N,
         typeof p.precedence == "string" ? p.precedence : void 0,
         {
@@ -702,7 +702,7 @@ function p0() {
           integrity: x,
           fetchPriority: V
         }
-      ) : I === "script" && s.d.X(N, {
+      ) : B === "script" && s.d.X(N, {
         crossOrigin: A,
         integrity: x,
         fetchPriority: V,
@@ -713,12 +713,12 @@ function p0() {
     if (typeof N == "string")
       if (typeof p == "object" && p !== null) {
         if (p.as == null || p.as === "script") {
-          var I = b(
+          var B = E(
             p.as,
             p.crossOrigin
           );
           s.d.M(N, {
-            crossOrigin: I,
+            crossOrigin: B,
             integrity: typeof p.integrity == "string" ? p.integrity : void 0,
             nonce: typeof p.nonce == "string" ? p.nonce : void 0,
             fetchPriority: typeof p.fetchPriority == "string" ? p.fetchPriority : void 0
@@ -727,8 +727,8 @@ function p0() {
       } else p == null && s.d.M(N);
   }, xt.preload = function(N, p) {
     if (typeof N == "string" && typeof p == "object" && p !== null && typeof p.as == "string") {
-      var I = p.as, A = b(I, p.crossOrigin);
-      s.d.L(N, I, {
+      var B = p.as, A = E(B, p.crossOrigin);
+      s.d.L(N, B, {
         crossOrigin: A,
         integrity: typeof p.integrity == "string" ? p.integrity : void 0,
         nonce: typeof p.nonce == "string" ? p.nonce : void 0,
@@ -743,10 +743,10 @@ function p0() {
   }, xt.preloadModule = function(N, p) {
     if (typeof N == "string")
       if (p) {
-        var I = b(p.as, p.crossOrigin);
+        var B = E(p.as, p.crossOrigin);
         s.d.m(N, {
           as: typeof p.as == "string" && p.as !== "script" ? p.as : void 0,
-          crossOrigin: I,
+          crossOrigin: B,
           integrity: typeof p.integrity == "string" ? p.integrity : void 0,
           nonce: typeof p.nonce == "string" ? p.nonce : void 0,
           fetchPriority: typeof p.fetchPriority == "string" ? p.fetchPriority : void 0
@@ -756,8 +756,8 @@ function p0() {
     s.d.r(N);
   }, xt.unstable_batchedUpdates = function(N, p) {
     return N(p);
-  }, xt.useFormState = function(N, p, I) {
-    return S.H.useFormState(N, p, I);
+  }, xt.useFormState = function(N, p, B) {
+    return S.H.useFormState(N, p, B);
   }, xt.useFormStatus = function() {
     return S.H.useHostTransitionStatus();
   }, xt.version = "19.3.0", xt;
@@ -817,7 +817,7 @@ function g0() {
     if (m(e) !== e)
       throw Error(s(188));
   }
-  function b(e) {
+  function E(e) {
     var t = e.alternate;
     if (!t) {
       if (t = m(e), t === null) throw Error(s(188));
@@ -899,7 +899,7 @@ function g0() {
     }
     return !1;
   }
-  function I(e) {
+  function B(e) {
     for (e = e.return; e !== null; ) {
       if (e.tag === 3 || e.tag === 5 || e.tag === 27) return e;
       e = e.return;
@@ -913,7 +913,7 @@ function g0() {
     return t;
   }
   function x(e) {
-    var t = [null, null], n = I(e);
+    var t = [null, null], n = B(e);
     return n === null || V(
       t,
       e,
@@ -964,7 +964,7 @@ function g0() {
     while (e && e.tag !== 5 && e.tag !== 27 && e.tag !== 3);
     return e || null;
   }
-  function ne(e, t, n) {
+  function ae(e, t, n) {
     for (var a = 0, l = e; l; l = n(l)) a++;
     l = 0;
     for (var i = t; i; i = n(i)) l++;
@@ -977,7 +977,7 @@ function g0() {
     }
     return null;
   }
-  var re = Object.assign, ge = /* @__PURE__ */ Symbol.for("react.element"), se = /* @__PURE__ */ Symbol.for("react.transitional.element"), oe = /* @__PURE__ */ Symbol.for("react.portal"), Se = /* @__PURE__ */ Symbol.for("react.fragment"), G = /* @__PURE__ */ Symbol.for("react.strict_mode"), me = /* @__PURE__ */ Symbol.for("react.profiler"), De = /* @__PURE__ */ Symbol.for("react.consumer"), H = /* @__PURE__ */ Symbol.for("react.context"), M = /* @__PURE__ */ Symbol.for("react.forward_ref"), te = /* @__PURE__ */ Symbol.for("react.suspense"), j = /* @__PURE__ */ Symbol.for("react.suspense_list"), F = /* @__PURE__ */ Symbol.for("react.memo"), B = /* @__PURE__ */ Symbol.for("react.lazy"), X = /* @__PURE__ */ Symbol.for("react.activity"), ae = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), $ = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), E = /* @__PURE__ */ Symbol.for("react.view_transition"), z = /* @__PURE__ */ Symbol.for("react.recoverable"), W = Symbol.iterator;
+  var re = Object.assign, ge = /* @__PURE__ */ Symbol.for("react.element"), se = /* @__PURE__ */ Symbol.for("react.transitional.element"), oe = /* @__PURE__ */ Symbol.for("react.portal"), Se = /* @__PURE__ */ Symbol.for("react.fragment"), G = /* @__PURE__ */ Symbol.for("react.strict_mode"), me = /* @__PURE__ */ Symbol.for("react.profiler"), De = /* @__PURE__ */ Symbol.for("react.consumer"), H = /* @__PURE__ */ Symbol.for("react.context"), M = /* @__PURE__ */ Symbol.for("react.forward_ref"), te = /* @__PURE__ */ Symbol.for("react.suspense"), j = /* @__PURE__ */ Symbol.for("react.suspense_list"), F = /* @__PURE__ */ Symbol.for("react.memo"), I = /* @__PURE__ */ Symbol.for("react.lazy"), X = /* @__PURE__ */ Symbol.for("react.activity"), ne = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), J = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), b = /* @__PURE__ */ Symbol.for("react.view_transition"), z = /* @__PURE__ */ Symbol.for("react.recoverable"), W = Symbol.iterator;
   function P(e) {
     return e === null || typeof e != "object" ? null : (e = W && e[W] || e["@@iterator"], typeof e == "function" ? e : null);
   }
@@ -1000,7 +1000,7 @@ function g0() {
         return "SuspenseList";
       case X:
         return "Activity";
-      case E:
+      case b:
         return "ViewTransition";
     }
     if (typeof e == "object")
@@ -1016,7 +1016,7 @@ function g0() {
           return e = e.displayName, e || (e = t.displayName || t.name || "", e = e !== "" ? "ForwardRef(" + e + ")" : "ForwardRef"), e;
         case F:
           return t = e.displayName || null, t !== null ? t : be(e.type) || "Memo";
-        case B:
+        case I:
           t = e._payload, e = e._init;
           try {
             return be(e(t));
@@ -1040,9 +1040,9 @@ function g0() {
   function Qe(e, t) {
     Yt++, rt[Yt] = e.current, e.current = t;
   }
-  var Xt = an(null), O = an(null), J = an(null), Y = an(null);
+  var Xt = an(null), O = an(null), $ = an(null), Y = an(null);
   function k(e, t) {
-    switch (Qe(J, t), Qe(O, e), Qe(Xt, null), t.nodeType) {
+    switch (Qe($, t), Qe(O, e), Qe(Xt, null), t.nodeType) {
       case 9:
       case 11:
         e = (e = t.documentElement) && (e = e.namespaceURI) ? bm(e) : 0;
@@ -1065,7 +1065,7 @@ function g0() {
     Ne(Xt), Qe(Xt, e);
   }
   function Ee() {
-    Ne(Xt), Ne(O), Ne(J);
+    Ne(Xt), Ne(O), Ne($);
   }
   function Be(e) {
     var t = e.memoizedState;
@@ -2533,9 +2533,9 @@ Error generating stack: ` + a.message + `
           return e = Lt(13, n, t, l), e.elementType = te, e.lanes = i, e;
         case j:
           return e = Lt(19, n, t, l), e.elementType = j, e.lanes = i, e;
-        case ae:
-        case E:
-          return e = l | 32, e = Lt(30, n, t, e), e.elementType = E, e.lanes = i, e.stateNode = {
+        case ne:
+        case b:
+          return e = l | 32, e = Lt(30, n, t, e), e.elementType = b, e.lanes = i, e.stateNode = {
             autoName: null,
             paired: null,
             clones: null,
@@ -2556,7 +2556,7 @@ Error generating stack: ` + a.message + `
               case F:
                 c = 14;
                 break e;
-              case B:
+              case I:
                 c = 16, a = null;
                 break e;
             }
@@ -3079,7 +3079,7 @@ Error generating stack: ` + a.message + `
         R.props.children,
         Q,
         R.key
-      ), ua(w, R), w) : T !== null && (T.elementType === pe || typeof pe == "object" && pe !== null && pe.$$typeof === B && Qa(pe) === T.type) ? (T = l(T, R.props), ua(T, R), T.return = w, T) : (T = Ou(
+      ), ua(w, R), w) : T !== null && (T.elementType === pe || typeof pe == "object" && pe !== null && pe.$$typeof === I && Qa(pe) === T.type) ? (T = l(T, R.props), ua(T, R), T.return = w, T) : (T = Ou(
         R.type,
         R.key,
         R.props,
@@ -3123,7 +3123,7 @@ Error generating stack: ` + a.message + `
               w.mode,
               R
             ), T.return = w, T;
-          case B:
+          case I:
             return T = Qa(T), K(w, T, R);
         }
         if (fe(T) || P(T))
@@ -3155,7 +3155,7 @@ Error generating stack: ` + a.message + `
             return R.key === pe ? v(w, T, R, Q) : null;
           case oe:
             return R.key === pe ? C(w, T, R, Q) : null;
-          case B:
+          case I:
             return R = Qa(R), _(w, T, R, Q);
         }
         if (fe(R) || P(R))
@@ -3191,7 +3191,7 @@ Error generating stack: ` + a.message + `
             return w = w.get(
               Q.key === null ? R : Q.key
             ) || null, C(T, w, Q, pe);
-          case B:
+          case I:
             return Q = Qa(Q), D(
               w,
               T,
@@ -3308,7 +3308,7 @@ Error generating stack: ` + a.message + `
                       ), ua(Q, R), Q.return = w, w = Q;
                       break e;
                     }
-                  } else if (T.elementType === pe || typeof pe == "object" && pe !== null && pe.$$typeof === B && Qa(pe) === T.type) {
+                  } else if (T.elementType === pe || typeof pe == "object" && pe !== null && pe.$$typeof === I && Qa(pe) === T.type) {
                     n(
                       w,
                       T.sibling
@@ -3355,7 +3355,7 @@ Error generating stack: ` + a.message + `
               Q = ys(R, w.mode, Q), Q.return = w, w = Q;
             }
             return c(w);
-          case B:
+          case I:
             return R = Qa(R), je(
               w,
               T,
@@ -3734,7 +3734,7 @@ Error generating stack: ` + a.message + `
     }
     if (t == null && (t = { data: [], index: 0 }), n === null && (n = Yu(), Re.updateQueue = n), n.memoCache = t, n = t.data[t.index], n === void 0)
       for (n = t.data[t.index] = Array(e), a = 0; a < e; a++)
-        n[a] = $;
+        n[a] = J;
     return t.index++, n;
   }
   function kn(e, t) {
@@ -5594,7 +5594,7 @@ Error generating stack: ` + a.message + `
         )) ? t.memoizedState = n : Ue || (t.stateNode = Sm(
           t.type,
           t.pendingProps,
-          J.current,
+          $.current,
           t
         )) : t.memoizedState = Gm(
           t.type,
@@ -5606,7 +5606,7 @@ Error generating stack: ` + a.message + `
         return Be(t), e === null && Ue && (a = t.stateNode = Lm(
           t.type,
           t.pendingProps,
-          J.current
+          $.current
         ), vt = t, on = !0, l = et, Ea(t.type) ? (io = l, et = dn(a.firstChild)) : et = l), pt(
           e,
           t,
@@ -5807,7 +5807,7 @@ Error generating stack: ` + a.message + `
           n
         )), null;
       case 27:
-        if ($e(t), n = J.current, l = t.type, e !== null && t.stateNode != null)
+        if ($e(t), n = $.current, l = t.type, e !== null && t.stateNode != null)
           e.memoizedProps !== a && Jn(t);
         else {
           if (!a) {
@@ -5831,7 +5831,7 @@ Error generating stack: ` + a.message + `
             $f(t);
           else {
             var c = Ii(
-              J.current
+              $.current
             );
             switch (i) {
               case 1:
@@ -5920,7 +5920,7 @@ Error generating stack: ` + a.message + `
         else {
           if (typeof a != "string" && t.stateNode === null)
             throw Error(s(166));
-          if (e = J.current, yl(t)) {
+          if (e = $.current, yl(t)) {
             if (e = t.stateNode, n = t.memoizedProps, a = null, l = vt, l !== null)
               switch (l.tag) {
                 case 27:
@@ -9188,7 +9188,7 @@ Error generating stack: ` + a.message + `
             D,
             n,
             U
-          ), ve.target = R, ve.relatedTarget = je, Q = ve), je = Q, ve = _ && D ? ne(
+          ), ve.target = R, ve.relatedTarget = je, Q = ve), je = Q, ve = _ && D ? ae(
             _,
             D,
             dy
@@ -10433,7 +10433,7 @@ Error generating stack: ` + a.message + `
     return -1;
   }
   tn.prototype.dispatchEvent = function(e) {
-    var t = I(
+    var t = B(
       this._fragmentFiber
     );
     if (t === null) return !0;
@@ -10489,7 +10489,7 @@ Error generating stack: ` + a.message + `
     return t.push(e), !1;
   }
   tn.prototype.blur = function() {
-    var e = I(
+    var e = B(
       this._fragmentFiber
     );
     e !== null && (e = L(e), e = Ii(e).activeElement, e !== null && p(
@@ -10575,12 +10575,12 @@ Error generating stack: ` + a.message + `
     return !1;
   }
   tn.prototype.getRootNode = function(e) {
-    var t = I(
+    var t = B(
       this._fragmentFiber
     );
     return t === null ? this : L(t).getRootNode(e);
   }, tn.prototype.compareDocumentPosition = function(e) {
-    var t = I(
+    var t = B(
       this._fragmentFiber
     );
     if (t === null) return Node.DOCUMENT_POSITION_DISCONNECTED;
@@ -10650,7 +10650,7 @@ Error generating stack: ` + a.message + `
       if (i === null)
         return i = l.ownerDocument, l === i || l === i.documentElement || l === i.body;
       e: {
-        for (i = t, t = I(t); i !== null; ) {
+        for (i = t, t = B(t); i !== null; ) {
           if (!(i.tag !== 5 && i.tag !== 3 && i.tag !== 27 || i !== t && i.alternate !== t)) {
             i = !0;
             break e;
@@ -10661,7 +10661,7 @@ Error generating stack: ` + a.message + `
       }
       return i;
     }
-    return e & Node.DOCUMENT_POSITION_PRECEDING ? ((t = !!i) && !(t = i === n) && (t = ne(
+    return e & Node.DOCUMENT_POSITION_PRECEDING ? ((t = !!i) && !(t = i === n) && (t = ae(
       n,
       i,
       ue
@@ -10671,7 +10671,7 @@ Error generating stack: ` + a.message + `
       he,
       i,
       n
-    ), i = le, le = null, t = i !== null)), t) : e & Node.DOCUMENT_POSITION_FOLLOWING ? ((t = !!i) && !(t = i === a) && (t = ne(
+    ), i = le, le = null, t = i !== null)), t) : e & Node.DOCUMENT_POSITION_FOLLOWING ? ((t = !!i) && !(t = i === a) && (t = ae(
       a,
       i,
       ue
@@ -10706,7 +10706,7 @@ Error generating stack: ` + a.message + `
       var a = x(
         this._fragmentFiber
       );
-      if (a = n ? a[1] || a[0] || I(this._fragmentFiber) : a[0] || a[1], a === null) return;
+      if (a = n ? a[1] || a[0] || B(this._fragmentFiber) : a[0] || a[1], a === null) return;
       if (a.tag === 6) {
         e = L(a), Dm(e, n);
         return;
@@ -11110,7 +11110,7 @@ Error generating stack: ` + a.message + `
     }
   }
   function Gm(e, t, n, a) {
-    var l = (l = J.current) ? Bi(l) : null;
+    var l = (l = $.current) ? Bi(l) : null;
     if (!l) throw Error(s(446));
     switch (e) {
       case "meta":
@@ -11935,7 +11935,7 @@ Error generating stack: ` + a.message + `
     var t = e._reactInternals;
     if (t === void 0)
       throw typeof e.render == "function" ? Error(s(188)) : (e = Object.keys(e).join(","), Error(s(268, e)));
-    return e = b(t), e = e !== null ? N(e) : null, e = e === null ? null : e.stateNode, e;
+    return e = E(t), e = e !== null ? N(e) : null, e = e === null ? null : e.stateNode, e;
   };
   var s0 = {
     bundleType: 0,
@@ -12197,13 +12197,13 @@ function L0(u, r) {
   const m = r.targetElementId === void 0 ? null : eu(u, r.targetElementId);
   if (r.targetElementId !== void 0 && !m) return { ok: !1, code: "UI_ACTION_ELEMENT_NOT_FOUND", error: "No visible target element matches targetElementId." };
   if (!m && s === 0 && d === 0) return { ok: !1, code: "UI_ACTION_DRAG_TARGET_REQUIRED", error: "drag_element requires a target element or non-zero delta." };
-  const g = o.getBoundingClientRect(), y = g.left + g.width / 2, S = g.top + g.height / 2, b = m?.getBoundingClientRect(), N = b ? b.left + b.width / 2 : y + s, p = b ? b.top + b.height / 2 : S + d, I = m ?? o;
+  const g = o.getBoundingClientRect(), y = g.left + g.width / 2, S = g.top + g.height / 2, E = m?.getBoundingClientRect(), N = E ? E.left + E.width / 2 : y + s, p = E ? E.top + E.height / 2 : S + d, B = m ?? o;
   No(o, "pointerdown", y, S, 1), Ao(o, "mousedown", y, S, 1);
   for (const A of [0.25, 0.5, 0.75]) {
     const x = y + (N - y) * A, V = S + (p - S) * A;
-    No(I, "pointermove", x, V, 1), Ao(I, "mousemove", x, V, 1);
+    No(B, "pointermove", x, V, 1), Ao(B, "mousemove", x, V, 1);
   }
-  return No(I, "pointerup", N, p, 0), Ao(I, "mouseup", N, p, 0), { ok: !0, result: { dragged: !0, endX: N, endY: p } };
+  return No(B, "pointerup", N, p, 0), Ao(B, "mouseup", N, p, 0), { ok: !0, result: { dragged: !0, endX: N, endY: p } };
 }
 function I0(u, r) {
   const o = r.key === void 0 ? r.keys : [r.key];
@@ -12577,12 +12577,12 @@ function sb(u) {
   let o = null, s = !1, d, m = !0;
   const g = /* @__PURE__ */ new Set(), y = /* @__PURE__ */ new Set();
   let S = 0;
-  const b = () => {
+  const E = () => {
     S += 1;
   }, N = (Z) => new Wi("unavailable", Z), p = () => new Wi(
     "identity-changed",
     "The current App card identity changed while this view write waited."
-  ), I = () => new Wi(
+  ), B = () => new Wi(
     "token-stale",
     "The held view token is no longer the current document."
   ), A = (Z) => {
@@ -12590,8 +12590,8 @@ function sb(u) {
   }, x = (Z, ue) => {
     A(Z), Z.reject(ue);
   }, V = (Z, ue) => {
-    const ne = o !== Z, re = m;
-    o = Z, m = !0, (ne || !re) && b();
+    const ae = o !== Z, re = m;
+    o = Z, m = !0, (ae || !re) && E();
     for (const oe of [...g]) {
       if (A(oe), oe.identity !== void 0 && oe.identity !== d) {
         oe.reject(p());
@@ -12600,7 +12600,7 @@ function sb(u) {
       oe.resolve(Z);
     }
     if (y.size === 0) return;
-    const ge = { changed: ne, resync: ue }, se = S;
+    const ge = { changed: ae, resync: ue }, se = S;
     for (const oe of [...y]) {
       if (s || se !== S) return;
       y.has(oe) && oe.listener(ge);
@@ -12608,8 +12608,8 @@ function sb(u) {
   };
   return {
     handleHostMessage: (Z) => {
-      const ue = Z.type === Jl.CHALLENGE, ne = Z.type === Jl.BINDING;
-      if (!ue && !ne) return !1;
+      const ue = Z.type === Jl.CHALLENGE, ae = Z.type === Jl.BINDING;
+      if (!ue && !ae) return !1;
       if (s) return !0;
       if (ue && Z.kind === "event") {
         const re = K0(Z.payload);
@@ -12621,7 +12621,7 @@ function sb(u) {
           payload: { challengeId: re.value.challengeId, documentNonce: r }
         }), s || u.reannounceReady?.()), !0;
       }
-      if (ne && Z.kind === "event") {
+      if (ae && Z.kind === "event") {
         const re = Q0(Z.payload);
         return re.ok === !0 && V(re.value.viewToken, re.value.resync === !0), !0;
       }
@@ -12631,24 +12631,24 @@ function sb(u) {
       if (s) return;
       if (Z === null) {
         if (!m) return;
-        m = !1, b();
+        m = !1, E();
         return;
       }
       const ue = rb(Z);
       if (d !== ue) {
         if (d !== void 0) {
-          for (const ne of [...g]) x(ne, p());
+          for (const ae of [...g]) x(ae, p());
           o = null;
         }
-        d = ue, b();
+        d = ue, E();
       }
     },
     currentToken() {
       return !s && m ? o : null;
     },
-    waitForToken: (Z, ue) => s ? Promise.reject(N("The current App card view binding was released.")) : ue?.aborted ? Promise.reject(N("The current App card view wait was aborted.")) : o && m ? Promise.resolve(o) : new Promise((ne, re) => {
+    waitForToken: (Z, ue) => s ? Promise.reject(N("The current App card view binding was released.")) : ue?.aborted ? Promise.reject(N("The current App card view wait was aborted.")) : o && m ? Promise.resolve(o) : new Promise((ae, re) => {
       const ge = {
-        resolve: ne,
+        resolve: ae,
         reject: re,
         identity: d,
         timer: u.targetWindow.setTimeout(() => {
@@ -12661,7 +12661,7 @@ function sb(u) {
       if (s) throw N("The current App card view binding was released.");
       if (!m || !o)
         throw N("The current App card view is not writable here right now.");
-      if (o !== Z) throw I();
+      if (o !== Z) throw B();
     },
     onBinding(Z) {
       if (s) return () => {
@@ -12701,17 +12701,17 @@ function cb(u, r) {
       if (!g || typeof g.scrollTop != "number" || typeof g.addEventListener != "function")
         throw new TypeError("hana.chrome.registerScrollSource requires an element.");
       m(!0);
-      const y = ++s, S = g.ownerDocument?.defaultView, b = { generation: y, scrolled: g.scrollTop > 0, detach: () => {
+      const y = ++s, S = g.ownerDocument?.defaultView, E = { generation: y, scrolled: g.scrollTop > 0, detach: () => {
       } }, N = () => {
         if (!o || o.generation !== y) return;
         const A = g.scrollTop > 0;
         A !== o.scrolled && (o.scrolled = A, d(A));
       };
       g.addEventListener("scroll", N, { passive: !0 });
-      const p = S?.ResizeObserver, I = p ? new p(N) : null;
-      return I?.observe(g), b.detach = () => {
-        g.removeEventListener("scroll", N), I?.disconnect();
-      }, o = b, b.scrolled && d(!0), () => {
+      const p = S?.ResizeObserver, B = p ? new p(N) : null;
+      return B?.observe(g), E.detach = () => {
+        g.removeEventListener("scroll", N), B?.disconnect();
+      }, o = E, E.scrolled && d(!0), () => {
         if (!o || o.generation !== y) return;
         const A = o;
         o = null, A.detach(), A.scrolled && d(!1);
@@ -12737,13 +12737,13 @@ function db(u) {
   }), S = () => Object.assign(
     new Error("The App card business identity changed; this chrome write is stale."),
     { code: Pn.VIEW_STALE }
-  ), b = () => Object.assign(
+  ), E = () => Object.assign(
     new Error("The host has not bound this App card view; chrome is unavailable here."),
     { code: Pn.UNAVAILABLE }
   ), N = () => Object.assign(
     new Error("The App chrome view was released."),
     { code: Pn.UNAVAILABLE }
-  ), p = (L) => L instanceof Wi ? L.reason === "unavailable" ? b() : S() : L, I = (L, le) => {
+  ), p = (L) => L instanceof Wi ? L.reason === "unavailable" ? E() : S() : L, B = (L, le) => {
     u.post({
       protocol: dt,
       version: ht,
@@ -12757,7 +12757,7 @@ function db(u) {
     if (L.kind !== "request") return !1;
     const le = Z0(L.payload);
     if (le.ok === !1)
-      return I(L, { kind: "error", error: { code: Pn.BAD_PAYLOAD, message: le.error } }), !0;
+      return B(L, { kind: "error", error: { code: Pn.BAD_PAYLOAD, message: le.error } }), !0;
     const ye = le.value, he = {
       requestId: ye.requestId,
       revision: ye.revision,
@@ -12765,13 +12765,13 @@ function db(u) {
       viewToken: ye.viewToken
     }, Z = d;
     if (!Z)
-      return I(L, {
+      return B(L, {
         kind: "error",
         payload: he,
         error: { code: Pn.ACTION_UNHANDLED, message: "This App has no chrome action handler." }
       }), !0;
     if (ye.viewToken !== o.currentToken())
-      return I(L, {
+      return B(L, {
         kind: "error",
         payload: he,
         error: { code: Pn.VIEW_STALE, message: "This chrome action belongs to a replaced view." }
@@ -12779,19 +12779,19 @@ function db(u) {
     const ue = () => !s && d === Z && ye.viewToken === o.currentToken();
     return Promise.resolve().then(async () => {
       if (!ue()) {
-        I(L, {
+        B(L, {
           kind: "error",
           payload: he,
           error: { code: Pn.VIEW_STALE, message: "This chrome action belongs to a replaced view." }
         });
         return;
       }
-      let ne;
+      let ae;
       try {
-        ne = await Z.fn(ob(ye));
+        ae = await Z.fn(ob(ye));
       } catch (re) {
         if (!ue()) return;
-        I(L, {
+        B(L, {
           kind: "error",
           payload: he,
           error: {
@@ -12801,12 +12801,12 @@ function db(u) {
         });
         return;
       }
-      ue() && I(L, {
+      ue() && B(L, {
         kind: "response",
         payload: {
           ...he,
-          status: ne && ne.status === "rejected" ? "rejected" : "handled",
-          ...ne && typeof ne.message == "string" && ne.message ? { message: ne.message } : {}
+          status: ae && ae.status === "rejected" ? "rejected" : "handled",
+          ...ae && typeof ae.message == "string" && ae.message ? { message: ae.message } : {}
         }
       });
     }), !0;
@@ -12891,55 +12891,55 @@ function Eb(u, r) {
     }
     if (S !== "object")
       throw new Et(o, "App view state must contain only JSON values.");
-    const b = g;
-    if (s.has(b))
+    const E = g;
+    if (s.has(E))
       throw new Et(o, "App view state must not contain cycles.");
-    const N = Object.getPrototypeOf(b);
-    if (Array.isArray(b)) {
+    const N = Object.getPrototypeOf(E);
+    if (Array.isArray(E)) {
       if (N !== Array.prototype)
         throw new Et(o, "App view state must contain only plain arrays.");
-      s.add(b);
-      const I = b.length;
-      for (const x of Reflect.ownKeys(b)) {
+      s.add(E);
+      const B = E.length;
+      for (const x of Reflect.ownKeys(E)) {
         if (typeof x != "string")
           throw new Et(o, "App view state must not contain symbol keys.");
         if (x === "length") {
-          const le = Object.getOwnPropertyDescriptor(b, "length");
+          const le = Object.getOwnPropertyDescriptor(E, "length");
           if (le.enumerable || le.get || le.set)
             throw new Et(o, "App view state arrays must expose a plain length.");
           continue;
         }
         const V = bb(x);
-        if (V === null || V >= I)
+        if (V === null || V >= B)
           throw new Et(o, "App view state arrays must not carry extra keys.");
-        const L = Object.getOwnPropertyDescriptor(b, x);
+        const L = Object.getOwnPropertyDescriptor(E, x);
         if (!L.enumerable || L.get || L.set)
           throw new Et(o, "App view state arrays must index plain values.");
       }
       const A = [];
-      for (let x = 0; x < I; x++) {
-        const V = Object.getOwnPropertyDescriptor(b, String(x));
+      for (let x = 0; x < B; x++) {
+        const V = Object.getOwnPropertyDescriptor(E, String(x));
         if (!V)
           throw new Et(o, "App view state must not contain sparse arrays.");
         A.push(m(V.value, y + 1));
       }
-      return s.delete(b), A;
+      return s.delete(E), A;
     }
     if (N !== Object.prototype && N !== null)
       throw new Et(o, "App view state must contain only plain objects.");
-    s.add(b);
+    s.add(E);
     const p = /* @__PURE__ */ Object.create(null);
-    for (const I of Reflect.ownKeys(b)) {
-      if (typeof I != "string")
+    for (const B of Reflect.ownKeys(E)) {
+      if (typeof B != "string")
         throw new Et(o, "App view state must not contain symbol keys.");
-      const A = Object.getOwnPropertyDescriptor(b, I);
+      const A = Object.getOwnPropertyDescriptor(E, B);
       if (!A.enumerable)
         throw new Et(o, "App view state must not contain non-enumerable fields.");
       if (A.get || A.set)
         throw new Et(o, "App view state must not contain accessors.");
-      p[I] = m(A.value, y + 1);
+      p[B] = m(A.value, y + 1);
     }
-    return s.delete(b), p;
+    return s.delete(E), p;
   };
   return m(u, 0);
 }
@@ -12992,13 +12992,13 @@ function wb(u) {
   let o = !1, s = 0, d = null;
   const m = /* @__PURE__ */ new Map();
   let g = null, y = null, S = !1;
-  const b = (H) => H instanceof Wi ? H.reason === "unavailable" ? Oe(we.UNAVAILABLE, "The App card view is not writable here right now.") : Oe(we.VIEW_STALE, "The App card view this operation was bound to is no longer current.") : H, N = (H, M) => {
+  const E = (H) => H instanceof Wi ? H.reason === "unavailable" ? Oe(we.UNAVAILABLE, "The App card view is not writable here right now.") : Oe(we.VIEW_STALE, "The App card view this operation was bound to is no longer current.") : H, N = (H, M) => {
     !H || H.terminated !== null || (H.terminated = M, H.lifetime.abort());
   }, p = (H) => {
     N(d, H), d = null;
     for (const M of m.values()) M.abort.abort();
     m.clear();
-  }, I = (H) => {
+  }, B = (H) => {
     if (o || H === null) return;
     if (H.slot !== "card") {
       p("namespace-changed"), y = null, S = !0, g = null;
@@ -13012,11 +13012,11 @@ function wb(u) {
       for (const M of m.values())
         M.tokenCaptured && M.abort.abort();
     }
-  }, x = u.subscribeContext(I), V = u.currentView.onBinding(A), L = (H) => u.currentView.currentToken() === H, le = (H) => {
+  }, x = u.subscribeContext(B), V = u.currentView.onBinding(A), L = (H) => u.currentView.currentToken() === H, le = (H) => {
     try {
       u.currentView.assertCurrentToken(H);
     } catch (M) {
-      throw b(M);
+      throw E(M);
     }
   }, ye = (H) => {
     const M = u.getContext();
@@ -13051,7 +13051,7 @@ function wb(u) {
       throw Oe(we.VIEW_STALE, "The namespace changed before this view-state reply arrived.");
     if (j.available !== !0)
       throw Oe(we.UNAVAILABLE, "The App view-state namespace paused before this reply arrived.");
-  }, ne = async (H, M, te, j) => {
+  }, ae = async (H, M, te, j) => {
     try {
       return await u.request(H, M, { timeoutMs: te });
     } catch (F) {
@@ -13073,54 +13073,54 @@ function wb(u) {
     }
     return { viewKind: H, revision: M.revision, state: te };
   }, ge = async (H, M) => {
-    const te = M?.timeoutMs ?? r, j = Z(H), F = await ne(Ji.GET, {
+    const te = M?.timeoutMs ?? r, j = Z(H), F = await ae(Ji.GET, {
       viewToken: j,
       bindingId: H.bindingId,
       registrationId: H.registrationId
     }, te, H);
     ue(H, j);
-    const B = wo(F);
-    if (B.ok === !1)
-      throw Oe(we.BAD_RESPONSE, B.error);
-    if (!$i(B.value, {
+    const I = wo(F);
+    if (I.ok === !1)
+      throw Oe(we.BAD_RESPONSE, I.error);
+    if (!$i(I.value, {
       viewToken: j,
       bindingId: H.bindingId,
       registrationId: H.registrationId
     }))
       throw Oe(we.VIEW_STALE, "This view-state reply answered a different view than the one this handle targets.");
-    const X = _o(B.value.snapshot);
+    const X = _o(I.value.snapshot);
     if (X.ok === !1)
       throw Oe(we.BAD_RESPONSE, X.error);
     return re(H.viewKind, X.value);
   }, se = async (H, M, te) => {
-    const j = te?.timeoutMs ?? r, F = Ob(M), B = Uo(M.state), X = Z(H), ae = await ne(Ji.SET, {
+    const j = te?.timeoutMs ?? r, F = Ob(M), I = Uo(M.state), X = Z(H), ne = await ae(Ji.SET, {
       viewToken: X,
       bindingId: H.bindingId,
       registrationId: H.registrationId,
       expectedRevision: F,
-      state: B
+      state: I
     }, j, H);
     ue(H, X);
-    const $ = wo(ae);
-    if ($.ok === !1)
-      throw Oe(we.BAD_RESPONSE, $.error);
-    if (!$i($.value, {
+    const J = wo(ne);
+    if (J.ok === !1)
+      throw Oe(we.BAD_RESPONSE, J.error);
+    if (!$i(J.value, {
       viewToken: X,
       bindingId: H.bindingId,
       registrationId: H.registrationId
     }))
       throw Oe(we.VIEW_STALE, "This view-state reply answered a different view than the one this handle targets.");
-    const E = _o($.value.snapshot);
-    if (E.ok === !1)
-      throw Oe(we.BAD_RESPONSE, E.error);
-    return re(H.viewKind, E.value);
+    const b = _o(J.value.snapshot);
+    if (b.ok === !1)
+      throw Oe(we.BAD_RESPONSE, b.error);
+    return re(H.viewKind, b.value);
   }, oe = async (H, M, te) => {
     if (!L(H)) return;
     const j = u.getContext();
     if (!(!j || j.slot !== "card" || j.viewState?.bindingId !== M))
       try {
-        const F = await u.request(Ji.RELEASE, { viewToken: H, bindingId: M, registrationId: te }, { timeoutMs: r }), B = wp(F);
-        (B.ok === !1 || !$i(B.value, { viewToken: H, bindingId: M, registrationId: te })) && console.error("[hana] App view-state cleanup reply did not confirm the released registration.");
+        const F = await u.request(Ji.RELEASE, { viewToken: H, bindingId: M, registrationId: te }, { timeoutMs: r }), I = wp(F);
+        (I.ok === !1 || !$i(I.value, { viewToken: H, bindingId: M, registrationId: te })) && console.error("[hana] App view-state cleanup reply did not confirm the released registration.");
       } catch (F) {
         console.error("[hana] failed to release a superseded App view-state registration:", F instanceof Error ? F.message : F);
       }
@@ -13133,26 +13133,26 @@ function wb(u) {
       viewToken: H.viewToken,
       bindingId: H.bindingId,
       registrationId: H.registrationId
-    }, { timeoutMs: te }), ae = wp(X);
-    if (ae.ok === !1)
-      throw Oe(we.BAD_RESPONSE, ae.error);
-    if (!$i(ae.value, {
+    }, { timeoutMs: te }), ne = wp(X);
+    if (ne.ok === !1)
+      throw Oe(we.BAD_RESPONSE, ne.error);
+    if (!$i(ne.value, {
       viewToken: H.viewToken,
       bindingId: H.bindingId,
       registrationId: H.registrationId
     }))
       throw Oe(we.VIEW_STALE, "This view-state release reply answered a different view than the one this handle targets.");
-    const $ = u.getContext();
-    if (!L(H.viewToken) || $?.slot !== "card" || $.viewState?.bindingId !== H.bindingId || $.viewState?.viewKind !== H.viewKind)
+    const J = u.getContext();
+    if (!L(H.viewToken) || J?.slot !== "card" || J.viewState?.bindingId !== H.bindingId || J.viewState?.viewKind !== H.viewKind)
       throw Oe(we.VIEW_STALE, "The namespace changed before this view-state release was confirmed.");
-    return { released: ae.value.released };
+    return { released: ne.value.released };
   })()), H.releasePromise), G = (H, M, te, j, F) => {
-    const B = new AbortController(), X = {
+    const I = new AbortController(), X = {
       viewToken: H,
       bindingId: M,
       viewKind: te,
       registrationId: j,
-      lifetime: B,
+      lifetime: I,
       initial: F,
       releasePromise: null,
       terminated: null
@@ -13161,10 +13161,10 @@ function wb(u) {
       get initial() {
         return _b(X.initial);
       },
-      signal: B.signal,
-      get: (ae) => ge(X, ae),
-      set: (ae, $) => se(X, ae, $),
-      release: (ae) => Se(X, ae)
+      signal: I.signal,
+      get: (ne) => ge(X, ne),
+      set: (ne, J) => se(X, ne, J),
+      release: (ne) => Se(X, ne)
     }, X;
   };
   return {
@@ -13176,38 +13176,38 @@ function wb(u) {
         throw Oe(we.UNAVAILABLE, "View-state recovery is only available on an App card surface.");
       const j = te?.viewState?.bindingId ?? null, F = ++s;
       p("superseded");
-      const B = new AbortController(), X = { abort: B, tokenCaptured: !1 };
+      const I = new AbortController(), X = { abort: I, tokenCaptured: !1 };
       m.set(F, X);
-      let ae = null;
+      let ne = null;
       try {
-        let $;
+        let J;
         try {
-          $ = await u.currentView.waitForToken(M, B.signal);
+          J = await u.currentView.waitForToken(M, I.signal);
         } catch (de) {
-          throw o ? Oe(we.RELEASED, "The App view-state controller was released.") : B.signal.aborted ? Oe(we.VIEW_STALE, "A newer view-state enable replaced this one before it was bound.") : b(de);
+          throw o ? Oe(we.RELEASED, "The App view-state controller was released.") : I.signal.aborted ? Oe(we.VIEW_STALE, "A newer view-state enable replaced this one before it was bound.") : E(de);
         }
         if (X.tokenCaptured = !0, o) throw Oe(we.RELEASED, "The App view-state controller was released.");
-        if (F !== s || B.signal.aborted)
+        if (F !== s || I.signal.aborted)
           throw Oe(we.VIEW_STALE, "A newer view-state enable replaced this one before it was bound.");
-        le($);
-        const E = u.getContext(), z = E?.viewState;
-        if (!E || E.slot !== "card" || !z || z.available !== !0)
+        le(J);
+        const b = u.getContext(), z = b?.viewState;
+        if (!b || b.slot !== "card" || !z || z.available !== !0)
           throw Oe(we.UNAVAILABLE, "The App view-state namespace is not available here right now.");
         if (j !== null && j !== z.bindingId)
           throw Oe(we.VIEW_STALE, "The App view-state namespace changed before this enable was sent.");
-        le($);
-        const W = await ne(Ji.ENABLE, {
-          viewToken: $,
+        le(J);
+        const W = await ae(Ji.ENABLE, {
+          viewToken: J,
           bindingId: z.bindingId
         }, M, null), P = wo(W);
         if (P.ok === !1)
           throw Oe(we.BAD_RESPONSE, P.error);
-        if (!$i(P.value, { viewToken: $, bindingId: z.bindingId }))
+        if (!$i(P.value, { viewToken: J, bindingId: z.bindingId }))
           throw Oe(we.VIEW_STALE, "This view-state enable reply answered a different view than the one that was enabled.");
-        if (ae = { token: $, bindingId: z.bindingId, registrationId: P.value.registrationId }, o) throw Oe(we.RELEASED, "The App view-state controller was released.");
-        if (F !== s || B.signal.aborted || !m.has(F))
+        if (ne = { token: J, bindingId: z.bindingId, registrationId: P.value.registrationId }, o) throw Oe(we.RELEASED, "The App view-state controller was released.");
+        if (F !== s || I.signal.aborted || !m.has(F))
           throw Oe(we.VIEW_STALE, "This view-state enable was voided before its reply arrived.");
-        if (!L($))
+        if (!L(J))
           throw Oe(we.VIEW_STALE, "The document changed before this view-state enable reply arrived.");
         const ie = u.getContext();
         if (!ie || ie.slot !== "card" || ie.viewState?.bindingId !== z.bindingId || ie.viewState?.viewKind !== z.viewKind)
@@ -13217,10 +13217,10 @@ function wb(u) {
         const be = _o(P.value.snapshot);
         if (be.ok === !1)
           throw Oe(we.BAD_RESPONSE, be.error);
-        const fe = re(z.viewKind, be.value), ee = G($, z.bindingId, z.viewKind, P.value.registrationId, fe);
-        return d = ee, ae = null, ee.handle;
-      } catch ($) {
-        throw ae !== null && await oe(ae.token, ae.bindingId, ae.registrationId), $;
+        const fe = re(z.viewKind, be.value), ee = G(J, z.bindingId, z.viewKind, P.value.registrationId, fe);
+        return d = ee, ne = null, ee.handle;
+      } catch (J) {
+        throw ne !== null && await oe(ne.token, ne.bindingId, ne.registrationId), J;
       } finally {
         m.delete(F);
       }
@@ -13267,14 +13267,14 @@ function nu(u) {
     let y;
     if (Array.isArray(d)) {
       const S = [];
-      for (let b = 0; b < d.length; b++) {
-        if (!Object.prototype.hasOwnProperty.call(d, b)) throw new Error("Input panel JSON must not contain sparse arrays.");
-        S.push(o(d[b], m + 1));
+      for (let E = 0; E < d.length; E++) {
+        if (!Object.prototype.hasOwnProperty.call(d, E)) throw new Error("Input panel JSON must not contain sparse arrays.");
+        S.push(o(d[E], m + 1));
       }
       y = S;
     } else {
       const S = /* @__PURE__ */ Object.create(null);
-      for (const b of Object.keys(d)) S[b] = o(d[b], m + 1);
+      for (const E of Object.keys(d)) S[E] = o(d[E], m + 1);
       y = S;
     }
     return r.delete(d), y;
@@ -13355,7 +13355,7 @@ function Rb(u) {
     for (const A of m.values())
       clearTimeout(A.timeout), A.reject(new Error("The input panel binding was replaced."));
     m.clear(), y();
-  }, b = (A) => {
+  }, E = (A) => {
     for (const x of m.values())
       clearTimeout(x.timeout), x.reject(new Error(A));
     m.clear();
@@ -13379,7 +13379,7 @@ function Rb(u) {
         }
         const Z = r?.panelId === he.panelId && r.appId === he.appId && r.sessionId === he.sessionId && r.confirmId === he.confirmId && r.status === he.status && r.instanceId === he.instanceId && r.revision === he.revision;
         if (Z && r && he.presentationRevision < r.presentationRevision) return !0;
-        Z || b("The input panel binding was replaced."), r = he, Z || o++, y();
+        Z || E("The input panel binding was replaced."), r = he, Z || o++, y();
       }
       return !0;
     }
@@ -13450,9 +13450,9 @@ function Rb(u) {
           m.delete(le), he(new Error("The input panel presentation request timed out."));
         }, 1e4);
         m.set(le, { generation: L, resolve: ye, reject: he, timeout: Z });
-        const ue = (ne) => {
+        const ue = (ae) => {
           const re = m.get(le);
-          re && (m.delete(le), clearTimeout(re.timeout), re.reject(ne instanceof Error ? ne : new Error("The input panel presentation request could not be delivered.")));
+          re && (m.delete(le), clearTimeout(re.timeout), re.reject(ae instanceof Error ? ae : new Error("The input panel presentation request could not be delivered.")));
         };
         try {
           u({
@@ -13463,12 +13463,12 @@ function Rb(u) {
             type: Fi.PRESENTATION,
             payload: { panelId: x.panelId, instanceId: x.instanceId, revision: x.revision, presentationRevision: x.presentationRevision, presentation: V }
           }, ue);
-        } catch (ne) {
-          ue(ne);
+        } catch (ae) {
+          ue(ae);
         }
         if (o !== L) {
-          const ne = m.get(le);
-          ne && (m.delete(le), clearTimeout(ne.timeout), ne.reject(new Error("The input panel binding was replaced.")));
+          const ae = m.get(le);
+          ae && (m.delete(le), clearTimeout(ae.timeout), ae.reject(new Error("The input panel binding was replaced.")));
         }
       });
     }
@@ -13549,14 +13549,14 @@ function Lb(u, r) {
   const o = u, s = typeof o.visible == "boolean" ? o.visible : r.visible, d = eg(
     o.maxFrameRate,
     r.maxFrameRate > 0 ? r.maxFrameRate : uu
-  ), m = typeof o.active == "boolean" ? o.active && s && d > 0 : s && d > 0, g = o.motion, y = g === "full" || g === "reduced" || g === "paused" ? g : m ? "full" : "paused", S = typeof o.slot == "string" ? o.slot : r.slot, b = typeof o.reason == "string" ? o.reason : r.reason;
+  ), m = typeof o.active == "boolean" ? o.active && s && d > 0 : s && d > 0, g = o.motion, y = g === "full" || g === "reduced" || g === "paused" ? g : m ? "full" : "paused", S = typeof o.slot == "string" ? o.slot : r.slot, E = typeof o.reason == "string" ? o.reason : r.reason;
   return {
     visible: s,
     active: m,
     maxFrameRate: m ? d : 0,
     motion: m ? y : "paused",
     ...S === "page" || S === "widget" || S === "card" || S === "settings" || S === "function-panel" || S === "slot" ? { slot: S } : {},
-    ...b ? { reason: b } : {}
+    ...E ? { reason: E } : {}
   };
 }
 function Ib(u, r) {
@@ -13604,10 +13604,10 @@ function Yb(u) {
   if (!o || s !== "card" && s !== "function-panel" && s !== "settings" && s !== "slot" && s !== "input-panel") return null;
   const m = Rp(r.embeddedSessionId), g = Rp(r.originSessionId), y = Zp(r.instanceKey);
   if (y === null) return null;
-  const S = Gb(r.viewState), b = typeof d == "string" && !!d.trim();
-  if (y !== void 0 && !b) return null;
+  const S = Gb(r.viewState), E = typeof d == "string" && !!d.trim();
+  if (y !== void 0 && !E) return null;
   const N = {};
-  return m !== void 0 && (N.embeddedSessionId = m), g !== void 0 && (N.originSessionId = g), y !== void 0 && (N.instanceKey = y), S !== void 0 && (N.viewState = S), s === "settings" || s === "input-panel" ? d === null ? { appId: o, slot: s, cardInstanceId: null, ...N } : null : b ? { appId: o, slot: s, cardInstanceId: d.trim(), ...N } : s !== "card" || d !== null || typeof r.embeddedSessionId != "string" || !r.embeddedSessionId.trim() ? null : { appId: o, slot: s, cardInstanceId: null, ...N };
+  return m !== void 0 && (N.embeddedSessionId = m), g !== void 0 && (N.originSessionId = g), y !== void 0 && (N.instanceKey = y), S !== void 0 && (N.viewState = S), s === "settings" || s === "input-panel" ? d === null ? { appId: o, slot: s, cardInstanceId: null, ...N } : null : E ? { appId: o, slot: s, cardInstanceId: d.trim(), ...N } : s !== "card" || d !== null || typeof r.embeddedSessionId != "string" || !r.embeddedSessionId.trim() ? null : { appId: o, slot: s, cardInstanceId: null, ...N };
 }
 function Co(u) {
   return {
@@ -13698,13 +13698,13 @@ function Pb(u) {
   const m = d.split("/");
   for (const S of m) {
     if (!S) throw new Error("Invalid plugin API path.");
-    let b;
+    let E;
     try {
-      b = decodeURIComponent(S);
+      E = decodeURIComponent(S);
     } catch {
       throw new Error("Invalid plugin API path.");
     }
-    if (b === "." || b === ".." || b.includes("/") || b.includes("\\"))
+    if (E === "." || E === ".." || E.includes("/") || E.includes("\\"))
       throw new Error("Invalid plugin API path.");
   }
   const g = new URL(`http://hana.local/${o}`);
@@ -13755,9 +13755,9 @@ function tE(u, r) {
   return u.kind === "global" ? o.kind === "global" : o.kind === "agent" && o.agentId === u.agentId;
 }
 function ig(u = {}) {
-  const r = u.targetWindow ?? Ub(), o = u.parentWindow ?? r.parent, s = qp(r, u.targetOrigin), d = u.requestTimeoutMs ?? 1e4, m = u.idFactory ?? Db, g = Rb($), y = sb({
+  const r = u.targetWindow ?? Ub(), o = u.parentWindow ?? r.parent, s = qp(r, u.targetOrigin), d = u.requestTimeoutMs ?? 1e4, m = u.idFactory ?? Db, g = Rb(J), y = sb({
     targetWindow: r,
-    post: $,
+    post: J,
     // A host that rebound its bridge to this same document gets a fresh
     // handshake by re-announcing the ready the page already sent.
     reannounceReady: () => {
@@ -13765,20 +13765,20 @@ function ig(u = {}) {
     }
   }), S = db({
     request: Ne,
-    post: $,
+    post: J,
     targetWindow: r,
     currentView: y,
     requestTimeoutMs: d
-  }), b = u.followHostTheme !== !1;
-  let N = Hb(r), p = qb(r), I = null, A = null;
-  const x = /* @__PURE__ */ new Set(), V = /* @__PURE__ */ new Set(), L = /* @__PURE__ */ new Set(), le = /* @__PURE__ */ new Set(), ye = /* @__PURE__ */ new Set(), he = /* @__PURE__ */ new Set(), Z = /* @__PURE__ */ new Set(), ue = /* @__PURE__ */ new Set(), ne = /* @__PURE__ */ new Set();
+  }), E = u.followHostTheme !== !1;
+  let N = Hb(r), p = qb(r), B = null, A = null;
+  const x = /* @__PURE__ */ new Set(), V = /* @__PURE__ */ new Set(), L = /* @__PURE__ */ new Set(), le = /* @__PURE__ */ new Set(), ye = /* @__PURE__ */ new Set(), he = /* @__PURE__ */ new Set(), Z = /* @__PURE__ */ new Set(), ue = /* @__PURE__ */ new Set(), ae = /* @__PURE__ */ new Set();
   let re = null, ge = null, se = null, oe = !1, Se, G = !1, me = !1, De = !1, H = Promise.resolve();
   const M = /* @__PURE__ */ new Map();
-  let te = 1, j = null, F = null, B = null, X = !1;
-  function ae(O) {
-    if (!b || !O) return;
-    const J = r.document;
-    J && zb(J, O).catch((Y) => {
+  let te = 1, j = null, F = null, I = null, X = !1;
+  function ne(O) {
+    if (!E || !O) return;
+    const $ = r.document;
+    $ && zb($, O).catch((Y) => {
       if (u.onThemeError) {
         u.onThemeError(Y);
         return;
@@ -13786,50 +13786,50 @@ function ig(u = {}) {
       console.error("[hana] failed to follow host theme", Y);
     });
   }
-  function $(O, J) {
+  function J(O, $) {
     if (u.messageTransport) {
       const Y = u.messageTransport.postMessage(O);
-      Y && Y.catch(J ?? ((k) => console.error("[hana] host message delivery failed", k)));
+      Y && Y.catch($ ?? ((k) => console.error("[hana] host message delivery failed", k)));
     } else o.postMessage(O, s);
   }
-  function E(O) {
+  function b(O) {
     if (u.messageTransport) return u.messageTransport.onMessage(O);
-    const J = (Y) => {
+    const $ = (Y) => {
       Lp(Y, o, s) && O(Y.data);
     };
-    return r.addEventListener("message", J), () => r.removeEventListener("message", J);
+    return r.addEventListener("message", $), () => r.removeEventListener("message", $);
   }
-  function z(O, J) {
+  function z(O, $) {
     const Y = {
       protocol: dt,
       version: ht,
       kind: "event",
       type: O
     };
-    J !== void 0 && (Y.payload = J), $(Y);
+    $ !== void 0 && (Y.payload = $), J(Y);
   }
   function W(O) {
     z("hana.ready", O);
   }
   function P(O) {
-    const J = O instanceof Ca ? O : new Ca({
+    const $ = O instanceof Ca ? O : new Ca({
       code: "HOST_ERROR",
       message: O instanceof Error ? O.message : "Active session subscription failed."
     });
     let Y = !1;
-    for (const k of ne)
+    for (const k of ae)
       if (k.onError) {
         Y = !0;
         try {
-          k.onError(J);
+          k.onError($);
         } catch (Ee) {
           console.error("[hana] active session error callback failed", Ee);
         }
       }
-    Y || console.error("[hana] active session subscription failed", J);
+    Y || console.error("[hana] active session subscription failed", $);
   }
   function ie() {
-    return ne.size > 0 && !De && !me;
+    return ae.size > 0 && !De && !me;
   }
   function be() {
     H = H.catch(() => {
@@ -13861,8 +13861,8 @@ function ig(u = {}) {
     });
   }
   function fe(O) {
-    const J = r.document?.readyState;
-    return J !== "loading" && J !== "interactive" ? Promise.resolve() : new Promise((Y, k) => {
+    const $ = r.document?.readyState;
+    return $ !== "loading" && $ !== "interactive" ? Promise.resolve() : new Promise((Y, k) => {
       const Ee = () => {
         r.clearTimeout(St), r.removeEventListener("load", Be), r.removeEventListener("pagehide", $e);
       }, Be = () => {
@@ -13887,9 +13887,9 @@ function ig(u = {}) {
     });
   }
   function de(O) {
-    const J = r.requestAnimationFrame?.bind(r), Y = r.cancelAnimationFrame?.bind(r);
-    if (J && Y) {
-      const Ee = J(O);
+    const $ = r.requestAnimationFrame?.bind(r), Y = r.cancelAnimationFrame?.bind(r);
+    if ($ && Y) {
+      const Ee = $(O);
       return () => Y(Ee);
     }
     const k = r.setTimeout(() => {
@@ -13904,8 +13904,8 @@ function ig(u = {}) {
   function rt() {
     j || M.size === 0 || !p.active || p.maxFrameRate <= 0 || (j = de((O) => {
       if (j = null, !p.active || p.maxFrameRate <= 0) return;
-      const J = 1e3 / p.maxFrameRate;
-      if (F !== null && O >= F && O - F < J) {
+      const $ = 1e3 / p.maxFrameRate;
+      if (F !== null && O >= F && O - F < $) {
         rt();
         return;
       }
@@ -13926,7 +13926,7 @@ function ig(u = {}) {
   function Yt(O) {
     if (!Bb(p, O)) {
       p = O;
-      for (const J of L) J({ ...p });
+      for (const $ of L) $({ ...p });
       if (!p.active || p.maxFrameRate <= 0) {
         We();
         return;
@@ -13943,9 +13943,9 @@ function ig(u = {}) {
       k && Yt(k);
       return;
     }
-    const J = Pi(O);
-    if (!J.ok) return;
-    const Y = J.value;
+    const $ = Pi(O);
+    if (!$.ok) return;
+    const Y = $.value;
     if (!y.handleHostMessage(Y) && !S.handleHostMessage(Y)) {
       if (g.handleMessage(Y)) {
         Y.type === Fi.CONTEXT && Y.payload === null && oe && W(Se);
@@ -13954,7 +13954,7 @@ function ig(u = {}) {
       if (Y.kind === "request" && Y.type === "hana.document.view-request") {
         const k = typeof Y.payload == "object" && Y.payload !== null ? Y.payload : null, Ee = k && typeof k.requestId == "string" ? k.requestId : "", Be = k && typeof k.documentId == "string" ? k.documentId : "", $e = k && typeof k.viewId == "string" ? k.viewId : "", St = k?.revision, Ht = k && typeof k.method == "string" ? k.method.trim() : "";
         if (!Ee || !Be || !$e || !Ht || Ht.length > 128 || !Number.isSafeInteger(St) || Number(St) < 0) {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -13965,7 +13965,7 @@ function ig(u = {}) {
           return;
         }
         if (!se) {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -13984,9 +13984,9 @@ function ig(u = {}) {
           method: Ht,
           ...Object.prototype.hasOwnProperty.call(k, "payload") ? { payload: Tt } : {}
         })).then((pn) => {
-          $({ protocol: dt, version: ht, id: Y.id, kind: "response", type: Y.type, payload: pn });
+          J({ protocol: dt, version: ht, id: Y.id, kind: "response", type: Y.type, payload: pn });
         }, (pn) => {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -14000,7 +14000,7 @@ function ig(u = {}) {
       if (Y.kind === "request" && Y.type === "hana.document.request") {
         const k = Y.payload, Ee = typeof k == "object" && k !== null ? k : null, Be = Ee && typeof Ee.requestId == "string" ? Ee.requestId : "", $e = Ee?.kind, St = Ee?.revision;
         if (!Be || !["save", "prepareClose", "revert", "undo", "redo"].includes(String($e)) || !Number.isSafeInteger(St)) {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -14011,7 +14011,7 @@ function ig(u = {}) {
           return;
         }
         if (!ge) {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -14027,9 +14027,9 @@ function ig(u = {}) {
           revision: St
         };
         Promise.resolve(ge(Ht)).then((Tt) => {
-          $({ protocol: dt, version: ht, id: Y.id, kind: "response", type: Y.type, payload: Tt });
+          J({ protocol: dt, version: ht, id: Y.id, kind: "response", type: Y.type, payload: Tt });
         }, (Tt) => {
-          $({
+          J({
             protocol: dt,
             version: ht,
             id: Y.id,
@@ -14042,14 +14042,14 @@ function ig(u = {}) {
       }
       if (Y.kind === "request" && Y.type === Ie.UI_ACTION) {
         const k = r.document, Ee = k ? Qp(k, Y.payload, Zb(r, A)) : { ok: !1, code: "UI_ACTION_DOCUMENT_UNAVAILABLE", error: "No document is available." };
-        Ee.ok === !0 ? $({
+        Ee.ok === !0 ? J({
           protocol: dt,
           version: ht,
           id: Y.id,
           kind: "response",
           type: Ie.UI_ACTION,
           payload: Ee.result
-        }) : $({
+        }) : J({
           protocol: dt,
           version: ht,
           id: Y.id,
@@ -14075,14 +14075,14 @@ function ig(u = {}) {
             palettes: Mb(k.palettes) ? k.palettes : Be ? void 0 : N.palettes
           };
           for (const $e of x) $e({ ...N });
-          ae(N.cssUrl);
+          ne(N.cssUrl);
           return;
         }
         if (Y.type === Kl.SURFACE_ENVELOPE_CHANGED) {
           const k = Vb(Y.payload);
           if (!k) return;
-          I = k;
-          for (const Ee of V) Ee(Oo(I));
+          B = k;
+          for (const Ee of V) Ee(Oo(B));
           return;
         }
         if (Y.type === Kl.SURFACE_RUNTIME_CHANGED) {
@@ -14102,7 +14102,7 @@ function ig(u = {}) {
           if (me) return;
           const k = Xb(Y.payload);
           if (!k) return;
-          for (const Ee of ne) Ee.callback(k);
+          for (const Ee of ae) Ee.callback(k);
           return;
         }
         if (Y.type === _p.ERROR) {
@@ -14142,12 +14142,12 @@ function ig(u = {}) {
       }
     }
   }
-  E(an), r.addEventListener("pagehide", (O) => {
-    g.clear(), De = !0, be(), O?.persisted === !1 && (X = !0, y.dispose(), B?.dispose(), S.dispose());
+  b(an), r.addEventListener("pagehide", (O) => {
+    g.clear(), De = !0, be(), O?.persisted === !1 && (X = !0, y.dispose(), I?.dispose(), S.dispose());
   }), r.addEventListener("pageshow", () => {
     De && (De = !1, be());
   });
-  function Ne(O, J, Y = {}) {
+  function Ne(O, $, Y = {}) {
     const k = m(), Ee = Y.timeoutMs ?? d;
     return new Promise((Be, $e) => {
       let St = () => {
@@ -14171,9 +14171,9 @@ function ig(u = {}) {
         kind: "request",
         type: O
       };
-      J !== void 0 && (pn.payload = J);
+      $ !== void 0 && (pn.payload = $);
       try {
-        St = E(Tt), $(pn, (ja) => {
+        St = b(Tt), J(pn, (ja) => {
           Ht(), $e(ja);
         });
       } catch (ja) {
@@ -14183,27 +14183,27 @@ function ig(u = {}) {
   }
   function Qe(O) {
     return {
-      get(J, Y) {
-        return Ne(Zl.GET, { scope: O, key: J }, Y);
+      get($, Y) {
+        return Ne(Zl.GET, { scope: O, key: $ }, Y);
       },
-      getAll(J) {
-        return Ne(Zl.GET_ALL, { scope: O }, J);
+      getAll($) {
+        return Ne(Zl.GET_ALL, { scope: O }, $);
       },
-      set(J, Y, k) {
-        return Ne(Zl.SET, { scope: O, key: J, value: Y }, k);
+      set($, Y, k) {
+        return Ne(Zl.SET, { scope: O, key: $, value: Y }, k);
       },
-      delete(J, Y) {
-        return Ne(Zl.DELETE, { scope: O, key: J }, Y);
+      delete($, Y) {
+        return Ne(Zl.DELETE, { scope: O, key: $ }, Y);
       },
-      keys(J) {
-        return Ne(Zl.KEYS, { scope: O }, J);
+      keys($) {
+        return Ne(Zl.KEYS, { scope: O }, $);
       },
-      onChanged(J) {
+      onChanged($) {
         if (O.kind === "agent" && !O.agentId)
           throw new Error(
             "hana.storage.agent() with no agentId cannot subscribe with onChanged — a subscription outlives any single request, so pass an explicit agentId to subscribe to a stable scope."
           );
-        const Y = { scope: O, callback: J };
+        const Y = { scope: O, callback: $ };
         return he.add(Y), () => {
           he.delete(Y);
         };
@@ -14224,8 +14224,8 @@ function ig(u = {}) {
       url(O) {
         return lg(r, O, !0);
       },
-      fetch(O, J) {
-        return Wb(r, O, J, re);
+      fetch(O, $) {
+        return Wb(r, O, $, re);
       }
     },
     ui: {
@@ -14245,10 +14245,10 @@ function ig(u = {}) {
     },
     envelope: {
       getSnapshot() {
-        return I ? Oo(I) : null;
+        return B ? Oo(B) : null;
       },
       subscribe(O) {
-        return V.add(O), O(I ? Oo(I) : null), () => {
+        return V.add(O), O(B ? Oo(B) : null), () => {
           V.delete(O);
         };
       }
@@ -14264,16 +14264,16 @@ function ig(u = {}) {
       }
     },
     cards: {
-      open(O, J) {
+      open(O, $) {
         if (typeof O != "string" || !O.trim())
           return Promise.reject(new TypeError("hana.cards.open requires a non-empty declared card ID."));
         let Y;
-        if (J !== void 0) {
-          if (typeof J != "object" || J === null || Array.isArray(J))
+        if ($ !== void 0) {
+          if (typeof $ != "object" || $ === null || Array.isArray($))
             return Promise.reject(new TypeError("hana.cards.open options must be an object."));
-          if (Object.keys(J).some((Ee) => Ee !== "instanceKey"))
+          if (Object.keys($).some((Ee) => Ee !== "instanceKey"))
             return Promise.reject(new TypeError("hana.cards.open options accepts only instanceKey."));
-          const k = Zp(J.instanceKey);
+          const k = Zp($.instanceKey);
           if (k === null)
             return Promise.reject(new TypeError("hana.cards.open instanceKey must be a non-empty string of at most 256 code units without NUL."));
           Y = k;
@@ -14293,33 +14293,33 @@ function ig(u = {}) {
           le.delete(O);
         };
       },
-      setInteractiveRegions(O, J) {
+      setInteractiveRegions(O, $) {
         const Y = Y0({ regions: O });
-        return Y.ok === !1 ? Promise.reject(new TypeError(Y.error)) : oe ? fe(J?.timeoutMs ?? d).then(() => (W(Se), Ne(Do.SET_INTERACTIVE_REGIONS, Y.value, J))) : Ne(Do.SET_INTERACTIVE_REGIONS, Y.value, J);
+        return Y.ok === !1 ? Promise.reject(new TypeError(Y.error)) : oe ? fe($?.timeoutMs ?? d).then(() => (W(Se), Ne(Do.SET_INTERACTIVE_REGIONS, Y.value, $))) : Ne(Do.SET_INTERACTIVE_REGIONS, Y.value, $);
       }
     },
     sessions: {
       getActive(O) {
         return ee(O?.timeoutMs).then(() => Ne(zr.GET_ACTIVE, void 0, O));
       },
-      focus(O, J) {
-        return !O || typeof O.sessionId != "string" || !O.sessionId.trim() ? Promise.reject(new TypeError("hana.sessions.focus requires a non-empty sessionId.")) : ee(J?.timeoutMs).then(() => Ne(
+      focus(O, $) {
+        return !O || typeof O.sessionId != "string" || !O.sessionId.trim() ? Promise.reject(new TypeError("hana.sessions.focus requires a non-empty sessionId.")) : ee($?.timeoutMs).then(() => Ne(
           zr.FOCUS,
           { sessionId: O.sessionId.trim() },
-          J
+          $
         ));
       },
-      onActiveChanged(O, J) {
-        const Y = { callback: O, onError: J };
-        return me = !1, ne.add(Y), be(), () => {
-          ne.delete(Y) && be();
+      onActiveChanged(O, $) {
+        const Y = { callback: O, onError: $ };
+        return me = !1, ae.add(Y), be(), () => {
+          ae.delete(Y) && be();
         };
       }
     },
     performance: {
       requestAnimationFrame(O) {
-        const J = te;
-        return te += 1, M.set(J, O), rt(), J;
+        const $ = te;
+        return te += 1, M.set($, O), rt(), $;
       },
       cancelAnimationFrame(O) {
         M.delete(O), M.size === 0 && We();
@@ -14330,39 +14330,39 @@ function ig(u = {}) {
     },
     chrome: S.api,
     toast: {
-      show(O, J) {
-        return Ne(Ie.TOAST_SHOW, O, J);
+      show(O, $) {
+        return Ne(Ie.TOAST_SHOW, O, $);
       }
     },
     external: {
-      open(O, J) {
-        return Ne(Ie.EXTERNAL_OPEN, Kb(O), J);
+      open(O, $) {
+        return Ne(Ie.EXTERNAL_OPEN, Kb(O), $);
       }
     },
     clipboard: {
-      writeText(O, J) {
+      writeText(O, $) {
         return Ne(
           Ie.CLIPBOARD_WRITE_TEXT,
           kb(O),
-          J
+          $
         );
       }
     },
     resources: {
-      open(O, J) {
-        return Ne(Ie.RESOURCE_OPEN, O, J);
+      open(O, $) {
+        return Ne(Ie.RESOURCE_OPEN, O, $);
       },
-      pick(O = {}, J) {
-        return Ne(Ie.RESOURCE_PICK, O, J);
+      pick(O = {}, $) {
+        return Ne(Ie.RESOURCE_PICK, O, $);
       },
-      saveFile(O, J) {
-        return Ne(Ie.RESOURCE_SAVE_FILE, O, J);
+      saveFile(O, $) {
+        return Ne(Ie.RESOURCE_SAVE_FILE, O, $);
       },
-      requestAccess(O, J) {
+      requestAccess(O, $) {
         return Ne(
           Ie.RESOURCE_REQUEST_ACCESS,
           O,
-          J
+          $
         );
       }
     },
@@ -14373,21 +14373,21 @@ function ig(u = {}) {
       read(O) {
         return Ne("hana.document.read", void 0, O);
       },
-      reportStatus(O, J) {
-        return Ne("hana.document.report-status", O, J);
+      reportStatus(O, $) {
+        return Ne("hana.document.report-status", O, $);
       },
-      open(O, J) {
-        return Ne("hana.document.open", O, J);
+      open(O, $) {
+        return Ne("hana.document.open", O, $);
       },
-      rebind(O, J) {
-        return Ne("hana.document.rebind", O, J);
+      rebind(O, $) {
+        return Ne("hana.document.rebind", O, $);
       },
-      openDrop(O, J) {
+      openDrop(O, $) {
         if (O.defaultPrevented) return Promise.resolve(null);
         const Y = O.dataTransfer?.getData("application/x-hana-file-drag") || "";
-        if (Y) return Ne("hana.document.open-drop", { dragId: Y }, J);
+        if (Y) return Ne("hana.document.open-drop", { dragId: Y }, $);
         const k = Array.from(O.dataTransfer?.files || []);
-        return k.length !== 1 ? Promise.resolve(null) : Ne("hana.document.open-drop", { file: k[0] }, J);
+        return k.length !== 1 ? Promise.resolve(null) : Ne("hana.document.open-drop", { file: k[0] }, $);
       },
       onRequest(O) {
         return ge = O, () => {
@@ -14401,27 +14401,27 @@ function ig(u = {}) {
       }
     },
     state: {
-      get(O, J) {
+      get(O, $) {
         const Y = typeof O == "string" && O ? { key: O } : {};
-        return Ne(Ie.STATE_GET, Y, J);
+        return Ne(Ie.STATE_GET, Y, $);
       },
-      set(O, J, Y) {
-        const k = typeof O == "string" ? { key: O, value: J } : { state: O };
+      set(O, $, Y) {
+        const k = typeof O == "string" ? { key: O, value: $ } : { state: O };
         return Ne(Ie.STATE_SET, k, Y);
       }
     },
     storage: {
-      get(O, J) {
-        return Ne(Ie.STORAGE_GET, { key: O }, J);
+      get(O, $) {
+        return Ne(Ie.STORAGE_GET, { key: O }, $);
       },
       getAll(O) {
         return Ne(Ie.STORAGE_GET_ALL, {}, O);
       },
-      set(O, J, Y) {
-        return Ne(Ie.STORAGE_SET, { key: O, value: J }, Y);
+      set(O, $, Y) {
+        return Ne(Ie.STORAGE_SET, { key: O, value: $ }, Y);
       },
-      delete(O, J) {
-        return Ne(Ie.STORAGE_DELETE, { key: O }, J);
+      delete(O, $) {
+        return Ne(Ie.STORAGE_DELETE, { key: O }, $);
       },
       onChanged(O) {
         return ye.add(O), () => {
@@ -14433,20 +14433,20 @@ function ig(u = {}) {
         return Qe({ kind: "agent", agentId: O });
       }
     },
-    emit(O, J, Y, k) {
+    emit(O, $, Y, k) {
       const Ee = {
         name: O,
         userGesture: eE(r)
       };
-      return arguments.length >= 2 && (Ee.payload = J), typeof Y == "string" && Y.trim() && (Ee.to = Y.trim()), Ne(Ie.EMIT, Ee, k);
+      return arguments.length >= 2 && (Ee.payload = $), typeof Y == "string" && Y.trim() && (Ee.to = Y.trim()), Ne(Ie.EMIT, Ee, k);
     },
-    track(O, J, Y) {
+    track(O, $, Y) {
       const k = { name: O };
-      return arguments.length >= 2 && (k.payload = J), Ne(Ie.TRACK, k, Y);
+      return arguments.length >= 2 && (k.payload = $), Ne(Ie.TRACK, k, Y);
     },
     panel: {
-      set(O, J) {
-        return Ne(Ie.PANEL_SET, O, J);
+      set(O, $) {
+        return Ne(Ie.PANEL_SET, O, $);
       },
       onEvent(O) {
         return Z.add(O), () => {
@@ -14460,7 +14460,7 @@ function ig(u = {}) {
       }
     }
   };
-  return Fp(Xt, () => X ? null : (B ??= wb({
+  return Fp(Xt, () => X ? null : (I ??= wb({
     request: Ne,
     currentView: y,
     getContext: () => A,
@@ -14468,7 +14468,7 @@ function ig(u = {}) {
       le.delete(O);
     }),
     requestTimeoutMs: d
-  }), B.api)), Xt;
+  }), I.api)), Xt;
 }
 var Dp = null;
 function Te() {
@@ -14802,12 +14802,12 @@ function rE(u, r = rg, o = {}) {
           if (!x.ok || x.value.kind !== "event" || x.value.type !== "hana.app.event") return;
           const V = x.value.payload;
           V?.source !== `app:${y}` || V.type !== s || !V.payload || typeof V.payload != "object" || Array.isArray(V.payload) || d(V.payload);
-        }, b = o.messageTransport ?? Br(m);
-        if (b) return b.onMessage(S);
-        const N = o.parentWindow ?? m.parent, p = qp(m, o.targetOrigin), I = (A) => {
+        }, E = o.messageTransport ?? Br(m);
+        if (E) return E.onMessage(S);
+        const N = o.parentWindow ?? m.parent, p = qp(m, o.targetOrigin), B = (A) => {
           Lp(A, N, p) && S(A.data);
         };
-        return m.addEventListener("message", I), () => m.removeEventListener("message", I);
+        return m.addEventListener("message", B), () => m.removeEventListener("message", B);
       }
     },
     instances: {
@@ -15188,23 +15188,23 @@ function dE(u, r) {
   if (u === "hana")
     return Up["warm-paper"];
 }
-const Ce = q.forwardRef(function({ variant: r = "secondary", size: o = "md", loading: s = !1, iconLeft: d, iconRight: m, disabled: g, className: y, children: S, type: b = "button", ...N }, p) {
-  return h.jsxs("button", { ...N, ref: p, type: b, disabled: g || s, className: Hn("hana-plugin-button", `hana-plugin-button-${r}`, `hana-plugin-button-${o}`, s && "hana-plugin-button-loading", y), children: [s ? h.jsx("span", { className: "hana-plugin-spinner", "aria-hidden": !0 }) : d, S && h.jsx("span", { className: "hana-plugin-button-label", children: S }), !s && m] });
+const Ce = q.forwardRef(function({ variant: r = "secondary", size: o = "md", loading: s = !1, iconLeft: d, iconRight: m, disabled: g, className: y, children: S, type: E = "button", ...N }, p) {
+  return h.jsxs("button", { ...N, ref: p, type: E, disabled: g || s, className: Hn("hana-plugin-button", `hana-plugin-button-${r}`, `hana-plugin-button-${o}`, s && "hana-plugin-button-loading", y), children: [s ? h.jsx("span", { className: "hana-plugin-spinner", "aria-hidden": !0 }) : d, S && h.jsx("span", { className: "hana-plugin-button-label", children: S }), !s && m] });
 });
 q.forwardRef(function({ label: r, size: o = "md", variant: s = "ghost", className: d, children: m, type: g = "button", ...y }, S) {
   return h.jsx("button", { ...y, ref: S, type: g, "aria-label": r, title: y.title || r, className: Hn("hana-plugin-icon-button", `hana-plugin-icon-button-${o}`, `hana-plugin-icon-button-${s}`, d), children: m });
 });
 const Rt = q.forwardRef(function({ label: r, hint: o, error: s, id: d, className: m, inputClassName: g, ...y }, S) {
-  const b = q.useId(), N = d || b;
+  const E = q.useId(), N = d || E;
   return h.jsx(sg, { label: r, hint: o, error: s, htmlFor: N, className: m, children: h.jsx("input", { ...y, ref: S, id: N, "aria-invalid": !!s, className: Hn("hana-plugin-input", g) }) });
 });
-q.forwardRef(function({ label: r, hint: o, error: s, id: d, className: m, textareaClassName: g, rows: y = 4, ...S }, b) {
+q.forwardRef(function({ label: r, hint: o, error: s, id: d, className: m, textareaClassName: g, rows: y = 4, ...S }, E) {
   const N = q.useId(), p = d || N;
-  return h.jsx(sg, { label: r, hint: o, error: s, htmlFor: p, className: m, children: h.jsx("textarea", { ...S, ref: b, id: p, rows: y, "aria-invalid": !!s, className: Hn("hana-plugin-textarea", g) }) });
+  return h.jsx(sg, { label: r, hint: o, error: s, htmlFor: p, className: m, children: h.jsx("textarea", { ...S, ref: E, id: p, rows: y, "aria-invalid": !!s, className: Hn("hana-plugin-textarea", g) }) });
 });
-q.forwardRef(function({ checked: r, onChange: o, label: s, disabled: d, className: m, onClick: g, type: y = "button", ...S }, b) {
+q.forwardRef(function({ checked: r, onChange: o, label: s, disabled: d, className: m, onClick: g, type: y = "button", ...S }, E) {
   const N = typeof s == "string" ? s : S["aria-label"];
-  return h.jsxs("span", { className: Hn("hana-plugin-switch-wrap", m), children: [h.jsx("button", { ...S, ref: b, type: y, role: "switch", "aria-checked": r, "aria-label": N, disabled: d, className: Hn("hana-plugin-switch", r && "hana-plugin-switch-on"), onClick: (p) => {
+  return h.jsxs("span", { className: Hn("hana-plugin-switch-wrap", m), children: [h.jsx("button", { ...S, ref: E, type: y, role: "switch", "aria-checked": r, "aria-label": N, disabled: d, className: Hn("hana-plugin-switch", r && "hana-plugin-switch-on"), onClick: (p) => {
     g?.(p), !p.defaultPrevented && !d && o?.(!r);
   }, children: h.jsx("span", { className: "hana-plugin-switch-thumb", "aria-hidden": !0 }) }), s && h.jsx("span", { className: "hana-plugin-switch-label", children: s })] });
 });
@@ -15268,34 +15268,34 @@ function fg(u, r) {
   return { title: o ? o[1] : r, meta: o ? `${o[2].trim()} · ${o[3]}` : "" };
 }
 function $l({ id: u, value: r, onChange: o, options: s, placeholder: d, allowCustom: m = !1 }) {
-  const [g, y] = q.useState(r), [S, b] = q.useState(!1), [N, p] = q.useState(0), [I, A] = q.useState(null), x = q.useRef(null), V = q.useRef(null);
+  const [g, y] = q.useState(r), [S, E] = q.useState(!1), [N, p] = q.useState(0), [B, A] = q.useState(null), x = q.useRef(null), V = q.useRef(null);
   q.useEffect(() => {
     y(r);
   }, [r]);
   const L = String(g || "").trim().toLowerCase(), le = q.useMemo(() => {
     if (!L) return s;
-    const ue = s.filter((ne) => ne.value.toLowerCase().includes(L) || ne.label.toLowerCase().includes(L));
+    const ue = s.filter((ae) => ae.value.toLowerCase().includes(L) || ae.label.toLowerCase().includes(L));
     return ue.length ? ue : s;
   }, [s, L]), ye = q.useCallback(() => {
     const ue = x.current;
     if (!ue) return;
-    const ne = ue.getBoundingClientRect(), re = window.innerHeight || document.documentElement.clientHeight || 720, ge = re - ne.bottom - 8, se = ne.top - 8, oe = ge < 160 && se > ge, Se = Math.max(120, Math.min(340, Math.floor(oe ? se : ge))), G = oe ? Math.max(4, ne.top - Se - 2) : Math.max(4, Math.min(ne.bottom + 2, re - Se - 4));
-    A({ left: ne.left, width: Math.max(ne.width, 180), top: G, maxH: Se });
+    const ae = ue.getBoundingClientRect(), re = window.innerHeight || document.documentElement.clientHeight || 720, ge = re - ae.bottom - 8, se = ae.top - 8, oe = ge < 160 && se > ge, Se = Math.max(120, Math.min(340, Math.floor(oe ? se : ge))), G = oe ? Math.max(4, ae.top - Se - 2) : Math.max(4, Math.min(ae.bottom + 2, re - Se - 4));
+    A({ left: ae.left, width: Math.max(ae.width, 180), top: G, maxH: Se });
   }, []), he = q.useCallback(() => {
-    ye(), b(!0), p(0);
+    ye(), E(!0), p(0);
   }, [ye]);
   q.useEffect(() => {
     if (!S) return;
     const ue = (re) => {
       const ge = re.target;
-      x.current?.contains(ge) || V.current?.contains(ge) || b(!1);
-    }, ne = () => ye();
-    return document.addEventListener("pointerdown", ue, !0), window.addEventListener("scroll", ne, !0), window.addEventListener("resize", ne), () => {
-      document.removeEventListener("pointerdown", ue, !0), window.removeEventListener("scroll", ne, !0), window.removeEventListener("resize", ne);
+      x.current?.contains(ge) || V.current?.contains(ge) || E(!1);
+    }, ae = () => ye();
+    return document.addEventListener("pointerdown", ue, !0), window.addEventListener("scroll", ae, !0), window.addEventListener("resize", ae), () => {
+      document.removeEventListener("pointerdown", ue, !0), window.removeEventListener("scroll", ae, !0), window.removeEventListener("resize", ae);
     };
   }, [S, ye]);
   const Z = (ue) => {
-    y(ue), o(ue), b(!1);
+    y(ue), o(ue), E(!1);
   };
   return /* @__PURE__ */ h.jsxs(h.Fragment, { children: [
     /* @__PURE__ */ h.jsx(
@@ -15309,33 +15309,33 @@ function $l({ id: u, value: r, onChange: o, options: s, placeholder: d, allowCus
         onFocus: he,
         onClick: he,
         onChange: (ue) => {
-          const ne = ue.currentTarget.value;
-          y(ne), (m || s.some((re) => re.value === ne)) && o(ne), ye(), b(!0), p(0);
+          const ae = ue.currentTarget.value;
+          y(ae), (m || s.some((re) => re.value === ae)) && o(ae), ye(), E(!0), p(0);
         },
         onBlur: () => {
           window.setTimeout(() => {
-            V.current?.contains(document.activeElement) || (b(!1), m || y(r));
+            V.current?.contains(document.activeElement) || (E(!1), m || y(r));
           }, 120);
         },
         onKeyDown: (ue) => {
-          ue.stopPropagation(), ue.key === "ArrowDown" ? (ue.preventDefault(), S ? p((ne) => Math.min(ne + 1, le.length - 1)) : he()) : ue.key === "ArrowUp" ? (ue.preventDefault(), p((ne) => Math.max(ne - 1, 0))) : ue.key === "Enter" ? S && le[N] && (ue.preventDefault(), Z(le[N].value)) : ue.key === "Escape" && b(!1);
+          ue.stopPropagation(), ue.key === "ArrowDown" ? (ue.preventDefault(), S ? p((ae) => Math.min(ae + 1, le.length - 1)) : he()) : ue.key === "ArrowUp" ? (ue.preventDefault(), p((ae) => Math.max(ae - 1, 0))) : ue.key === "Enter" ? S && le[N] && (ue.preventDefault(), Z(le[N].value)) : ue.key === "Escape" && E(!1);
         }
       }
     ),
-    S && I && b0.createPortal(
+    S && B && b0.createPortal(
       /* @__PURE__ */ h.jsxs(
         "div",
         {
           ref: V,
           className: "combo-pop",
-          style: { left: I.left, top: I.top, width: I.width, maxHeight: I.maxH },
+          style: { left: B.left, top: B.top, width: B.width, maxHeight: B.maxH },
           children: [
             le.length === 0 && /* @__PURE__ */ h.jsx("div", { className: "combo-opt muted", children: "（无匹配）" }),
-            le.map((ue, ne) => /* @__PURE__ */ h.jsx(
+            le.map((ue, ae) => /* @__PURE__ */ h.jsx(
               "div",
               {
-                className: ne === N ? "combo-opt on" : "combo-opt",
-                onMouseEnter: () => p(ne),
+                className: ae === N ? "combo-opt on" : "combo-opt",
+                onMouseEnter: () => p(ae),
                 onMouseDown: (re) => {
                   re.preventDefault(), Z(ue.value);
                 },
@@ -15393,13 +15393,13 @@ function gE(u) {
     const g = r[s];
     if (/^\|.*\|/.test(g) && s + 1 < r.length && /^\|\s*-+/.test(r[s + 1])) {
       m();
-      const y = g.split("|").slice(1, -1).map((b) => b.trim());
+      const y = g.split("|").slice(1, -1).map((E) => E.trim());
       s += 2;
       const S = [];
       for (; s < r.length && /^\|/.test(r[s]); )
-        S.push(r[s].split("|").slice(1, -1).map((b) => b.trim())), s++;
-      o.push("<table><thead><tr>" + y.map((b) => `<th>${Oa(b)}</th>`).join("") + "</tr></thead><tbody>");
-      for (const b of S) o.push("<tr>" + b.map((N) => `<td>${Oa(N)}</td>`).join("") + "</tr>");
+        S.push(r[s].split("|").slice(1, -1).map((E) => E.trim())), s++;
+      o.push("<table><thead><tr>" + y.map((E) => `<th>${Oa(E)}</th>`).join("") + "</tr></thead><tbody>");
+      for (const E of S) o.push("<tr>" + E.map((N) => `<td>${Oa(N)}</td>`).join("") + "</tr>");
       o.push("</tbody></table>");
       continue;
     }
@@ -15445,23 +15445,23 @@ async function vE() {
   };
 }
 function yE() {
-  const u = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), [r, o] = q.useState({ id: "", title: "", authors: "", year: "", venue: "", textType: "", score: "9", rationale: "", date: u, recordedBy: "" }), [s, d] = q.useState(null), [m, g] = q.useState([]), y = (b, N) => o((p) => ({ ...p, [b]: N }));
+  const u = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), [r, o] = q.useState({ id: "", title: "", authors: "", year: "", venue: "", textType: "", score: "9", rationale: "", date: u, recordedBy: "" }), [s, d] = q.useState(null), [m, g] = q.useState([]), y = (E, N) => o((p) => ({ ...p, [E]: N }));
   q.useEffect(() => {
-    let b = !0;
+    let E = !0;
     return (async () => {
       const N = await Ye("/api/list?dir=篇目").catch(() => null);
       if (!N?.ok) return;
-      const p = (N.items || []).map((A) => A.name).filter((A) => A.endsWith(".md") && !A.startsWith("_")), I = await Promise.all(p.map(async (A) => {
+      const p = (N.items || []).map((A) => A.name).filter((A) => A.endsWith(".md") && !A.startsWith("_")), B = await Promise.all(p.map(async (A) => {
         const x = await Ye(nn(`篇目/${A}`)).catch(() => null), V = x?.ok ? String(x.content || "").split(/\r?\n/, 1)[0] : "", L = /^#\s+(.+?)（([^（）]+),\s*(\d{4})[^)）]*）$/.exec(String(V || "").trim()), le = A.replace(/\.md$/, "");
         return { id: le, title: L ? L[1] : le, label: L ? `${L[1]}（${L[2].trim()} · ${L[3]}）` : le, authors: L ? L[2].trim() : "", year: L ? L[3] : "" };
       }));
-      b && g(I);
+      E && g(B);
     })(), () => {
-      b = !1;
+      E = !1;
     };
   }, []);
   async function S() {
-    const b = {
+    const E = {
       id: r.id.trim(),
       title: r.title.trim(),
       authors: r.authors.trim(),
@@ -15472,7 +15472,7 @@ function yE() {
       rationale: r.rationale.trim(),
       date: r.date,
       recordedBy: r.recordedBy.trim()
-    }, N = await Pe("/api/tool/commit_anchor", { anchor: b });
+    }, N = await Pe("/api/tool/commit_anchor", { anchor: E });
     d(N), N.ok && mt.toast.show({ message: "评分已落盘", type: "success" });
   }
   return /* @__PURE__ */ h.jsxs("div", { className: "form", children: [
@@ -15484,27 +15484,27 @@ function yE() {
           id: "cb-score-entry",
           value: "",
           placeholder: m.length ? `输入过滤或选择篇目（${m.length} 篇，选中即预填）` : "读取篇目中…",
-          onChange: (b) => {
-            const N = m.find((p) => p.id === b);
+          onChange: (E) => {
+            const N = m.find((p) => p.id === E);
             N && o((p) => ({ ...p, id: N.id, title: N.title, authors: N.authors, year: N.year }));
           },
-          options: m.map((b) => ({ value: b.id, label: b.label }))
+          options: m.map((E) => ({ value: E.id, label: E.label }))
         }
       ),
       /* @__PURE__ */ h.jsx("span", { className: "hint", children: "也可不选直接手填（锚点可以是尚未拆解的文献）。" })
     ] }),
     /* @__PURE__ */ h.jsxs("div", { className: "grid2", children: [
-      /* @__PURE__ */ h.jsx(Rt, { label: "篇目 id（slug-年）", value: r.id, onChange: (b) => y("id", b.currentTarget.value), placeholder: "sample-2020" }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "文本类型（你判）", value: r.textType, onChange: (b) => y("textType", b.currentTarget.value), placeholder: "论证型 / 阐释型…" }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "标题", value: r.title, onChange: (b) => y("title", b.currentTarget.value) }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "作者", value: r.authors, onChange: (b) => y("authors", b.currentTarget.value) }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "年份", value: r.year, onChange: (b) => y("year", b.currentTarget.value) }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "出处（可空）", value: r.venue, onChange: (b) => y("venue", b.currentTarget.value) }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "总分 1-10", value: r.score, onChange: (b) => y("score", b.currentTarget.value) }),
-      /* @__PURE__ */ h.jsx(Rt, { label: "日期", value: r.date, onChange: (b) => y("date", b.currentTarget.value) })
+      /* @__PURE__ */ h.jsx(Rt, { label: "篇目 id（slug-年）", value: r.id, onChange: (E) => y("id", E.currentTarget.value), placeholder: "sample-2020" }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "文本类型（你判）", value: r.textType, onChange: (E) => y("textType", E.currentTarget.value), placeholder: "论证型 / 阐释型…" }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "标题", value: r.title, onChange: (E) => y("title", E.currentTarget.value) }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "作者", value: r.authors, onChange: (E) => y("authors", E.currentTarget.value) }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "年份", value: r.year, onChange: (E) => y("year", E.currentTarget.value) }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "出处（可空）", value: r.venue, onChange: (E) => y("venue", E.currentTarget.value) }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "总分 1-10", value: r.score, onChange: (E) => y("score", E.currentTarget.value) }),
+      /* @__PURE__ */ h.jsx(Rt, { label: "日期", value: r.date, onChange: (E) => y("date", E.currentTarget.value) })
     ] }),
-    /* @__PURE__ */ h.jsx(Rt, { label: "理由（≥10 字）", value: r.rationale, onChange: (b) => y("rationale", b.currentTarget.value) }),
-    /* @__PURE__ */ h.jsx(Rt, { label: "录入者", value: r.recordedBy, onChange: (b) => y("recordedBy", b.currentTarget.value) }),
+    /* @__PURE__ */ h.jsx(Rt, { label: "理由（≥10 字）", value: r.rationale, onChange: (E) => y("rationale", E.currentTarget.value) }),
+    /* @__PURE__ */ h.jsx(Rt, { label: "录入者", value: r.recordedBy, onChange: (E) => y("recordedBy", E.currentTarget.value) }),
     /* @__PURE__ */ h.jsx(Ce, { variant: "primary", onClick: S, children: "提交评分" }),
     s && /* @__PURE__ */ h.jsx("pre", { className: s.ok ? "ok" : "err", children: s.ok ? `已写入：${s.file || "(dry run)"}` : JSON.stringify(s, null, 2) })
   ] });
@@ -15523,16 +15523,16 @@ function EE(u) {
   for (const y of u) for (const S of s(y.pair)) r.has(S) || r.set(S, S);
   for (const y of u) {
     if (bE(y) < 2) continue;
-    const [S, b] = s(y.pair);
-    if (S && b) {
-      const N = o(S), p = o(b);
+    const [S, E] = s(y.pair);
+    if (S && E) {
+      const N = o(S), p = o(E);
       N !== p && r.set(N, p);
     }
   }
   const d = /* @__PURE__ */ new Map(), m = [];
   for (const y of u) {
-    const [S, b] = s(y.pair);
-    if (S && b && o(S) === o(b)) {
+    const [S, E] = s(y.pair);
+    if (S && E && o(S) === o(E)) {
       const N = o(S);
       let p = d.get(N);
       p || (p = { rows: [], labels: [] }, d.set(N, p)), p.rows.push(y);
@@ -15541,74 +15541,74 @@ function EE(u) {
   }
   for (const y of d.values()) {
     const S = /* @__PURE__ */ new Set();
-    for (const b of y.rows) for (const N of s(b.pair)) S.add(N);
+    for (const E of y.rows) for (const N of s(E.pair)) S.add(N);
     y.labels = [...S];
   }
   return { clusters: [...d.values()].sort((y, S) => {
-    const b = y.rows.map((p) => p.date).sort()[0] || "", N = S.rows.map((p) => p.date).sort()[0] || "";
-    return b !== N ? b < N ? -1 : 1 : S.rows.length - y.rows.length;
+    const E = y.rows.map((p) => p.date).sort()[0] || "", N = S.rows.map((p) => p.date).sort()[0] || "";
+    return E !== N ? E < N ? -1 : 1 : S.rows.length - y.rows.length;
   }), weak: m };
 }
 const xo = (u) => u.labels.slice().sort().join("|");
 function SE({ tick: u, onChanged: r }) {
-  const [o, s] = q.useState([]), [d, m] = q.useState({}), [g, y] = q.useState(""), [S, b] = q.useState(!1), [N, p] = q.useState(""), [I, A] = q.useState(!1), [x, V] = q.useState({}), [L, le] = q.useState(null), [ye, he] = q.useState(!1), [Z, ue] = q.useState("");
+  const [o, s] = q.useState([]), [d, m] = q.useState({}), [g, y] = q.useState(""), [S, E] = q.useState(!1), [N, p] = q.useState(""), [B, A] = q.useState(!1), [x, V] = q.useState({}), [L, le] = q.useState(null), [ye, he] = q.useState(!1), [Z, ue] = q.useState("");
   q.useEffect(() => {
     let j = !1;
     return (async () => {
       const F = await Ye("/api/model/status").catch(() => null);
       if (j || !F || !F.running || F.kind !== "propose") return;
-      b(!0), y("AI 语义查重进行中（接管切页前的任务）…");
-      const B = await tl("/api/model/status", { kind: "propose", timeoutMs: 180 * 1e3 });
-      j || (y(B.ok ? `已入队 ${B.queued?.length || 0} 对` : B.message || "未产出建议"), B.ok && await ne(), b(!1));
+      E(!0), y("AI 语义查重进行中（接管切页前的任务）…");
+      const I = await tl("/api/model/status", { kind: "propose", timeoutMs: 180 * 1e3 });
+      j || (y(I.ok ? `已入队 ${I.queued?.length || 0} 对` : I.message || "未产出建议"), I.ok && await ae(), E(!1));
     })(), () => {
       j = !0;
     };
   }, []);
-  const ne = q.useCallback(async () => {
+  const ae = q.useCallback(async () => {
     const j = await Ye(nn("标签库.md"));
     s(j.ok ? Bo(j.content) : []);
   }, []);
   q.useEffect(() => {
-    ne();
-  }, [ne, u]);
-  async function re(j, F, B) {
-    const X = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), ae = d[j] || `裁决执行：${j}`, $ = await Pe("/api/tool/apply_tag_merge", { mergedLabel: F, target: B, date: X, evidence: ae });
-    y($.ok ? `已执行：${F} → ${$.now}` : $.message || JSON.stringify($)), $.ok && (await ne(), r?.());
+    ae();
+  }, [ae, u]);
+  async function re(j, F, I) {
+    const X = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), ne = d[j] || `裁决执行：${j}`, J = await Pe("/api/tool/apply_tag_merge", { mergedLabel: F, target: I, date: X, evidence: ne });
+    y(J.ok ? `已执行：${F} → ${J.now}` : J.message || JSON.stringify(J)), J.ok && (await ae(), r?.());
   }
   async function ge(j) {
-    const F = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), B = d[j] || "", X = await Pe("/api/tool/apply_pair_independent", { pair: j, date: F, reason: B });
-    y(X.ok ? `已判定独立，两标签都保留：${j}` : X.message || JSON.stringify(X)), X.ok && (await ne(), r?.());
+    const F = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), I = d[j] || "", X = await Pe("/api/tool/apply_pair_independent", { pair: j, date: F, reason: I });
+    y(X.ok ? `已判定独立，两标签都保留：${j}` : X.message || JSON.stringify(X)), X.ok && (await ae(), r?.());
   }
-  const se = (j, F, B) => V((X) => ({ ...X, [j]: B(X[j] || { groups: [], pool: F.slice(), sel: [] }) }));
+  const se = (j, F, I) => V((X) => ({ ...X, [j]: I(X[j] || { groups: [], pool: F.slice(), sel: [] }) }));
   async function oe(j, F) {
-    const B = xo(F);
+    const I = xo(F);
     le(j), y("");
     try {
       const X = await Pe("/api/model/propose-partition", {
         labels: F.labels,
-        pairs: F.rows.map(($) => ({ pair: $.pair, evidence: $.evidence }))
+        pairs: F.rows.map((J) => ({ pair: J.pair, evidence: J.evidence }))
       });
       if (!X.started) {
         y(X.message || "发起失败"), le(null);
         return;
       }
-      const ae = await tl("/api/model/status", { kind: "partition", timeoutMs: 180 * 1e3 });
-      if (ae.stage === "timeout") {
-        y(ae.message), le(null);
+      const ne = await tl("/api/model/status", { kind: "partition", timeoutMs: 180 * 1e3 });
+      if (ne.stage === "timeout") {
+        y(ne.message), le(null);
         return;
       }
-      if (ae.ok && Array.isArray(ae.groups)) {
-        const $ = ae.groups.filter((E) => Array.isArray(E) && E.length > 0).map((E) => ({ target: E[0], members: E.slice() }));
-        se(B, F.labels, (E) => ({ ...E, groups: $, pool: [], sel: [] })), y(ae.message ? `分族提案已给出（${ae.message}）——点选标签可调整分组` : "分族提案已给出，核对后提交");
+      if (ne.ok && Array.isArray(ne.groups)) {
+        const J = ne.groups.filter((b) => Array.isArray(b) && b.length > 0).map((b) => ({ target: b[0], members: b.slice() }));
+        se(I, F.labels, (b) => ({ ...b, groups: J, pool: [], sel: [] })), y(ne.message ? `分族提案已给出（${ne.message}）——点选标签可调整分组` : "分族提案已给出，核对后提交");
       } else
-        y(ae.message || "未产出分族提案");
+        y(ne.message || "未产出分族提案");
     } catch (X) {
       y(`请求失败：${String(X?.message || X)}`);
     }
     le(null);
   }
   async function Se(j, F) {
-    const B = xo(F), X = x[B] || { groups: [], pool: F.labels.slice(), sel: [] };
+    const I = xo(F), X = x[I] || { groups: [], pool: F.labels.slice(), sel: [] };
     if (X.pool.length > 0) {
       y(`还有 ${X.pool.length} 个标签未分组（可「全部各自成组」）`);
       return;
@@ -15617,9 +15617,9 @@ function SE({ tick: u, onChanged: r }) {
       y("先分组再提交");
       return;
     }
-    const ae = X.groups.flatMap((ee) => ee.members), $ = F.labels.filter((ee) => !ae.includes(ee)), E = ae.filter((ee, de) => ae.indexOf(ee) !== de);
-    if ($.length || E.length) {
-      y(`分组与标签清单不符 — 缺：${$.join("、") || "无"}；重复：${E.join("、") || "无"}`);
+    const ne = X.groups.flatMap((ee) => ee.members), J = F.labels.filter((ee) => !ne.includes(ee)), b = ne.filter((ee, de) => ne.indexOf(ee) !== de);
+    if (J.length || b.length) {
+      y(`分组与标签清单不符 — 缺：${J.join("、") || "无"}；重复：${b.join("、") || "无"}`);
       return;
     }
     for (const ee of X.groups) {
@@ -15685,34 +15685,34 @@ function SE({ tick: u, onChanged: r }) {
     }
     y(fe ? `${fe}（此前已完成：${P} 合并、${ie} 独立；直接再点提交即可续跑——已并入的标签重试幂等，不会重复执行）` : `已提交本组裁决：${P} 合并、${ie} 独立${be ? `、${be} 对已随合并关闭` : ""}`);
     try {
-      await ne();
+      await ae();
     } catch {
     }
-    r?.(), fe || V((ee) => ({ ...ee, [B]: { groups: [], pool: F.labels.slice(), sel: [] } })), ue(""), he(!1);
+    r?.(), fe || V((ee) => ({ ...ee, [I]: { groups: [], pool: F.labels.slice(), sel: [] } })), ue(""), he(!1);
   }
   async function G() {
-    b(!0), y(""), p("co");
+    E(!0), y(""), p("co");
     let j = "";
     try {
       const F = await Pe("/api/tool/suggest_tag_merges", {});
       if (j = F.ok ? F.written ? `共现入队 ${F.written} 对` : "共现无新候选" : `共现扫描失败：${F.message || JSON.stringify(F)}`, F.ok)
         try {
-          await ne();
+          await ae();
         } catch {
         }
       p("semantic");
-      const B = await Pe("/api/model/propose-merges", {});
-      if (!B.started)
-        y(`${j}；语义查重未启动：${B.message || "发起失败"}`);
+      const I = await Pe("/api/model/propose-merges", {});
+      if (!I.started)
+        y(`${j}；语义查重未启动：${I.message || "发起失败"}`);
       else {
         const X = await tl("/api/model/status", { kind: "propose", timeoutMs: 18e4 });
         if (X.stage === "timeout")
           y(`${j}；语义查重${X.message || "等待超时"}`);
         else {
-          const ae = X.ok ? X.message || (X.queued?.length ? `语义入队 ${X.queued.length} 对：${X.queued.join("；")}` : "语义未找到新对") : X.message || "语义查重未产出建议";
-          if (y(`${j}；${ae}`), X.ok && X.queued?.length)
+          const ne = X.ok ? X.message || (X.queued?.length ? `语义入队 ${X.queued.length} 对：${X.queued.join("；")}` : "语义未找到新对") : X.message || "语义查重未产出建议";
+          if (y(`${j}；${ne}`), X.ok && X.queued?.length)
             try {
-              await ne();
+              await ae();
             } catch {
             }
         }
@@ -15720,23 +15720,23 @@ function SE({ tick: u, onChanged: r }) {
     } catch (F) {
       y(`${j ? `${j}；` : ""}查重中断：${String(F?.message || F)}`);
     }
-    p(""), b(!1), r?.();
+    p(""), E(!1), r?.();
   }
   const me = o.filter((j) => !j.decision), De = o.filter((j) => !!j.decision), { clusters: H, weak: M } = q.useMemo(() => EE(me), [o]), te = (j) => /* @__PURE__ */ h.jsx(Mn, { title: j.pair, description: `${j.date} 进队 · ${j.evidence}`, children: j.decision ? /* @__PURE__ */ h.jsxs("p", { className: "decided", children: [
     "已裁决：",
     j.decision
   ] }) : /* @__PURE__ */ h.jsxs("div", { className: "queue-actions", children: [
-    [j.pair.split(" vs ")[0], j.pair.split(" vs ")[1]].filter(Boolean).map((F, B, X) => /* @__PURE__ */ h.jsx("div", { className: "queue-op", children: /* @__PURE__ */ h.jsxs(Ce, { onClick: () => re(j.pair, F, X[1 - B]), children: [
+    [j.pair.split(" vs ")[0], j.pair.split(" vs ")[1]].filter(Boolean).map((F, I, X) => /* @__PURE__ */ h.jsx("div", { className: "queue-op", children: /* @__PURE__ */ h.jsxs(Ce, { onClick: () => re(j.pair, F, X[1 - I]), children: [
       "「",
       F,
       "」并入「",
-      X[1 - B],
+      X[1 - I],
       "」"
     ] }) }, F)),
     /* @__PURE__ */ h.jsx("div", { className: "queue-op", children: /* @__PURE__ */ h.jsx(Ce, { onClick: () => ge(j.pair), children: "判定独立（都保留）" }) }),
     /* @__PURE__ */ h.jsx(Rt, { label: "依据（可空，判定独立时建议填）", value: d[j.pair] || "", onChange: (F) => {
-      const B = F.currentTarget.value;
-      m((X) => ({ ...X, [j.pair]: B }));
+      const I = F.currentTarget.value;
+      m((X) => ({ ...X, [j.pair]: I }));
     } })
   ] }) }, j.pair);
   return /* @__PURE__ */ h.jsxs("div", { children: [
@@ -15756,11 +15756,11 @@ function SE({ tick: u, onChanged: r }) {
     ] }),
     o.length === 0 && /* @__PURE__ */ h.jsx(nl, { title: "暂无待裁决标签", description: "篇目积累出相近标签后，候选会自动出现在这里。" }),
     H.map((j, F) => {
-      const B = xo(j), X = x[B] || { groups: [], pool: j.labels.slice(), sel: [] }, ae = /* @__PURE__ */ new Map();
-      X.groups.forEach((z, W) => z.members.forEach((P) => ae.set(P, W)));
-      const $ = X.groups.reduce((z, W) => z + (W.members.includes(W.target) ? Math.max(0, W.members.length - 1) : W.members.length), 0), E = j.rows.filter((z) => {
+      const I = xo(j), X = x[I] || { groups: [], pool: j.labels.slice(), sel: [] }, ne = /* @__PURE__ */ new Map();
+      X.groups.forEach((z, W) => z.members.forEach((P) => ne.set(P, W)));
+      const J = X.groups.reduce((z, W) => z + (W.members.includes(W.target) ? Math.max(0, W.members.length - 1) : W.members.length), 0), b = j.rows.filter((z) => {
         const [W, P] = z.pair.split(" vs ");
-        return ae.get(W) !== ae.get(P);
+        return ne.get(W) !== ne.get(P);
       }).length;
       return /* @__PURE__ */ h.jsxs("div", { className: "cluster", children: [
         /* @__PURE__ */ h.jsxs("p", { className: "hint queue-group", children: [
@@ -15778,8 +15778,8 @@ function SE({ tick: u, onChanged: r }) {
           /* @__PURE__ */ h.jsx(Ce, { disabled: L !== null || S, onClick: () => {
             oe(F, j);
           }, children: L === F ? "分组中…" : "智能分组" }),
-          /* @__PURE__ */ h.jsx(Ce, { disabled: ye, onClick: () => se(B, j.labels, (z) => ({ ...z, groups: j.labels.map((W) => ({ target: W, members: [W] })), pool: [], sel: [] })), children: "全部各自成组" }),
-          /* @__PURE__ */ h.jsx(Ce, { disabled: ye, onClick: () => se(B, j.labels, (z) => ({ ...z, groups: [{ target: j.labels[0], members: j.labels.slice() }], pool: [], sel: [] })), children: "全部并入一组" })
+          /* @__PURE__ */ h.jsx(Ce, { disabled: ye, onClick: () => se(I, j.labels, (z) => ({ ...z, groups: j.labels.map((W) => ({ target: W, members: [W] })), pool: [], sel: [] })), children: "全部各自成组" }),
+          /* @__PURE__ */ h.jsx(Ce, { disabled: ye, onClick: () => se(I, j.labels, (z) => ({ ...z, groups: [{ target: j.labels[0], members: j.labels.slice() }], pool: [], sel: [] })), children: "全部并入一组" })
         ] }),
         X.groups.map((z, W) => /* @__PURE__ */ h.jsxs("div", { className: "group-card", children: [
           /* @__PURE__ */ h.jsxs("div", { className: "hint group-head", children: [
@@ -15793,7 +15793,7 @@ function SE({ tick: u, onChanged: r }) {
                 value: z.target,
                 onChange: (P) => {
                   const ie = P.currentTarget.value;
-                  se(B, j.labels, (be) => ({ ...be, groups: be.groups.map((fe, ee) => ee === W ? { ...fe, target: ie } : fe) }));
+                  se(I, j.labels, (be) => ({ ...be, groups: be.groups.map((fe, ee) => ee === W ? { ...fe, target: ie } : fe) }));
                 },
                 onKeyDown: (P) => P.stopPropagation(),
                 placeholder: "点 ★ 快选，或直接输入新名"
@@ -15809,7 +15809,7 @@ function SE({ tick: u, onChanged: r }) {
             "span",
             {
               className: X.sel.includes(P) ? "tag-chip sel" : "tag-chip",
-              onClick: () => se(B, j.labels, (ie) => ({ ...ie, sel: ie.sel.includes(P) ? ie.sel.filter((be) => be !== P) : [...ie.sel, P] })),
+              onClick: () => se(I, j.labels, (ie) => ({ ...ie, sel: ie.sel.includes(P) ? ie.sel.filter((be) => be !== P) : [...ie.sel, P] })),
               children: [
                 P,
                 /* @__PURE__ */ h.jsx(
@@ -15818,7 +15818,7 @@ function SE({ tick: u, onChanged: r }) {
                     className: "chip-star",
                     title: "设为本组存活名",
                     onClick: (ie) => {
-                      ie.stopPropagation(), se(B, j.labels, (be) => ({ ...be, groups: be.groups.map((fe, ee) => ee === W ? { ...fe, target: P } : fe) }));
+                      ie.stopPropagation(), se(I, j.labels, (be) => ({ ...be, groups: be.groups.map((fe, ee) => ee === W ? { ...fe, target: P } : fe) }));
                     },
                     children: z.target === P ? "★" : "☆"
                   }
@@ -15828,7 +15828,7 @@ function SE({ tick: u, onChanged: r }) {
                   {
                     className: "chip-x",
                     onClick: (ie) => {
-                      ie.stopPropagation(), se(B, j.labels, (be) => ({
+                      ie.stopPropagation(), se(I, j.labels, (be) => ({
                         ...be,
                         groups: be.groups.map((fe, ee) => {
                           if (ee !== W) return fe;
@@ -15845,7 +15845,7 @@ function SE({ tick: u, onChanged: r }) {
             },
             P
           )) }),
-          X.sel.length > 0 && /* @__PURE__ */ h.jsxs(Ce, { onClick: () => se(B, j.labels, (P) => {
+          X.sel.length > 0 && /* @__PURE__ */ h.jsxs(Ce, { onClick: () => se(I, j.labels, (P) => {
             const ie = P.sel.filter((fe) => j.labels.includes(fe));
             if (!ie.length) return P;
             const be = P.groups.map((fe, ee) => {
@@ -15871,14 +15871,14 @@ function SE({ tick: u, onChanged: r }) {
             "span",
             {
               className: X.sel.includes(z) ? "tag-chip sel" : "tag-chip",
-              onClick: () => se(B, j.labels, (W) => ({ ...W, sel: W.sel.includes(z) ? W.sel.filter((P) => P !== z) : [...W.sel, z] })),
+              onClick: () => se(I, j.labels, (W) => ({ ...W, sel: W.sel.includes(z) ? W.sel.filter((P) => P !== z) : [...W.sel, z] })),
               children: z
             },
             z
           )) })
         ] }),
         X.sel.length > 0 && /* @__PURE__ */ h.jsxs("div", { className: "import-row sel-actions", children: [
-          /* @__PURE__ */ h.jsxs(Ce, { onClick: () => se(B, j.labels, (z) => {
+          /* @__PURE__ */ h.jsxs(Ce, { onClick: () => se(I, j.labels, (z) => {
             const W = z.sel.filter((ie) => j.labels.includes(ie));
             if (!W.length) return z;
             const P = z.groups.map((ie) => {
@@ -15900,7 +15900,7 @@ function SE({ tick: u, onChanged: r }) {
         /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
           /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: ye || X.pool.length > 0 || X.groups.length === 0, onClick: () => {
             Se(F, j);
-          }, children: ye ? "提交中…" : `提交本组裁决（${$} 合并 + ${E} 独立）` }),
+          }, children: ye ? "提交中…" : `提交本组裁决（${J} 合并 + ${b} 独立）` }),
           /* @__PURE__ */ h.jsx("span", { className: "hint", children: ye && Z ? Z : X.pool.length > 0 ? "先把未分组标签分完（可「全部各自成组」）" : "先组内合并，再把跨组待裁对记为独立；存活名保留。" })
         ] }),
         /* @__PURE__ */ h.jsxs("details", { className: "cluster-evidence", children: [
@@ -15916,7 +15916,7 @@ function SE({ tick: u, onChanged: r }) {
           ] }, z.pair))
         ] }),
         j.rows.map(te)
-      ] }, B);
+      ] }, I);
     }),
     M.length > 0 && /* @__PURE__ */ h.jsxs("div", { className: "cluster weak-zone", children: [
       /* @__PURE__ */ h.jsxs("p", { className: "hint queue-group", children: [
@@ -15930,30 +15930,30 @@ function SE({ tick: u, onChanged: r }) {
     De.length > 0 && /* @__PURE__ */ h.jsxs("div", { className: "queue-decided-zone", children: [
       /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
         /* @__PURE__ */ h.jsxs(Ce, { onClick: () => A((j) => !j), children: [
-          I ? "收起" : "展开",
+          B ? "收起" : "展开",
           "已裁决（",
           De.length,
           " 条）"
         ] }),
         /* @__PURE__ */ h.jsx("span", { className: "hint", children: "裁决过的对折叠在此，可回看记录。" })
       ] }),
-      I && De.map(te)
+      B && De.map(te)
     ] })
   ] });
 }
 function TE({ tick: u, onChanged: r }) {
-  const [o, s] = q.useState(null), [d, m] = q.useState(""), [g, y] = q.useState(null), [S, b] = q.useState({}), [N, p] = q.useState({}), [I, A] = q.useState(!1), [x, V] = q.useState({}), [L, le] = q.useState(null), [ye, he] = q.useState({}), [Z, ue] = q.useState({ from: "", to: "" }), ne = q.useCallback(async () => {
+  const [o, s] = q.useState(null), [d, m] = q.useState(""), [g, y] = q.useState(null), [S, E] = q.useState({}), [N, p] = q.useState({}), [B, A] = q.useState(!1), [x, V] = q.useState({}), [L, le] = q.useState(null), [ye, he] = q.useState({}), [Z, ue] = q.useState({ from: "", to: "" }), ae = q.useCallback(async () => {
     const G = await Ye("/api/types/candidates");
     s(G.ok ? G : null);
   }, []);
   q.useEffect(() => {
-    ne();
-  }, [ne, u]);
+    ae();
+  }, [ae, u]);
   async function re(G, me, De = {}) {
     const H = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
     y(G), m("");
     const M = await Pe("/api/tool/apply_type_ruling", { action: me, name: G, date: H, ...De });
-    m(M.ok ? `已${me === "create" ? "新立进类型库" : me === "merge" ? `并入「${M.now}」` : "驳回"}：${G}` : M.message || JSON.stringify(M)), M.ok && (await ne(), r?.(), V({}), he((te) => {
+    m(M.ok ? `已${me === "create" ? "新立进类型库" : me === "merge" ? `并入「${M.now}」` : "驳回"}：${G}` : M.message || JSON.stringify(M)), M.ok && (await ae(), r?.(), V({}), he((te) => {
       const j = { ...te };
       return delete j[G], j;
     }), ue({ from: "", to: "" })), y(null);
@@ -15998,7 +15998,7 @@ function TE({ tick: u, onChanged: r }) {
       return;
     }
     const te = await Pe("/api/tool/apply_type_ruling", { action: "merge", name: G, target: me, date: H });
-    m(te.ok ? `已改名：${G} → ${me}` : te.message || JSON.stringify(te)), te.ok && (await ne(), r?.(), V({}), he((j) => {
+    m(te.ok ? `已改名：${G} → ${me}` : te.message || JSON.stringify(te)), te.ok && (await ae(), r?.(), V({}), he((j) => {
       const F = { ...j };
       return delete F[G], F;
     })), y(null);
@@ -16051,7 +16051,7 @@ function TE({ tick: u, onChanged: r }) {
         x[G.name].target === "新立" ? "新立（未匹配到既有类型）" : x[G.name].target === "驳回" ? "驳回（无独立价值）" : `并入「${x[G.name].target}」`,
         "——",
         x[G.name].reason,
-        (o.types || []).some((me) => me.type === x[G.name].target) && /* @__PURE__ */ h.jsx(Ce, { onClick: () => b((me) => ({ ...me, [G.name]: x[G.name].target })), children: "采纳（填入目标）" })
+        (o.types || []).some((me) => me.type === x[G.name].target) && /* @__PURE__ */ h.jsx(Ce, { onClick: () => E((me) => ({ ...me, [G.name]: x[G.name].target })), children: "采纳（填入目标）" })
       ] }),
       /* @__PURE__ */ h.jsx("div", { className: "import-row", children: /* @__PURE__ */ h.jsx(Ce, { disabled: L !== null || g !== null, onClick: () => {
         ge(G.name, G.definition);
@@ -16067,7 +16067,7 @@ function TE({ tick: u, onChanged: r }) {
             value: S[G.name] || "",
             placeholder: "输入过滤，或输入新名…",
             allowCustom: !0,
-            onChange: (me) => b((De) => ({ ...De, [G.name]: me })),
+            onChange: (me) => E((De) => ({ ...De, [G.name]: me })),
             options: [
               ...(o.types || []).map((me) => ({ value: me.type, label: me.type })),
               ...(o.pending || []).filter((me) => me.name !== G.name).map((me) => ({ value: me.name, label: `${me.name}（候选）` }))
@@ -16105,14 +16105,14 @@ function TE({ tick: u, onChanged: r }) {
     o.ruled.length > 0 && /* @__PURE__ */ h.jsxs("div", { className: "queue-decided-zone", children: [
       /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
         /* @__PURE__ */ h.jsxs(Ce, { onClick: () => A((G) => !G), children: [
-          I ? "收起" : "展开",
+          B ? "收起" : "展开",
           "已裁决（",
           o.ruled.length,
           "）"
         ] }),
         /* @__PURE__ */ h.jsx("span", { className: "hint", children: "裁决过的候选折叠在此；明细查类型库与闭包映射表。" })
       ] }),
-      I && o.ruled.map((G) => /* @__PURE__ */ h.jsxs(Mn, { title: G.name, description: `已裁决：${G.ruledStatus || ""}`, children: [
+      B && o.ruled.map((G) => /* @__PURE__ */ h.jsxs(Mn, { title: G.name, description: `已裁决：${G.ruledStatus || ""}`, children: [
         /* @__PURE__ */ h.jsx("p", { className: "hint", children: G.definition || "" }),
         /* @__PURE__ */ h.jsx(Ce, { disabled: g !== null, onClick: () => he((me) => ({ ...me, [G.name]: !0 })), children: "重新裁决" })
       ] }, G.name))
@@ -16121,15 +16121,15 @@ function TE({ tick: u, onChanged: r }) {
 }
 function hg({ initial: u, savePath: r, onSaved: o }) {
   const [s, d] = q.useState(u), [m, g] = q.useState(""), [y, S] = q.useState(!1);
-  async function b() {
+  async function E() {
     if (!s.startsWith("#")) {
       g("首行须为 # 标题（防存入半截文件）");
       return;
     }
     let N = s;
     if (N !== u) {
-      const p = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), I = /^> 人工修订：(.+)$/m;
-      N = I.test(N) ? N.replace(I, `> 人工修订：${p}`) : N.trimEnd() + `
+      const p = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), B = /^> 人工修订：(.+)$/m;
+      N = B.test(N) ? N.replace(B, `> 人工修订：${p}`) : N.trimEnd() + `
 
 > 人工修订：${p}
 `;
@@ -16148,25 +16148,25 @@ function hg({ initial: u, savePath: r, onSaved: o }) {
     /* @__PURE__ */ h.jsx("textarea", { className: "editbox", value: s, onChange: (N) => d(N.currentTarget.value), rows: 22, spellCheck: !1 }),
     /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
       /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: y, onClick: () => {
-        b();
+        E();
       }, children: "保存" }),
       /* @__PURE__ */ h.jsx("span", { className: "hint", children: "首行须为 # 标题；改动会在尾部留一行修订日期（可自行删除）。改标签：编辑「- 标签：」行。" })
     ] })
   ] });
 }
 function AE({ tick: u }) {
-  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(!1), b = q.useCallback(async () => {
+  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(!1), E = q.useCallback(async () => {
     const N = await xa("篇目"), p = await Promise.all(
-      N.map(async (I) => {
-        const { title: A, meta: x } = fg(await dg(I), I.replace(/\.md$/, ""));
-        return { id: I, title: A, meta: x || I.replace(/\.md$/, "") };
+      N.map(async (B) => {
+        const { title: A, meta: x } = fg(await dg(B), B.replace(/\.md$/, ""));
+        return { id: B, title: A, meta: x || B.replace(/\.md$/, "") };
       })
     );
     o(p);
   }, []);
   return q.useEffect(() => {
-    b();
-  }, [b, u]), q.useEffect(() => {
+    E();
+  }, [E, u]), q.useEffect(() => {
     if (!s) {
       g("");
       return;
@@ -16193,7 +16193,7 @@ function AE({ tick: u }) {
           initial: m,
           savePath: `篇目/${s}`,
           onSaved: (N) => {
-            g(N), S(!1), b();
+            g(N), S(!1), E();
           }
         }
       ) : /* @__PURE__ */ h.jsx(au, { md: m }) : /* @__PURE__ */ h.jsx("p", { className: "hint", children: "左侧选篇查看（每条登记都带位置与原文引文）。" })
@@ -16201,7 +16201,7 @@ function AE({ tick: u }) {
   ] }) : /* @__PURE__ */ h.jsx(nl, { title: "还没有篇目", description: "导入文献或在对话里拆解后，篇目会出现在这里。" });
 }
 function NE({ tick: u }) {
-  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(""), [b, N] = q.useState(""), [p, I] = q.useState({});
+  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(""), [E, N] = q.useState(""), [p, B] = q.useState({});
   if (q.useEffect(() => {
     xa("篇目").then(async (x) => {
       o(x), x[0] && d(x[0]), x[1] && g(x[1]);
@@ -16209,7 +16209,7 @@ function NE({ tick: u }) {
         const { title: le, meta: ye } = fg(await dg(L), L.replace(/\.md$/, ""));
         return [L, ye ? `${le} · ${ye}` : le];
       }));
-      I(Object.fromEntries(V));
+      B(Object.fromEntries(V));
     });
   }, [u]), q.useEffect(() => {
     s && Ye(nn(`篇目/${s}`)).then((x) => S(x.ok ? x.content : ""));
@@ -16224,7 +16224,7 @@ function NE({ tick: u }) {
     ] }),
     /* @__PURE__ */ h.jsxs("div", { className: "compare", children: [
       /* @__PURE__ */ h.jsx("div", { className: "col", children: /* @__PURE__ */ h.jsx(au, { md: y }) }),
-      /* @__PURE__ */ h.jsx("div", { className: "col", children: /* @__PURE__ */ h.jsx(au, { md: b }) })
+      /* @__PURE__ */ h.jsx("div", { className: "col", children: /* @__PURE__ */ h.jsx(au, { md: E }) })
     ] })
   ] });
 }
@@ -16232,21 +16232,21 @@ function _E({ tick: u }) {
   const [r, o] = q.useState(null);
   if (q.useEffect(() => {
     (async () => {
-      const [d, m, g, y, S, b] = await Promise.all([
+      const [d, m, g, y, S, E] = await Promise.all([
         xa("篇目"),
         xa("锚点样本"),
         xa("写作模型"),
         Ye(nn("标签库.md")),
         Ye(nn("闭包映射表.md")),
         Ye(nn("类型库.md"))
-      ]), N = y.ok ? Ro(y.content, "标签") : [], p = y.ok ? Bo(y.content) : [], I = S.ok ? Ro(S.content, "from") : [], A = b.ok ? Ro(b.content, "类型") : [];
+      ]), N = y.ok ? Ro(y.content, "标签") : [], p = y.ok ? Bo(y.content) : [], B = S.ok ? Ro(S.content, "from") : [], A = E.ok ? Ro(E.content, "类型") : [];
       o({
         papers: d.length,
         anchors: m.length,
         models: g.length,
         tags: N,
         queuePending: p.filter((x) => !x.decision).length,
-        mapRows: I,
+        mapRows: B,
         types: A
       });
     })();
@@ -16295,28 +16295,28 @@ function CE(u) {
   return r;
 }
 function xE({ tick: u }) {
-  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(!1), [b, N] = q.useState(!1), [p, I] = q.useState({}), [A, x] = q.useState(""), [V, L] = q.useState({}), [le, ye] = q.useState("list"), [he, Z] = q.useState(""), [ue, ne] = q.useState({}), [re, ge] = q.useState(!1);
+  const [r, o] = q.useState([]), [s, d] = q.useState(""), [m, g] = q.useState(""), [y, S] = q.useState(!1), [E, N] = q.useState(!1), [p, B] = q.useState({}), [A, x] = q.useState(""), [V, L] = q.useState({}), [le, ye] = q.useState("list"), [he, Z] = q.useState(""), [ue, ae] = q.useState({}), [re, ge] = q.useState(!1);
   q.useEffect(() => {
-    let B = !1;
+    let I = !1;
     return (async () => {
       const X = await Ye("/api/model/status").catch(() => null);
-      if (B || !X || !X.running || X.kind !== "generate") return;
+      if (I || !X || !X.running || X.kind !== "generate") return;
       S(!0), Z("建模进行中（接管切页前的任务）…");
-      const ae = await tl("/api/model/status", { kind: "generate" });
-      B || (Z(ae.stage === "timeout" ? ae.message : ae.ok ? "完成：见下方分组" : ae.message || "未生成"), ae.ok && (mt.toast.show({ message: "写作模型已生成/更新", type: "success" }), oe()), S(!1));
+      const ne = await tl("/api/model/status", { kind: "generate" });
+      I || (Z(ne.stage === "timeout" ? ne.message : ne.ok ? "完成：见下方分组" : ne.message || "未生成"), ne.ok && (mt.toast.show({ message: "写作模型已生成/更新", type: "success" }), oe()), S(!1));
     })(), () => {
-      B = !0;
+      I = !0;
     };
   }, []);
   const se = q.useMemo(() => {
-    const B = /* @__PURE__ */ new Map();
+    const I = /* @__PURE__ */ new Map();
     for (const X of r) {
-      const ae = /^(.+)-写作模型-v(\d+)\.md$/.exec(X);
-      ae && (B.has(ae[1]) || B.set(ae[1], []), B.get(ae[1]).push({ file: X, v: Number(ae[2]) }));
+      const ne = /^(.+)-写作模型-v(\d+)\.md$/.exec(X);
+      ne && (I.has(ne[1]) || I.set(ne[1], []), I.get(ne[1]).push({ file: X, v: Number(ne[2]) }));
     }
-    return [...B.entries()].map(([X, ae]) => (ae.sort(($, E) => $.v - E.v), { type: X, latest: ae[ae.length - 1], history: ae.slice(0, -1).reverse() }));
+    return [...I.entries()].map(([X, ne]) => (ne.sort((J, b) => J.v - b.v), { type: X, latest: ne[ne.length - 1], history: ne.slice(0, -1).reverse() }));
   }, [r]), oe = q.useCallback(() => {
-    xa("写作模型").then(o), Ye(nn("闭包映射表.md")).then((B) => I(B.ok ? CE(B.content) : {}));
+    xa("写作模型").then(o), Ye(nn("闭包映射表.md")).then((I) => B(I.ok ? CE(I.content) : {}));
   }, []);
   q.useEffect(() => {
     oe();
@@ -16325,14 +16325,14 @@ function xE({ tick: u }) {
       g("");
       return;
     }
-    Ye(nn(`写作模型/${s}`)).then((B) => g(B.ok ? B.content : ""));
+    Ye(nn(`写作模型/${s}`)).then((I) => g(I.ok ? I.content : ""));
   }, [s]);
   async function Se() {
     S(!0), Z("");
     try {
-      const B = await Pe("/api/model/generate", {});
-      if (!B.started) {
-        Z(B.message || "发起失败"), S(!1);
+      const I = await Pe("/api/model/generate", {});
+      if (!I.started) {
+        Z(I.message || "发起失败"), S(!1);
         return;
       }
       Z("建模中：归属 → 归纳 → 逐类型生成（每个类型一次模型调用，可离开本页）…");
@@ -16341,69 +16341,74 @@ function xE({ tick: u }) {
         Z(X.message), S(!1);
         return;
       }
-      Z(wE(X.results || []) || X.message || ""), (X.results || []).some((ae) => ae.ok) && (mt.toast.show({ message: "写作模型已生成/更新", type: "success" }), oe());
-    } catch (B) {
-      Z(`请求失败：${String(B?.message || B)}`);
+      Z(wE(X.results || []) || X.message || ""), (X.results || []).some((ne) => ne.ok) && (mt.toast.show({ message: "写作模型已生成/更新", type: "success" }), oe());
+    } catch (I) {
+      Z(`请求失败：${String(I?.message || I)}`);
     }
     S(!1);
   }
   async function G() {
     N(!0), Z("");
     try {
-      const B = await Pe("/api/model/generate-tactic", {});
-      if (!B.started) {
-        Z(B.message || "发起失败"), N(!1);
+      const I = await Pe("/api/model/generate-tactic", {});
+      if (!I.started) {
+        Z(I.message || "发起失败"), N(!1);
         return;
       }
       const X = Date.now();
       for (; Date.now() - X < 1200 * 1e3; ) {
-        await new Promise(($) => setTimeout($, 4e3));
-        const ae = await Ye("/api/model/status").catch(() => null);
-        if (!(!ae || ae.kind !== "tactic")) {
-          if (ae.running) {
-            const $ = ae.progress || {};
-            Z(`战术建模中：${$.done ?? 0}/${$.total ?? "?"}　当前：${$.current || "…"}`);
-          } else if (ae.lastResult) {
-            const $ = ae.lastResult;
-            Z(OE($) || $.message || ""), ($.results || []).some((E) => E.ok) && (mt.toast.show({ message: "战术模型已生成/更新", type: "success" }), oe()), N(!1);
+        await new Promise((J) => setTimeout(J, 4e3));
+        const ne = await Ye("/api/model/status").catch(() => null);
+        if (!(!ne || ne.kind !== "tactic")) {
+          if (ne.running) {
+            const J = ne.progress || {};
+            Z(`战术建模中：${J.done ?? 0}/${J.total ?? "?"}　当前：${J.current || "…"}`);
+          } else if (ne.lastResult) {
+            const J = ne.lastResult;
+            Z(OE(J) || J.message || ""), (J.results || []).some((b) => b.ok) && (mt.toast.show({ message: "战术模型已生成/更新", type: "success" }), oe()), N(!1);
             return;
           }
         }
       }
       Z("等待超时（20 分钟），任务可能仍在运行；稍后刷新查看结果。");
-    } catch (B) {
-      Z(`请求失败：${String(B?.message || B)}`);
+    } catch (I) {
+      Z(`请求失败：${String(I?.message || I)}`);
     }
     N(!1);
   }
   const [me, De] = q.useState(""), [H, M] = q.useState("");
-  async function te(B) {
+  async function te(I) {
     const X = [];
-    for (const ae of B) {
-      const $ = await Pe("/api/library/delete-file", { path: `写作模型/${ae}` });
-      X.push($.ok ? `✓ ${ae}` : `✗ ${ae}：${$.message || "失败"}`);
+    for (const ne of I) {
+      const J = await Pe("/api/library/delete-file", { path: `写作模型/${ne}` });
+      X.push(J.ok ? `✓ ${ne}` : `✗ ${ne}：${J.message || "失败"}`);
     }
     Z(`删除结果：${X.join("；")}`), d(""), oe();
   }
-  const j = (B) => {
-    let X = B;
-    const ae = /* @__PURE__ */ new Set();
-    for (; p[X] && p[X] !== X && !ae.has(X); )
-      ae.add(X), X = p[X];
+  const j = (I) => {
+    let X = I;
+    const ne = /* @__PURE__ */ new Set();
+    for (; p[X] && p[X] !== X && !ne.has(X); )
+      ne.add(X), X = p[X];
     return X;
   };
-  async function F(B, X) {
-    const ae = await Pe("/api/library/rename-models", { from: B, to: X });
-    Z(ae.ok ? `已随归并改名：${B} → ${X}（${(ae.moved || []).length} 个文件，版本保留）` : ae.message || JSON.stringify(ae)), ae.ok && (d(""), oe());
+  async function F(I, X) {
+    const ne = await Pe("/api/library/rename-models", { from: I, to: X });
+    if (!ne.ok) {
+      Z(ne.message || JSON.stringify(ne));
+      return;
+    }
+    const J = (ne.moved || []).map((b) => (/-v(\d+)\.md$/.exec(b) || [])[1]).filter(Boolean);
+    Z(ne.merged ? `已并入「${X}」家族：${I} → ${X}（${(ne.moved || []).length} 个文件，接续为 ${J.map((b) => `v${b}`).join("、")}；目标原有版本未动）` : `已随归并改名：${I} → ${X}（${(ne.moved || []).length} 个文件，版本保留）`), d(""), oe();
   }
   return /* @__PURE__ */ h.jsxs("div", { children: [
     /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
-      /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: y || b, onClick: () => {
+      /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: y || E, onClick: () => {
         Se();
       }, children: y ? "建模中…" : "生成 / 更新写作模型" }),
-      /* @__PURE__ */ h.jsx(Ce, { disabled: y || b, onClick: () => {
+      /* @__PURE__ */ h.jsx(Ce, { disabled: y || E, onClick: () => {
         G();
-      }, children: b ? "战术建模中…" : "生成 / 更新战术模型" }),
+      }, children: E ? "战术建模中…" : "生成 / 更新战术模型" }),
       /* @__PURE__ */ h.jsx("span", { className: "hint", children: "两个按钮同理：样本 ≥2 才生成，再点得新版本（v+1，历史保留），样本未变自动跳过零浪费。类型模型的样本看归并自与宣告篇，战术模型的样本看携带该标签的篇目。" })
     ] }),
     he && /* @__PURE__ */ h.jsx("pre", { className: "hint", children: he }),
@@ -16415,12 +16420,12 @@ function xE({ tick: u }) {
           s
         ] })
       ] }),
-      re ? /* @__PURE__ */ h.jsx(hg, { initial: m, savePath: `写作模型/${s}`, onSaved: (B) => {
-        g(B), ge(!1), oe();
+      re ? /* @__PURE__ */ h.jsx(hg, { initial: m, savePath: `写作模型/${s}`, onSaved: (I) => {
+        g(I), ge(!1), oe();
       } }) : /* @__PURE__ */ h.jsxs(h.Fragment, { children: [
         /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
           /* @__PURE__ */ h.jsx(Ce, { onClick: () => ge(!0), children: "编辑本模型" }),
-          /* @__PURE__ */ h.jsx(Ce, { disabled: y || b, onClick: () => {
+          /* @__PURE__ */ h.jsx(Ce, { disabled: y || E, onClick: () => {
             if (H !== s) {
               M(s);
               return;
@@ -16430,64 +16435,64 @@ function xE({ tick: u }) {
         ] }),
         /* @__PURE__ */ h.jsx(au, { md: m })
       ] })
-    ] }) : se.length ? /* @__PURE__ */ h.jsx(h.Fragment, { children: ["类型", "战术"].map((B) => {
-      const X = se.filter(($) => B === "战术" === $.type.startsWith("战术-"));
+    ] }) : se.length ? /* @__PURE__ */ h.jsx(h.Fragment, { children: ["类型", "战术"].map((I) => {
+      const X = se.filter((J) => I === "战术" === J.type.startsWith("战术-"));
       if (!X.length) return null;
-      const ae = !V[B];
+      const ne = !V[I];
       return /* @__PURE__ */ h.jsxs("div", { className: "model-section", children: [
-        /* @__PURE__ */ h.jsx("div", { className: "import-row section-toggle", children: /* @__PURE__ */ h.jsxs(Ce, { onClick: () => L(($) => ({ ...$, [B]: !$[B] })), children: [
-          ae ? "收起" : "展开",
+        /* @__PURE__ */ h.jsx("div", { className: "import-row section-toggle", children: /* @__PURE__ */ h.jsxs(Ce, { onClick: () => L((J) => ({ ...J, [I]: !J[I] })), children: [
+          ne ? "收起" : "展开",
           " ",
-          B,
+          I,
           "模型（",
           X.length,
           " 组）"
         ] }) }),
-        ae && X.map(($) => {
-          const E = $.type.startsWith("战术-") ? $.type.slice(2) : $.type, z = j(E), W = z !== E, P = $.type.startsWith("战术-") ? `战术-${z}` : z;
+        ne && X.map((J) => {
+          const b = J.type.startsWith("战术-") ? J.type.slice(2) : J.type, z = j(b), W = z !== b, P = J.type.startsWith("战术-") ? `战术-${z}` : z;
           return /* @__PURE__ */ h.jsxs("div", { className: "model-group", children: [
             /* @__PURE__ */ h.jsxs("div", { className: "model-group-head", children: [
               W && /* @__PURE__ */ h.jsx("span", { className: "badge", children: "已并入" }),
-              /* @__PURE__ */ h.jsx("span", { className: "model-grouptitle", children: W ? `${$.type} → ${z}` : $.type }),
+              /* @__PURE__ */ h.jsx("span", { className: "model-grouptitle", children: W ? `${J.type} → ${z}` : J.type }),
               /* @__PURE__ */ h.jsxs(
                 "button",
                 {
-                  className: s === $.latest.file ? "filebtn on" : "filebtn",
+                  className: s === J.latest.file ? "filebtn on" : "filebtn",
                   onClick: () => {
-                    d($.latest.file), ye("preview");
+                    d(J.latest.file), ye("preview");
                   },
                   children: [
                     "v",
-                    $.latest.v,
+                    J.latest.v,
                     "（最新）"
                   ]
                 }
               ),
-              $.history.length > 0 && /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => ne((ie) => ({ ...ie, [$.type]: !ie[$.type] })), children: ue[$.type] ? "收起历史" : `历史 ${$.history.length} 版` }),
+              J.history.length > 0 && /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => ae((ie) => ({ ...ie, [J.type]: !ie[J.type] })), children: ue[J.type] ? "收起历史" : `历史 ${J.history.length} 版` }),
               W && /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => {
-                if (A !== $.type) {
-                  x($.type);
+                if (A !== J.type) {
+                  x(J.type);
                   return;
                 }
-                x(""), F($.type, P);
-              }, children: A === $.type ? `再点一次确认改名为 ${P}` : "随归并改名" }),
+                x(""), F(J.type, P);
+              }, children: A === J.type ? `再点一次确认改名为 ${P}` : "随归并改名" }),
               /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => {
-                if (me !== $.type) {
-                  De($.type);
+                if (me !== J.type) {
+                  De(J.type);
                   return;
                 }
-                De(""), te([$.latest.file, ...$.history.map((ie) => ie.file)]);
-              }, children: me === $.type ? "再点一次确认删除整组" : "删除" })
+                De(""), te([J.latest.file, ...J.history.map((ie) => ie.file)]);
+              }, children: me === J.type ? "再点一次确认删除整组" : "删除" })
             ] }),
-            ue[$.type] && /* @__PURE__ */ h.jsx("div", { className: "filebtns", children: $.history.map((ie) => /* @__PURE__ */ h.jsxs("button", { className: s === ie.file ? "filebtn on" : "filebtn", onClick: () => {
+            ue[J.type] && /* @__PURE__ */ h.jsx("div", { className: "filebtns", children: J.history.map((ie) => /* @__PURE__ */ h.jsxs("button", { className: s === ie.file ? "filebtn on" : "filebtn", onClick: () => {
               d(ie.file), ye("preview");
             }, children: [
               "v",
               ie.v
             ] }, ie.file)) })
-          ] }, $.type);
+          ] }, J.type);
         })
-      ] }, B);
+      ] }, I);
     }) }) : /* @__PURE__ */ h.jsx(nl, { title: "暂无写作模型", description: "点上方按钮归纳生成；样本不足或样本未变的类型会跳过并说明。" })
   ] });
 }
@@ -16495,15 +16500,15 @@ function RE() {
   const [u, r] = q.useState(""), [o, s] = q.useState([]), [d, m] = q.useState(null), [g, y] = q.useState("");
   async function S() {
     if (!u.trim()) return;
-    const b = await Ye(`/api/search?query=${encodeURIComponent(u.trim())}`);
-    s(b.ok ? b.results : []), m(null);
+    const E = await Ye(`/api/search?query=${encodeURIComponent(u.trim())}`);
+    s(E.ok ? E.results : []), m(null);
   }
   return q.useEffect(() => {
     if (!d) {
       y("");
       return;
     }
-    Ye(nn(d.path)).then((b) => y(b.ok ? b.content : "读取失败"));
+    Ye(nn(d.path)).then((E) => y(E.ok ? E.content : "读取失败"));
   }, [d]), /* @__PURE__ */ h.jsxs("div", { children: [
     /* @__PURE__ */ h.jsx("p", { className: "hint", children: "按关键词物理命中排序帮你收窄候选，取舍仍由你判断；引用时带篇目位置与原文引文。" }),
     /* @__PURE__ */ h.jsxs("div", { className: "searchbar", children: [
@@ -16512,10 +16517,10 @@ function RE() {
         {
           label: "关键词（空格 / 、 分隔）",
           value: u,
-          onChange: (b) => r(b.currentTarget.value),
+          onChange: (E) => r(E.currentTarget.value),
           placeholder: "例：反驳 开头",
-          onKeyDown: (b) => {
-            b.key === "Enter" && S();
+          onKeyDown: (E) => {
+            E.key === "Enter" && S();
           }
         }
       ),
@@ -16524,25 +16529,25 @@ function RE() {
       }, children: "搜索" })
     ] }),
     /* @__PURE__ */ h.jsxs("div", { className: "searchresults", children: [
-      o.map((b) => /* @__PURE__ */ h.jsxs("div", { className: d?.path === b.path ? "searchhit on" : "searchhit", children: [
-        /* @__PURE__ */ h.jsxs("div", { className: "searchhit-head", onClick: () => m(b), children: [
-          /* @__PURE__ */ h.jsx("span", { className: "badge", children: b.kind }),
-          /* @__PURE__ */ h.jsx("b", { children: b.title }),
+      o.map((E) => /* @__PURE__ */ h.jsxs("div", { className: d?.path === E.path ? "searchhit on" : "searchhit", children: [
+        /* @__PURE__ */ h.jsxs("div", { className: "searchhit-head", onClick: () => m(E), children: [
+          /* @__PURE__ */ h.jsx("span", { className: "badge", children: E.kind }),
+          /* @__PURE__ */ h.jsx("b", { children: E.title }),
           /* @__PURE__ */ h.jsxs("span", { className: "hint", children: [
             "命中 ",
-            b.score,
+            E.score,
             " · ",
-            b.path
+            E.path
           ] })
         ] }),
-        d?.path !== b.path && b.hits?.slice(0, 2).map((N, p) => /* @__PURE__ */ h.jsxs("div", { className: "hitline", children: [
+        d?.path !== E.path && E.hits?.slice(0, 2).map((N, p) => /* @__PURE__ */ h.jsxs("div", { className: "hitline", children: [
           "L",
           N.line,
           ": ",
           N.excerpt,
           N.text
         ] }, p))
-      ] }, b.path)),
+      ] }, E.path)),
       !o.length && /* @__PURE__ */ h.jsx("p", { className: "hint", children: "输入关键词后搜索；结果按命中度排序，点击标题展开全文。" })
     ] }),
     d && /* @__PURE__ */ h.jsxs("div", { className: "searchpreview", children: [
@@ -16554,18 +16559,18 @@ function RE() {
 function jE() {
   const [u, r] = q.useState(""), [o, s] = q.useState(""), [d, m] = q.useState("2"), [g, y] = q.useState("");
   q.useEffect(() => {
-    Ye("/api/config").then((b) => {
-      b.ok && b.config ? (r((b.config.markers || []).join("、")), s(b.config.libraryPath || ""), m(String(b.config.maxPerRun ?? 2))) : y(b.message || "配置读取失败");
+    Ye("/api/config").then((E) => {
+      E.ok && E.config ? (r((E.config.markers || []).join("、")), s(E.config.libraryPath || ""), m(String(E.config.maxPerRun ?? 2))) : y(E.message || "配置读取失败");
     });
   }, []);
   async function S() {
     y("保存中…");
-    const b = await Pe("/api/config", {
+    const E = await Pe("/api/config", {
       markers: u.split(/[\s、，,;；]+/).map((N) => N.trim()).filter(Boolean),
       libraryPath: o.trim(),
       maxPerRun: Number(d) || 2
     });
-    y(b.ok ? "已保存" : `保存失败：${b.message || "未知错误"}`);
+    y(E.ok ? "已保存" : `保存失败：${E.message || "未知错误"}`);
   }
   return /* @__PURE__ */ h.jsxs("div", { className: "settings", children: [
     /* @__PURE__ */ h.jsx("p", { className: "hint", children: "会话名命中标定词才会收到结构推荐；标定词留空 = 全静默，不向任何会话推送。" }),
@@ -16574,7 +16579,7 @@ function jE() {
       {
         label: "会话标定词（、或逗号分隔，含任一即放行）",
         value: u,
-        onChange: (b) => r(b.currentTarget.value),
+        onChange: (E) => r(E.currentTarget.value),
         placeholder: "例：构成性、论文、写作"
       }
     ),
@@ -16583,7 +16588,7 @@ function jE() {
       {
         label: "结构库路径（留空用默认；改后重启 Hana 生效）",
         value: o,
-        onChange: (b) => s(b.currentTarget.value),
+        onChange: (E) => s(E.currentTarget.value),
         placeholder: "默认：workspace 写作模型插件/结构库"
       }
     ),
@@ -16592,7 +16597,7 @@ function jE() {
       {
         label: "单次推荐上限（1-2，设计上限 2）",
         value: d,
-        onChange: (b) => m(b.currentTarget.value)
+        onChange: (E) => m(E.currentTarget.value)
       }
     ),
     /* @__PURE__ */ h.jsxs("div", { className: "saverow", children: [
@@ -16605,7 +16610,7 @@ function jE() {
   ] });
 }
 function DE({ onDone: u }) {
-  const [r, o] = q.useState(""), [s, d] = q.useState(!1), [m, g] = q.useState(null), [y, S] = q.useState(!1), [b, N] = q.useState(!1);
+  const [r, o] = q.useState(""), [s, d] = q.useState(!1), [m, g] = q.useState(null), [y, S] = q.useState(!1), [E, N] = q.useState(!1);
   q.useEffect(() => {
     let x = !1;
     return (async () => {
@@ -16628,7 +16633,7 @@ function DE({ onDone: u }) {
     }
     d(!1);
   }
-  async function I(x) {
+  async function B(x) {
     const V = String(x || "").trim();
     if (!V) {
       g({ ok: !1, stage: "input", message: "请先粘贴文献全文，或选择 / 拖入 md、txt、pdf 文件" });
@@ -16695,12 +16700,12 @@ function DE({ onDone: u }) {
           ] }),
           /* @__PURE__ */ h.jsxs("p", { className: "hint zotero-toggle", children: [
             "或",
-            /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => N((x) => !x), children: b ? "收起 Zotero" : "从 Zotero 取" })
+            /* @__PURE__ */ h.jsx("button", { className: "linkbtn", onClick: () => N((x) => !x), children: E ? "收起 Zotero" : "从 Zotero 取" })
           ] })
         ]
       }
     ),
-    b && /* @__PURE__ */ h.jsx(ME, {}),
+    E && /* @__PURE__ */ h.jsx(ME, {}),
     /* @__PURE__ */ h.jsx(
       "textarea",
       {
@@ -16714,7 +16719,7 @@ function DE({ onDone: u }) {
     ),
     /* @__PURE__ */ h.jsxs("div", { className: "import-row", children: [
       /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: s || !r.trim(), onClick: () => {
-        I(r);
+        B(r);
       }, children: "加入队列并开始" }),
       s && /* @__PURE__ */ h.jsx("span", { className: "hint", children: "正在入队…" })
     ] }),
@@ -16768,25 +16773,25 @@ function zE() {
     const A = await Ye("/api/import/queue").catch(() => null);
     A && A.ok && (r(A.items || []), s(A));
   }
-  async function b(A, x, V = {}) {
+  async function E(A, x, V = {}) {
     const L = await Pe("/api/import/queue-action", x !== void 0 ? { action: A, key: x, ...V } : { action: A });
     return L && L.ok ? (s(L.snapshot), S(), !0) : (m(L?.message || "操作失败"), !1);
   }
   function N(A) {
     const x = g;
-    y(null), !(x === null || x === A) && b("reorder", x, { before: A });
+    y(null), !(x === null || x === A) && E("reorder", x, { before: A });
   }
-  const p = o?.total ?? u.length, I = (o?.done ?? 0) + (o?.failed ?? 0) + (o?.cancelled ?? 0);
+  const p = o?.total ?? u.length, B = (o?.done ?? 0) + (o?.failed ?? 0) + (o?.cancelled ?? 0);
   return /* @__PURE__ */ h.jsxs("div", { className: "queuebox", children: [
     /* @__PURE__ */ h.jsxs("div", { className: "qhead", children: [
       /* @__PURE__ */ h.jsx("b", { children: "导入队列" }),
-      /* @__PURE__ */ h.jsx("span", { className: "hint", children: p ? `${I}/${p} 完成 · 运行 ${(o?.running ?? 0) + (o?.stopping ?? 0)} · 排队 ${o?.pending ?? 0}${o?.paused ? " · 已暂停" : ""}` : "队列为空" }),
+      /* @__PURE__ */ h.jsx("span", { className: "hint", children: p ? `${B}/${p} 完成 · 运行 ${(o?.running ?? 0) + (o?.stopping ?? 0)} · 排队 ${o?.pending ?? 0}${o?.paused ? " · 已暂停" : ""}` : "队列为空" }),
       /* @__PURE__ */ h.jsxs("span", { className: "qhead-actions", children: [
         /* @__PURE__ */ h.jsx(Ce, { disabled: !o || p === 0, onClick: () => {
-          b(o?.paused ? "resume" : "pause");
+          E(o?.paused ? "resume" : "pause");
         }, children: o?.paused ? "继续" : "暂停" }),
         /* @__PURE__ */ h.jsx(Ce, { disabled: !o || (o?.done ?? 0) + (o?.cancelled ?? 0) === 0, onClick: () => {
-          b("clear-done");
+          E("clear-done");
         }, children: "清理已完成" })
       ] })
     ] }),
@@ -16805,14 +16810,14 @@ function zE() {
           /* @__PURE__ */ h.jsx("span", { className: "qstatus", children: UE[A.status] || A.status }),
           /* @__PURE__ */ h.jsx("span", { className: "qlabel", title: A.message || A.file || "", children: A.label }),
           (A.status === "pending" || A.status === "running") && /* @__PURE__ */ h.jsx(Ce, { onClick: () => {
-            b("cancel", A.key);
+            E("cancel", A.key);
           }, children: "停止" }),
           A.status === "stopping" && /* @__PURE__ */ h.jsx("span", { className: "hint", children: "停止中…" }),
           (A.status === "cancelled" || A.status === "failed") && /* @__PURE__ */ h.jsx(Ce, { onClick: () => {
-            b("start", A.key);
+            E("start", A.key);
           }, children: "开始" }),
           A.status !== "running" && A.status !== "stopping" && /* @__PURE__ */ h.jsx(Ce, { onClick: () => {
-            b("remove", A.key);
+            E("remove", A.key);
           }, children: "移除" }),
           A.status === "failed" && A.message && /* @__PURE__ */ h.jsx("span", { className: "qerr", children: A.message }),
           A.status === "done" && /* @__PURE__ */ h.jsx("span", { className: "qok", children: "已入库" })
@@ -16823,14 +16828,14 @@ function zE() {
   ] });
 }
 function ME() {
-  const [u, r] = q.useState([]), [o, s] = q.useState(null), [d, m] = q.useState([]), [g, y] = q.useState(""), [S, b] = q.useState("collection"), [N, p] = q.useState(null), [I, A] = q.useState(/* @__PURE__ */ new Set()), [x, V] = q.useState(""), [L, le] = q.useState(!1);
+  const [u, r] = q.useState([]), [o, s] = q.useState(null), [d, m] = q.useState([]), [g, y] = q.useState(""), [S, E] = q.useState("collection"), [N, p] = q.useState(null), [B, A] = q.useState(/* @__PURE__ */ new Set()), [x, V] = q.useState(""), [L, le] = q.useState(!1);
   q.useEffect(() => {
     Ye("/api/zotero/collections").then((se) => {
       se && se.ok ? r(se.collections || []) : V(se?.message || "分类读取失败（Zotero 桌面端在运行吗？）");
     }).catch(() => V("分类读取失败"));
   }, []);
   async function ye(se, oe) {
-    b("collection"), s(se), A(/* @__PURE__ */ new Set()), le(!0), V(`加载「${oe}」…`);
+    E("collection"), s(se), A(/* @__PURE__ */ new Set()), le(!0), V(`加载「${oe}」…`);
     try {
       const Se = await Ye(`/api/zotero/collection-items?key=${encodeURIComponent(se)}`);
       Se && Se.ok ? (m(Se.items || []), Se.truncated ? V(`该分类较大，列表显示前 ${Se.items.length} 条文献；更多可用搜索收窄`) : (Se.items || []).length ? V("") : V("该分类没有可导入的文献条目")) : V(Se?.message || "条目读取失败");
@@ -16840,7 +16845,7 @@ function ME() {
     le(!1);
   }
   async function he() {
-    b("search"), s(null), A(/* @__PURE__ */ new Set()), le(!0), V("");
+    E("search"), s(null), A(/* @__PURE__ */ new Set()), le(!0), V("");
     try {
       const se = await Pe("/api/tool/zotero_search", { query: g, limit: 50 });
       se && Array.isArray(se.items) ? (p(se.items.map((oe) => ({
@@ -16862,11 +16867,11 @@ function ME() {
       return Se.has(se) ? Se.delete(se) : Se.add(se), Se;
     });
   }
-  function ne() {
+  function ae() {
     A((se) => se.size >= Z.length && Z.length > 0 ? /* @__PURE__ */ new Set() : new Set(Z.map((oe) => oe.key)));
   }
   async function re() {
-    const se = Z.filter((G) => I.has(G.key));
+    const se = Z.filter((G) => B.has(G.key));
     if (!se.length) {
       V("先勾选条目");
       return;
@@ -16927,14 +16932,14 @@ function ME() {
       /* @__PURE__ */ h.jsx(Ce, { disabled: L, onClick: () => {
         he();
       }, children: "搜索" }),
-      /* @__PURE__ */ h.jsxs(Ce, { variant: "primary", disabled: L || I.size === 0, onClick: () => {
+      /* @__PURE__ */ h.jsxs(Ce, { variant: "primary", disabled: L || B.size === 0, onClick: () => {
         re();
       }, children: [
         "加入队列（",
-        I.size,
+        B.size,
         "）"
       ] }),
-      /* @__PURE__ */ h.jsx(Ce, { disabled: L || Z.length === 0, onClick: ne, children: I.size >= Z.length && Z.length > 0 ? "取消全选" : "全选本页" })
+      /* @__PURE__ */ h.jsx(Ce, { disabled: L || Z.length === 0, onClick: ae, children: B.size >= Z.length && Z.length > 0 ? "取消全选" : "全选本页" })
     ] }),
     x && /* @__PURE__ */ h.jsx("p", { className: "hint", children: x }),
     /* @__PURE__ */ h.jsxs("div", { className: "zgrid", children: [
@@ -16944,7 +16949,7 @@ function ME() {
           {
             className: S === "collection" && !o ? "collbtn on" : "collbtn",
             onClick: () => {
-              b("collection"), A(/* @__PURE__ */ new Set());
+              E("collection"), A(/* @__PURE__ */ new Set());
             },
             children: "按分类浏览"
           }
@@ -16956,7 +16961,7 @@ function ME() {
       /* @__PURE__ */ h.jsxs("div", { className: "zlist zlistpick", children: [
         Z.length === 0 && /* @__PURE__ */ h.jsx("p", { className: "hint", children: S === "collection" ? "选择左侧分类加载条目，或用搜索。" : "搜索无结果。" }),
         Z.map((se) => /* @__PURE__ */ h.jsxs("label", { className: "zrow", children: [
-          /* @__PURE__ */ h.jsx("input", { type: "checkbox", checked: I.has(se.key), onChange: () => ue(se.key) }),
+          /* @__PURE__ */ h.jsx("input", { type: "checkbox", checked: B.has(se.key), onChange: () => ue(se.key) }),
           /* @__PURE__ */ h.jsxs("span", { className: "zrow-main", children: [
             /* @__PURE__ */ h.jsx("b", { children: se.title || "（无题名）" }),
             /* @__PURE__ */ h.jsx("span", { className: "hint", children: [se.authors, se.year].filter(Boolean).join(" · ") })
@@ -17013,8 +17018,8 @@ function qE({ tick: u, bump: r }) {
   }, [S, u]), q.useEffect(() => {
     let p = !1;
     return (async () => {
-      const I = await Ye("/api/import/status").catch(() => null);
-      if (p || !I || !I.running) return;
+      const B = await Ye("/api/import/status").catch(() => null);
+      if (p || !B || !B.running) return;
       y("有导入任务进行中，等待结果…");
       const A = await zo();
       p || (y(A.ok ? `完成：${A.file}` : `仍失败：${A.message || "未知错误"}${A.failureTs ? "（已刷新记录）" : ""}`), (A.ok || A.failureTs) && (await S(), r()));
@@ -17022,7 +17027,7 @@ function qE({ tick: u, bump: r }) {
       p = !0;
     };
   }, []);
-  async function b(p) {
+  async function E(p) {
     if (!!!(p.text && String(p.text).trim()) && !p.pdfPath) {
       y(p.needsFile ? "该条目是文件拖入的 PDF，原文件未随记录保留，请把 PDF 重新拖入导入区" : "该条目无可重试内容（原文未保留），请重新提供文件");
       return;
@@ -17076,15 +17081,15 @@ function qE({ tick: u, bump: r }) {
       ] }),
       p.stage === "pdf_extract" && /* @__PURE__ */ h.jsx("div", { className: "hint", children: p.needsFile ? "PDF 提取失败；原文件未随记录保留，重试需把文件重新拖入" : "PDF 提取失败；可重试或换带文字层的版本" }),
       /* @__PURE__ */ h.jsx("div", { className: "fail-msg", children: p.message }),
-      (p.errors || []).slice(0, 4).map((I, A) => /* @__PURE__ */ h.jsxs("div", { className: "hint", children: [
+      (p.errors || []).slice(0, 4).map((B, A) => /* @__PURE__ */ h.jsxs("div", { className: "hint", children: [
         "· ",
-        I.field,
+        B.field,
         "：",
-        I.message
+        B.message
       ] }, A)),
       /* @__PURE__ */ h.jsxs("div", { className: "fail-actions", children: [
         /* @__PURE__ */ h.jsx(Ce, { variant: "primary", disabled: d === p.ts, onClick: () => {
-          b(p);
+          E(p);
         }, children: d === p.ts ? "重试中…" : "重试" }),
         /* @__PURE__ */ h.jsx(Ce, { disabled: d === p.ts, onClick: () => {
           N(p);
@@ -17101,7 +17106,7 @@ function LE() {
     library: "browse",
     todo: "score",
     settings: ""
-  }), [m, g] = q.useState(0), [y, S] = q.useState(null), b = q.useCallback(() => g((x) => x + 1), []), N = q.useCallback((x) => o(x), []);
+  }), [m, g] = q.useState(0), [y, S] = q.useState(null), E = q.useCallback(() => g((x) => x + 1), []), N = q.useCallback((x) => o(x), []);
   q.useEffect(() => {
     mt.ready(), mt.ui.resize({ height: u === "widget" ? 420 : 760 });
   }, [u]), q.useEffect(() => {
@@ -17114,26 +17119,26 @@ function LE() {
       x = !1;
     };
   }, [m, r]);
-  const p = s[r], I = q.useMemo(() => {
+  const p = s[r], B = q.useMemo(() => {
     switch (r) {
       case "home":
-        return /* @__PURE__ */ h.jsx(HE, { stats: y, go: N, onDone: b });
+        return /* @__PURE__ */ h.jsx(HE, { stats: y, go: N, onDone: E });
       case "use":
         return p === "models" ? /* @__PURE__ */ h.jsx(xE, { tick: m }) : /* @__PURE__ */ h.jsx(RE, {});
       case "library":
         return p === "compare" ? /* @__PURE__ */ h.jsx(NE, { tick: m }) : p === "board" ? /* @__PURE__ */ h.jsx(_E, { tick: m }) : /* @__PURE__ */ h.jsx(AE, { tick: m });
       case "todo":
-        return p === "queue" ? /* @__PURE__ */ h.jsx(SE, { tick: m, onChanged: b }) : p === "types" ? /* @__PURE__ */ h.jsx(TE, { tick: m, onChanged: b }) : p === "import-fail" ? /* @__PURE__ */ h.jsx(qE, { tick: m, bump: b }) : /* @__PURE__ */ h.jsx(yE, {});
+        return p === "queue" ? /* @__PURE__ */ h.jsx(SE, { tick: m, onChanged: E }) : p === "types" ? /* @__PURE__ */ h.jsx(TE, { tick: m, onChanged: E }) : p === "import-fail" ? /* @__PURE__ */ h.jsx(qE, { tick: m, bump: E }) : /* @__PURE__ */ h.jsx(yE, {});
       case "settings":
         return /* @__PURE__ */ h.jsx(jE, {});
     }
-  }, [r, p, m, y, N, b]), A = y ? y.queuePending + y.failures : 0;
+  }, [r, p, m, y, N, E]), A = y ? y.queuePending + y.failures : 0;
   return /* @__PURE__ */ h.jsx(oE, { mode: "inherit", className: "plugin-panel", children: /* @__PURE__ */ h.jsxs(
     Mn,
     {
       title: "论文结构建模",
       description: "把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。",
-      actions: /* @__PURE__ */ h.jsx(Ce, { variant: "ghost", onClick: b, children: "刷新" }),
+      actions: /* @__PURE__ */ h.jsx(Ce, { variant: "ghost", onClick: E, children: "刷新" }),
       children: [
         /* @__PURE__ */ h.jsx("nav", { className: "tabs zones", children: hE.map((x) => /* @__PURE__ */ h.jsxs("button", { className: r === x.id ? "tab on" : "tab", onClick: () => o(x.id), children: [
           x.label,
@@ -17152,7 +17157,7 @@ function LE() {
           },
           x.id
         )) }),
-        /* @__PURE__ */ h.jsx("div", { className: "tab-body", children: I })
+        /* @__PURE__ */ h.jsx("div", { className: "tab-body", children: B })
       ]
     }
   ) });

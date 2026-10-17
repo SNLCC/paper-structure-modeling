@@ -15,7 +15,7 @@ import { parseTypeCandidate } from "../lib/typelib.js";
 import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
-import { runModelGeneration, runMergeProposal, runPartitionProposal, runTypeTargets, runTacticBatch } from "../lib/model.js";
+import { runModelGeneration, runMergeProposal, runPartitionProposal, runTypeTargets, runTacticBatch, retagModelHead } from "../lib/model.js";
 import { extractPdfText } from "../lib/pdf-text.js";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
@@ -588,18 +588,28 @@ export function registerApiRoutes(app, ctx) {
     const reTo = new RegExp(`^${esc2(to)}-写作模型-v(\\d+)\\.md$`);
     const files = names.filter((n) => reFrom.test(n));
     if (!files.length) return c.json({ ok: false, message: `未找到模型族「${from}」的任何版本` });
-    if (names.some((n) => reTo.test(n))) return c.json({ ok: false, message: `目标名「${to}」已有模型版本，拒绝迁移（防覆盖）；可先删除或换个名字` });
+    // 目标已有版本时不硬拒也不覆盖：按「并入家族」处理，源版本接在目标末版之后，
+    // 目标文件一个不动。撞车的根因是目标多为「在用」类型，删掉再生成会被重建。
+    const targetMax = names
+      .filter((n) => reTo.test(n))
+      .reduce((m, n) => Math.max(m, Number(reTo.exec(n)[1])), 0);
+    const ordered = files.slice().sort((a, b) => Number(reFrom.exec(a)[1]) - Number(reFrom.exec(b)[1]));
+    let next = targetMax;
     const moved = [];
-    for (const f of files) {
+    for (const f of ordered) {
       const rd = await ctx.resources.read(ref(`${STRUCT_ROOT}/写作模型/${f}`));
-      let text = decoder.decode(rd.content ?? new Uint8Array());
-      text = text.split(`# ${from} 写作模型`).join(`# ${to} 写作模型`).split(`- 类型：${from}`).join(`- 类型：${to}`);
-      const nf = `${to}-写作模型-v${reFrom.exec(f)[1]}.md`;
-      await ctx.resources.write(ref(`${STRUCT_ROOT}/写作模型/${nf}`), text);
+      const text = decoder.decode(rd.content ?? new Uint8Array());
+      const oldV = Number(reFrom.exec(f)[1]);
+      const nv = targetMax ? ++next : oldV;
+      const nf = `${to}-写作模型-v${nv}.md`;
+      const out = targetMax
+        ? retagModelHead(text, { to, from, version: nv })
+        : text.split(`# ${from} 写作模型`).join(`# ${to} 写作模型`).split(`- 类型：${from}`).join(`- 类型：${to}`);
+      await ctx.resources.write(ref(`${STRUCT_ROOT}/写作模型/${nf}`), out);
       await ctx.resources.delete(ref(`${STRUCT_ROOT}/写作模型/${f}`));
       moved.push(nf);
     }
-    return c.json({ ok: true, from, to, moved });
+    return c.json({ ok: true, from, to, moved, merged: targetMax > 0, targetMax });
   });
 
   // 语义提议（异步，与生成共用单任务闸）：模型找相似标签对入队，裁决仍在队列页

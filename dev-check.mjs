@@ -1,7 +1,7 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
 import { extractJson, isProviderRejection } from "./lib/import.js";
-import { sampleFingerprint, extractSkillSection } from "./lib/model.js";
+import { sampleFingerprint, extractSkillSection, retagModelHead } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
 import { parseTagLib, patchTagLib, appendQueueRow, setQueueDecision, appendTagRow } from "./lib/taglib.js";
@@ -274,6 +274,13 @@ console.log("located validate rejects empty item:", !validateExtraction({ ...goo
   const t2 = patchTypeRowStatus(t1, "旧类型", "并入→新名字").md;
   const stale = patchTypeRowStatus(t0, "旧类型", "并入→新名字").md;
   console.log("type-lib write order keeps fresh row:", /^\|\s*新名字\s*\|/m.test(t2) && !/^\|\s*新名字\s*\|/m.test(stale));
+}
+
+// ---- 第 130 轮：随归并改名 / 并入家族——头部改标签、版本接续、补记原名，指纹行不动 ----
+{
+  const src = ["# 甲 写作模型 v1", "", "- 类型：甲", "- 版本：v1", "- 样本指纹：abc", ""].join("\n");
+  const out = retagModelHead(src, { to: "乙", from: "甲", version: 4 });
+  console.log("retag model head:", out.includes("# 乙 写作模型 v4") && out.includes("- 类型：乙") && out.includes("- 版本：v4") && out.includes("- 原名：甲") && out.includes("- 样本指纹：abc"));
 }
 
 console.log("done");

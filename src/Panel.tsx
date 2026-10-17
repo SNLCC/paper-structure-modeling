@@ -1350,8 +1350,12 @@ function ModelsTab({ tick }: { tick: number }) {
   };
   async function migrateModels(fromBase: string, toBase: string) {
     const r = await apiPost('/api/library/rename-models', { from: fromBase, to: toBase });
-    setMsg(r.ok ? `已随归并改名：${fromBase} → ${toBase}（${(r.moved || []).length} 个文件，版本保留）` : (r.message || JSON.stringify(r)));
-    if (r.ok) { setSel(''); load(); }
+    if (!r.ok) { setMsg(r.message || JSON.stringify(r)); return; }
+    const vs = ((r.moved || []) as string[]).map((f) => (/-v(\d+)\.md$/.exec(f) || [])[1]).filter(Boolean);
+    setMsg(r.merged
+      ? `已并入「${toBase}」家族：${fromBase} → ${toBase}（${(r.moved || []).length} 个文件，接续为 ${vs.map((v) => `v${v}`).join('、')}；目标原有版本未动）`
+      : `已随归并改名：${fromBase} → ${toBase}（${(r.moved || []).length} 个文件，版本保留）`);
+    setSel(''); load();
   }
 
   return (
