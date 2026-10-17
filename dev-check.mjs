@@ -1,7 +1,7 @@
 // 开发自检：校验器与渲染器冒烟测试。改校验规则后重跑：node dev-check.mjs
 import { validateExtraction, renderExtraction } from "./lib/extraction.js";
 import { extractJson, isProviderRejection } from "./lib/import.js";
-import { sampleFingerprint, extractSkillSection, retagModelHead } from "./lib/model.js";
+import { sampleFingerprint, extractSkillSection, retagModelHead, resolveTypeTarget } from "./lib/model.js";
 import { validateAnchor, renderAnchor, parseAnchorScore } from "./lib/anchor.js";
 import { parseMapping, flattenRows, isSingleHop, renderMapping } from "./lib/mapping.js";
 import { parseTagLib, patchTagLib, appendQueueRow, setQueueDecision, appendTagRow } from "./lib/taglib.js";
@@ -281,6 +281,19 @@ console.log("located validate rejects empty item:", !validateExtraction({ ...goo
   const src = ["# 甲 写作模型 v1", "", "- 类型：甲", "- 版本：v1", "- 样本指纹：abc", ""].join("\n");
   const out = retagModelHead(src, { to: "乙", from: "甲", version: 4 });
   console.log("retag model head:", out.includes("# 乙 写作模型 v4") && out.includes("- 类型：乙") && out.includes("- 版本：v4") && out.includes("- 原名：甲") && out.includes("- 样本指纹：abc"));
+}
+
+// ---- 第 131 轮：类型并入建议的目标解析——容错但不出已知集 ----
+{
+  const known = ["甲型论证", "乙型综述", "待裁候选丙"];
+  console.log("resolve type target:",
+    resolveTypeTarget("甲型论证", known) === "甲型论证"
+    && resolveTypeTarget("并入「乙型综述」", known) === "乙型综述"
+    && resolveTypeTarget("「待裁候选丙」", known) === "待裁候选丙"
+    && resolveTypeTarget("甲型论证（既有类型）", known) === "甲型论证"
+    && resolveTypeTarget("新立", known) === "新立"
+    && resolveTypeTarget("驳回", known) === "驳回"
+    && resolveTypeTarget("不存在的类型", known) === null);
 }
 
 console.log("done");
