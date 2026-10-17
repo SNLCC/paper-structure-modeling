@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "paper-structure-modeling",
   "name": "论文结构建模",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "entry": "index.js",
   "icon": "assets/icon.jpg",
   "minAppVersion": "1.0.6-beta",

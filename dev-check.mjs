@@ -261,4 +261,19 @@ console.log("located validate rejects string:", !validateExtraction({ ...good, e
 console.log("located validate rejects bad location:", !validateExtraction({ ...good, emergent: { ...good.emergent, sectionFunctions: [{ location: "一、", title: "x" }] } }).ok);
 console.log("located validate rejects empty item:", !validateExtraction({ ...good, emergent: { ...good.emergent, paragraphFunctions: [{ location: "§1" }] } }).ok);
 
+// ---- 第 129 轮：类型库写序——targetFresh 登记新行后，状态补丁必须基于写完的文本，
+// 否则会用写前快照把刚登记的行覆盖掉（工具层改名路径的 bug）
+{
+  const t0 = [
+    "| 类型 | 定义 | 归并自 | 子语法 | 状态 | 出现篇数 |",
+    "|---|---|---|---|---|---|",
+    "| 旧类型 | d | 旧类型 |  | 在用 | 1 |",
+    "",
+  ].join("\n");
+  const t1 = upsertTypeRow(t0, { type: "新名字", definition: "（定义待补）", mergedFrom: "新名字", status: "在用", count: 0 }).md;
+  const t2 = patchTypeRowStatus(t1, "旧类型", "并入→新名字").md;
+  const stale = patchTypeRowStatus(t0, "旧类型", "并入→新名字").md;
+  console.log("type-lib write order keeps fresh row:", /^\|\s*新名字\s*\|/m.test(t2) && !/^\|\s*新名字\s*\|/m.test(stale));
+}
+
 console.log("done");

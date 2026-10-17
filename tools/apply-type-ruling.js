@@ -67,6 +67,9 @@ const tool = {
       if (c[0] && c[0] !== "类型" && !c[0].includes("暂无")) typeNames.push(c[0]);
     }
     const isRegistered = typeNames.includes(name);
+    // 类型库当前文本：每一次写库后同步，避免后续补丁用写前的旧快照把刚写入的行覆盖掉
+    // （targetFresh 登记新行后，末尾的并入状态补丁管的就是这里）。
+    let typeCur = typeMd;
 
     // 找宣告篇（第 116 轮放宽：允许已裁决者再裁/改判，不再提前拦截）
     const listing = await ctx.resources.list(ref(META_DIR));
@@ -90,6 +93,7 @@ const tool = {
       const up = upsertTypeRow(typeMd, { type: name, definition, mergedFrom, status: "在用", count: declaring.length });
       if (up.action === "notable") return json({ ok: false, message: "类型库无表格可写，请检查库文件" });
       await ctx.resources.write(ref(TYPE_LIB), up.md);
+      typeCur = up.md;
       for (const d of pending) {
         const p = patchDeclaringStatus(d.md, name, `新立为类型库「${name}」${stamp}`);
         if (p.changed) { await ctx.resources.write(ref(`${META_DIR}/${d.file}`), p.md); stamped++; }
@@ -128,13 +132,15 @@ const tool = {
         if (!input.targetFresh) {
           return json({ ok: false, message: `目标「${targetRaw}」既不在类型库、也无篇目宣告（现有类型：${typeNames.join("、") || "空"}）` });
         }
-        const upF = upsertTypeRow(typeMd, { type: targetRaw, definition: "（定义待补）", mergedFrom: targetRaw, status: "在用", count: 0 });
+        const upF = upsertTypeRow(typeCur, { type: targetRaw, definition: "（定义待补）", mergedFrom: targetRaw, status: "在用", count: 0 });
         if (upF.action === "notable") return json({ ok: false, message: "类型库无表格可写，请检查库文件" });
         await ctx.resources.write(ref(TYPE_LIB), upF.md);
+        typeCur = upF.md;
       } else {
-        const up2 = upsertTypeRow(typeMd, { type: targetRaw, definition: targetDeclaring[0].cand.definition || "（定义待补）", mergedFrom: targetRaw, status: "在用", count: targetDeclaring.length });
+        const up2 = upsertTypeRow(typeCur, { type: targetRaw, definition: targetDeclaring[0].cand.definition || "（定义待补）", mergedFrom: targetRaw, status: "在用", count: targetDeclaring.length });
         if (up2.action === "notable") return json({ ok: false, message: "类型库无表格可写，请检查库文件" });
         await ctx.resources.write(ref(TYPE_LIB), up2.md);
+        typeCur = up2.md;
         for (const td of targetDeclaring) {
           const pt = patchDeclaringStatus(await readMd(ctx, `${META_DIR}/${td.file}`), targetRaw, `新立为类型库「${targetRaw}」${stamp}`);
           if (pt.changed) { await ctx.resources.write(ref(`${META_DIR}/${td.file}`), pt.md); stamped++; }
@@ -157,7 +163,7 @@ const tool = {
       basis: `库主裁决（类型裁决页）：并入${reason ? `：${reason}` : ""}`,
     });
     await ctx.resources.write(ref(MAPPING), renderMapping(state));
-    const libPatch = patchTypeRowStatus(typeMd, name, `并入→${target}`);
+    const libPatch = patchTypeRowStatus(typeCur, name, `并入→${target}`);
     if (libPatch.changed) await ctx.resources.write(ref(TYPE_LIB), libPatch.md);
     for (const d of pending) {
       const p = patchDeclaringStatus(d.md, name, `并入「${target}」${stamp}`);
