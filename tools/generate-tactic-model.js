@@ -8,7 +8,7 @@ const json = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, nul
 const tool = {
   name: "generate_tactic_model",
   description:
-    "On-demand tactic-model generation (§5.10, round 123): induce a TACTIC model for ONE tag — samples = every 篇目 carrying that tag (>=2 required; corpus <=24000 chars). " +
+    "On-demand tactic-model generation (§5.10, round 123): induce a TACTIC model for ONE tag — samples = every 篇目 carrying that tag (>=2 required; corpus <=60000 chars). " +
     "Writes 写作模型/战术-<标签>-写作模型-v<n>.md via commit_model(kind=tactic), versioned with sample-fingerprint skip-if-unchanged. " +
     "Content covers ONLY single-tactic usage (what it is & when to use / per-instance usage with quotes and scores / variants & failure boundaries / boundaries vs independent-neighbor tags) — NEVER whole-paper arrangement (that belongs to type models). " +
     "Trigger: user asks to 沉淀 a tactic while writing (写作取用), or explicitly requests it. Returns {ok:false, stage} with a clear reason when samples<2, unchanged, or over size limit.",
