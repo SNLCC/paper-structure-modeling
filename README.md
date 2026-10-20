@@ -61,6 +61,18 @@ node <hana>/scripts/validate-app.mjs --dir . --json   # 官方静态校验
 - **路由**：`routes/api.js` 经 v2 兼容目录自动挂载到 `/api/apps/<id>/routes/`，具名导出 `register`。
 - **技能**：`skills/structure-extraction/SKILL.md` 是对话拆解的方法论载体，同时是导入链提示词的唯一来源（单源约束，禁止出现第二份）。
 
+## 打包发布物
+
+用官方打包器生成 entry JSON 与 zip：
+
+```bash
+node <hana>/scripts/extension-pack.mjs --kind app --dir <app> --publisher "<publisher>" --out <dist>
+```
+
+打包器只收 `--dir` 下的文件，不会自动带入 npm 依赖；而 Hana 在用户机器上既不会安装 npm 包，也不会从宿主 `node_modules` 解析依赖。所以打包目录应**只含已提交文件**（可剔 `.gitignore`），**外加 `node_modules/unpdf`**（MIT，随包，约 2 MB）；其余 `node_modules` 与 `.git` 不进包。
+
+漏带 unpdf 的后果不是降级而是硬失败：`lib/pdf-text.js` 对它是静态导入，`routes/api.js` 整模块加载失败，宿主不会为空白路由注册路由应用，面板所有 `/api/*` 不可用。打包后建议验一下：把 zip 解到空目录，在目录内执行 `node --input-type=module -e "await import('./routes/api.js')"`，应无报错。
+
 ## 来源说明
 
 `vendor/sdk/` 内的三个 `@hana/*` 打包文件来自官方 `hana-app-creator` skill 附带的分发资产（Apache-2.0，披露见 [NOTICE](NOTICE)）。`@hana/app-sdk` 尚未上公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录——随包携带是官方机制的预期产物，仅用于构建与类型解析，未作修改。

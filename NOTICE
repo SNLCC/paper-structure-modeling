@@ -31,7 +31,7 @@ third-party notices
    Copyright (c) 2023-Present Johann Schopplich
    Licensed under the MIT License。**协议全文随包：third-party/unpdf-MIT-LICENSE.txt**
    说明：unpdf 的打包产物内嵌 Mozilla pdf.js（Apache-2.0, https://github.com/mozilla/pdf.js），
-   其上游 LICENSE 文件未单独声明该内嵌，此处代为披露。
+   其上游 LICENSE 文件未单独声明该内嵌，此处代为披露。**协议全文随包：vendor/sdk/LICENSE-APACHE-2.0.txt**
 
 3. react, react-dom
    Copyright (c) Meta Platforms, Inc.
