@@ -17093,7 +17093,7 @@ function LE({ stats: u, go: r, onDone: o }) {
       /* @__PURE__ */ d.jsx(_e, { disabled: !u || s === 0, onClick: () => r("todo"), children: s > 0 ? `处理待办（${s}）` : "暂无待办" })
     ] }),
     /* @__PURE__ */ d.jsx("div", { className: "statusbar", children: u ? `库内 ${u.papers} 篇目 · ${u.models} 模型 · 待办 ${s} 条` : "统计中…" }),
-    /* @__PURE__ */ d.jsx("p", { className: "hint", children: "使用边界：仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。" }),
+    /* @__PURE__ */ d.jsx("p", { className: "usage-note", children: "使用边界：仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。" }),
     /* @__PURE__ */ d.jsx(zE, { onDone: o })
   ] });
 }

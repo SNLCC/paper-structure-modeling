@@ -431,6 +431,19 @@ pre.err {
   background: rgba(120, 110, 90, 0.06);
 }
 
+/* 使用边界常驻提示：带框加左侧强调条，比 hint 醒目 */
+.usage-note {
+  margin: 8px 0 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(120, 110, 90, 0.45);
+  border-left: 3px solid var(--hana-accent, #537d96);
+  border-radius: 6px;
+  background: rgba(120, 110, 90, 0.10);
+  color: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* 导入区 */
 .import-zone {
   display: flex;
