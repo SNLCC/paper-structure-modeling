@@ -29,9 +29,13 @@ third-party notices
 
 2. unpdf
    Copyright (c) 2023-Present Johann Schopplich
-   Licensed under the MIT License。**协议全文随包：third-party/unpdf-MIT-LICENSE.txt**
-   说明：unpdf 的打包产物内嵌 Mozilla pdf.js（Apache-2.0, https://github.com/mozilla/pdf.js），
-   其上游 LICENSE 文件未单独声明该内嵌，此处代为披露。**协议全文随包：vendor/sdk/LICENSE-APACHE-2.0.txt**
+   Licensed under the MIT License。
+   随包位置：`node_modules/unpdf/`（服务端依赖，PDF 回退引擎）
+   许可全文随包：`node_modules/unpdf/LICENSE`（上游原文）；另存副本 `third-party/unpdf-MIT-LICENSE.txt`
+   内嵌组件：unpdf 随附 Mozilla pdf.js 的 serverless 构建（`dist/pdfjs.mjs`，Apache-2.0，
+   https://github.com/mozilla/pdf.js）。此项由 unpdf 的 README 声明；其 LICENSE 文件只含 MIT 正文，
+   未附 Apache-2.0 全文，该构建内也未标注许可头，故此处代为转述并随包 Apache 全文：
+   **vendor/sdk/LICENSE-APACHE-2.0.txt**
 
 3. react, react-dom
    Copyright (c) Meta Platforms, Inc.
@@ -44,9 +48,6 @@ third-party notices
    官方发行包原件拷贝（即各自上游仓库的一手文本）：
    - react / react-dom — MIT，见 third-party/react-MIT-LICENSE.txt
      （Copyright (c) Meta Platforms, Inc. and affiliates.）
-   - unpdf — MIT，见 third-party/unpdf-MIT-LICENSE.txt
-     （Copyright (c) 2023-PRESENT Johann Schopplich；其 bundle 内嵌的
-      Mozilla pdf.js 为 Apache-2.0，此处于上游 LICENSE 未单独声明，代为披露）
 
 6. sdk/ 目录内另含上游官方自带的一手披露文件，原样保留未改动：
    THIRD_PARTY_NOTICES.txt（ant-design 等 MIT 全文）、components.js.LEGAL.txt、

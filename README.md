@@ -13,7 +13,7 @@
 
 - HanaAgent ≥ 1.0.6-beta（manifest `minAppVersion`）。
 - **PDF 解析**：主引擎 PyMuPDF sidecar —— 需要本机 `Python 3.9+` 并 `python -m pip install --user pypdfium2` 之外，安装：`python -m pip install --user pymupdf`（官方 PyPI 源）。sidecar 不可用时自动回退内置 unpdf（纯 JS，零外部依赖），功能不减。
-- Python 解释器可用环境变量 `PSM_PYTHON` 覆盖（默认 PATH 上的 `python`）。
+- Python 解释器可用环境变量 `PSM_PYTHON` 覆盖（默认 PATH 上的 `python`）；也可在插件「设置 · PDF 引擎」里填解释器路径，保存即生效，无需重启。同一处可查看主引擎是否可用（含版本或失败原因）并一键重检。
 
 ## 安装
 
@@ -61,18 +61,6 @@ node <hana>/scripts/validate-app.mjs --dir . --json   # 官方静态校验
 - **路由**：`routes/api.js` 经 v2 兼容目录自动挂载到 `/api/apps/<id>/routes/`，具名导出 `register`。
 - **技能**：`skills/structure-extraction/SKILL.md` 是对话拆解的方法论载体，同时是导入链提示词的唯一来源（单源约束，禁止出现第二份）。
 
-## 打包发布物
-
-用官方打包器生成 entry JSON 与 zip：
-
-```bash
-node <hana>/scripts/extension-pack.mjs --kind app --dir <app> --publisher "<publisher>" --out <dist>
-```
-
-打包器只收 `--dir` 下的文件，不会自动带入 npm 依赖；而 Hana 在用户机器上既不会安装 npm 包，也不会从宿主 `node_modules` 解析依赖。所以打包目录应**只含已提交文件**（可剔 `.gitignore`），**外加 `node_modules/unpdf`**（MIT，随包，约 2 MB）；其余 `node_modules` 与 `.git` 不进包。
-
-漏带 unpdf 的后果不是降级而是硬失败：`lib/pdf-text.js` 对它是静态导入，`routes/api.js` 整模块加载失败，宿主不会为空白路由注册路由应用，面板所有 `/api/*` 不可用。打包后建议验一下：把 zip 解到空目录，在目录内执行 `node --input-type=module -e "await import('./routes/api.js')"`，应无报错。
-
 ## 来源说明
 
 `vendor/sdk/` 内的三个 `@hana/*` 打包文件来自官方 `hana-app-creator` skill 附带的分发资产（Apache-2.0，披露见 [NOTICE](NOTICE)）。`@hana/app-sdk` 尚未上公开 npm registry，官方 Creator 脚手架默认将所需构建文件复制进每个 App 目录——随包携带是官方机制的预期产物，仅用于构建与类型解析，未作修改。
@@ -83,5 +71,5 @@ HanaAgent 为 liliMozi 的商标；本项目是独立第三方插件，与官方
 
 本项目以 [MIT](LICENSE) 发布。第三方组件的许可与来源披露见 [NOTICE](NOTICE)，要点：
 
-- `@hana/*` SDK：Apache-2.0（官方分发资产，随包携带）；react 与 unpdf：MIT（unpdf 打包产物内嵌 Mozilla pdf.js，Apache-2.0）。
+- `@hana/*` SDK：Apache-2.0（官方分发资产，随包携带）；react 与 unpdf：MIT（unpdf 内嵌 Mozilla pdf.js，Apache-2.0）。两者随包形态不同：react 由构建内联进 `ui/assets/panel.js`，unpdf 以 `node_modules/unpdf` 随包作为 PDF 回退引擎。
 - PDF 主引擎 PyMuPDF 为 AGPL-3.0 **外部依赖**：用户自行 pip 安装，本插件以独立子进程调用其公开**函数接口（纯本地内存处理，零网络）**，无链接无嵌入、不随仓库分发——不构成本项目的衍生作品，也不传染本许可；不安装时自动回退 MIT 的 unpdf 引擎。

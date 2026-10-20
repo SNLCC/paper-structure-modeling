@@ -65,6 +65,15 @@ async function pollImport(timeoutMs = 8 * 60 * 1000): Promise<any> {
   return pollJob('/api/import/status', { timeoutMs });
 }
 
+// PDF 主引擎探测（设置页与首页共用）：模块级缓存，force 时重探。
+let engineCache: any = null;
+async function fetchEngine(force = false): Promise<any> {
+  if (engineCache && !force) return engineCache;
+  const r = await apiGet('/api/pdf/engine').catch(() => ({ ok: false, error: '探测请求失败' }));
+  engineCache = r;
+  return r;
+}
+
 // 篇目首行落格格式：# 题目（作者, 年份）——列表与下拉统一显示人话（不露文件 id）
 function parseEntryHead(firstLine: string, fallbackId: string) {
   const m = /^#\s+(.+?)（([^（）]+),\s*(\d{4}[^)）]*)）$/.exec(String(firstLine || '').trim());
@@ -1542,7 +1551,10 @@ function SettingsTab() {
   const [markers, setMarkers] = useState('');
   const [libPath, setLibPath] = useState('');
   const [maxN, setMaxN] = useState('2');
+  const [py, setPy] = useState('');
   const [note, setNote] = useState('');
+  const [engine, setEngine] = useState<any>(null);
+  const [probing, setProbing] = useState(false);
 
   useEffect(() => {
     void apiGet('/api/config').then((r) => {
@@ -1550,11 +1562,19 @@ function SettingsTab() {
         setMarkers((r.config.markers || []).join('、'));
         setLibPath(r.config.libraryPath || '');
         setMaxN(String(r.config.maxPerRun ?? 2));
+        setPy(r.config.pythonPath || '');
       } else {
         setNote(r.message || '配置读取失败');
       }
     });
+    void fetchEngine().then(setEngine);
   }, []);
+
+  async function probe() {
+    setProbing(true);
+    setEngine(await fetchEngine(true));
+    setProbing(false);
+  }
 
   async function save() {
     setNote('保存中…');
@@ -1562,9 +1582,17 @@ function SettingsTab() {
       markers: markers.split(/[\s、，,;；]+/).map((s) => s.trim()).filter(Boolean),
       libraryPath: libPath.trim(),
       maxPerRun: Number(maxN) || 2,
+      pythonPath: py.trim(),
     });
     setNote(r.ok ? '已保存' : `保存失败：${r.message || '未知错误'}`);
+    if (r.ok) void fetchEngine(true).then(setEngine);
   }
+
+  const engineLine = engine === null
+    ? '检测中…'
+    : engine.ok
+      ? `可用，版本 ${engine.version || '未知'}（解释器 ${engine.python}）`
+      : `不可用（${engine.error || '未知原因'}；解释器 ${engine.python || 'python'}）`;
 
   return (
     <div className="settings">
@@ -1575,6 +1603,17 @@ function SettingsTab() {
         onChange={(e) => setLibPath(e.currentTarget.value)} placeholder="默认：workspace 写作模型插件/结构库" />
       <TextInput label="单次推荐上限（1-2，设计上限 2）" value={maxN}
         onChange={(e) => setMaxN(e.currentTarget.value)} />
+
+      <p className="hint">
+        PDF 引擎：主引擎 PyMuPDF {engineLine}。不可用时自动回退内置 unpdf，功能不缺，仅部分 PDF 的提取质量低一档。
+      </p>
+      <TextInput label="Python 解释器路径（留空 = PATH 上的 python；本项保存即生效，无需重启）" value={py}
+        onChange={(e) => setPy(e.currentTarget.value)} placeholder="例：C:\\Python312\\python.exe" />
+      <div className="saverow">
+        <Button disabled={probing} onClick={() => void probe()}>{probing ? '检测中…' : '重新检测引擎'}</Button>
+        <span className="hint">启用主引擎：{(engine && engine.python ? engine.python : 'python') + ' -m pip install pymupdf'}</span>
+      </div>
+
       <div className="saverow">
         <Button variant="primary" onClick={() => void save()}>保存</Button>
         {note && <span className="savehint">{note}</span>}
@@ -2072,23 +2111,43 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
   useEffect(() => {
     try { setNoticeOpen(!window.localStorage.getItem(NOTICE_KEY)); } catch { setNoticeOpen(true); }
   }, []);
-  // 未配置引导：库路径为空或占位串时，在首页给出一步到位的指引
-  const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok'>('loading');
-  useEffect(() => {
+  // 未配置引导：库路径为空/占位串 → 提示；请求本身失败 → 单独一态，不再静默留在 loading
+  const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok' | 'error'>('loading');
+  const [libErr, setLibErr] = useState('');
+  const checkLib = useCallback(() => {
+    setLibState('loading');
     apiGet('/api/config')
       .then((r) => {
-        const p = r?.config?.libraryPath ?? '';
-        setLibState(p && !String(p).startsWith('NOT_CONFIGURED') ? 'ok' : 'unconfigured');
+        if (!r || r.ok !== true || !r.config) { setLibErr(r?.message || '接口未返回配置'); setLibState('error'); return; }
+        const p = String(r.config.libraryPath ?? '');
+        setLibState(p && !p.startsWith('NOT_CONFIGURED') ? 'ok' : 'unconfigured');
       })
-      .catch(() => setLibState('loading'));
+      .catch((e) => { setLibErr(String(e?.message || e)); setLibState('error'); });
   }, []);
+  useEffect(() => { checkLib(); }, [checkLib]);
+  // PDF 主引擎不可用时在首页给一条提示，指到设置页
+  const [engine, setEngine] = useState<any>(null);
+  useEffect(() => { void fetchEngine().then(setEngine); }, []);
   return (
     <div className="home">
       <p className="tagline">把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。</p>
+      {libState === 'error' && (
+        <div className="home-banner">
+          读取配置失败（{libErr || '未知原因'}），暂时无法判断结构库是否已配置。
+          <Button onClick={checkLib}>重试</Button>
+          <Button onClick={() => go('settings')}>去设置</Button>
+        </div>
+      )}
       {libState === 'unconfigured' && (
         <div className="home-banner">
           尚未配置结构库。到「设置」填写 libraryPath 并保存，模板会自动铺到该目录，无需手动拷贝。
           <Button onClick={() => go('settings')}>前往设置</Button>
+        </div>
+      )}
+      {engine && engine.ok === false && (
+        <div className="home-banner">
+          PDF 主引擎 PyMuPDF 未启用（{engine.error || '未知原因'}），当前使用内置解析；功能不缺，部分 PDF 的提取质量低一档。
+          <Button onClick={() => go('settings')}>去设置</Button>
         </div>
       )}
       {noticeOpen && (

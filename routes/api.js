@@ -16,7 +16,7 @@ import { searchLibrary } from "../lib/search.js";
 import { loadConfig, validateConfig, saveConfig } from "../lib/config.js";
 import { runImport, listFailures, addFailure, removeFailure, MAX_IMPORT_CHARS } from "../lib/import.js";
 import { runModelGeneration, runMergeProposal, runPartitionProposal, runTypeTargets, runTacticBatch, retagModelHead } from "../lib/model.js";
-import { extractPdfText } from "../lib/pdf-text.js";
+import { extractPdfText, probeEngine } from "../lib/pdf-text.js";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -194,6 +194,16 @@ export function registerApiRoutes(app, ctx) {
   // 插件配置（第八 tab）：通道三三闸参数。读宽松、写严格；结构库路径改动需重启 Hana
   // （paths.js 模块级常量，宿主 ESM 缓存）。
   app.get("/api/config", (c) => c.json({ ok: true, config: loadConfig() }));
+
+  // PDF 主引擎检测（设置页用）：用当前配置的解释器 import pymupdf。
+  // 只做一次 spawn，不读文件不联网；失败原因直接回给面板，不替用户作任何安装动作。
+  app.get("/api/pdf/engine", async (c) => {
+    try {
+      return c.json({ ok: true, ...(await probeEngine()) });
+    } catch (e) {
+      return c.json({ ok: false, error: String(e?.message || e) });
+    }
+  });
 
   app.post("/api/config", async (c) => {
     let body;
