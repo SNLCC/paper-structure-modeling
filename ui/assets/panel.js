@@ -17033,7 +17033,7 @@ function qE({ stats: u, go: r, onDone: o }) {
       /* @__PURE__ */ h.jsx(we, { onClick: () => r("settings"), children: "前往设置" })
     ] }),
     d && /* @__PURE__ */ h.jsxs("div", { className: "home-banner", children: [
-      "仅处理你有权使用的文本；结构库保存在本机，不随插件分发。引用与对外使用请自行核对授权，适当引用需指明作者与作品名。",
+      "仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。",
       /* @__PURE__ */ h.jsx(we, { onClick: () => {
         m(!1);
         try {

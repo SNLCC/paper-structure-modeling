@@ -2093,7 +2093,7 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
       )}
       {noticeOpen && (
         <div className="home-banner">
-          仅处理你有权使用的文本；结构库保存在本机，不随插件分发。引用与对外使用请自行核对授权，适当引用需指明作者与作品名。
+          仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。
           <Button onClick={() => { setNoticeOpen(false); try { window.localStorage.setItem(NOTICE_KEY, '1'); } catch { /* 存不了就下次再提示 */ } }}>我知道了</Button>
         </div>
       )}

@@ -6,7 +6,7 @@
   "entry": "index.js",
   "icon": "assets/icon.jpg",
   "minAppVersion": "1.0.6-beta",
-  "description": "从文献提取论文底层论证架构与表层呈现结构，聚类归纳类型，生成可回溯的写作模型。",
+  "description": "从文献提取论文底层论证架构与表层呈现结构，聚类归纳类型，生成可回溯的写作模型。仅供个人学习与研究使用。",
   "capabilities": [
     "app/tools.expose-to-model",
     "app/models.infer",
