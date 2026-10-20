@@ -1234,19 +1234,53 @@ function ModelsTab({ tick }: { tick: number }) {
   const [histOpen, setHistOpen] = useState<Record<string, boolean>>({});
   const [editingModel, setEditingModel] = useState(false);
 
-  // 挂载恢复：建模中切页回来，接管轮询到收尾
+  // 第 132 轮：类型建模的实时进度轮询（与战术链同款）——按类型推进，附带已用时长跳动，
+  // 让“还在跑”看得见；后台任务不因等待超时而中断。
+  async function watchGenerate(alive: () => boolean = () => true): Promise<any | null> {
+    const t0 = Date.now();
+    const elapsed = () => {
+      const s = Math.max(0, Math.round((Date.now() - t0) / 1000));
+      return `${Math.floor(s / 60)}分${String(s % 60).padStart(2, '0')}秒`;
+    };
+    while (Date.now() - t0 < 40 * 60 * 1000) {
+      await new Promise((r) => setTimeout(r, 4000));
+      if (!alive()) return null;
+      const s = await apiGet('/api/model/status').catch(() => null);
+      if (!s || s.kind !== 'generate') continue;
+      if (s.running) {
+        const p = s.progress || {};
+        setMsg(p.total
+          ? `建模中：${p.done ?? 0}/${p.total}　当前：${p.current || '…'}　已用 ${elapsed()}`
+          : `建模中：准备中…　已用 ${elapsed()}`);
+      } else if (s.lastResult) {
+        return s.lastResult;
+      }
+    }
+    return { ok: false, stage: 'timeout', message: `等待超过 40 分钟（已用 ${elapsed()}），任务可能仍在运行；本页离开再回来仍可查看，后台任务不会因等待超时而中断。` };
+  }
+
+  // 挂载恢复：建模中切页回来，接管轮询到收尾；切页期间已跑完的，把结果补出来。
+  // 旧版的守卫只认 running，跑完就 return，回来一片空白——这是切页丢提示的直接原因。
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const s = await apiGet('/api/model/status').catch(() => null);
-      if (cancelled || !s || !s.running || s.kind !== 'generate') return;
-      setBusy(true);
-      setMsg('建模进行中（接管切页前的任务）…');
-      const fin = await pollJob('/api/model/status', { kind: 'generate' });
-      if (cancelled) return;
-      setMsg(fin.stage === 'timeout' ? fin.message : (fin.ok ? '完成：见下方分组' : (fin.message || '未生成')));
-      if (fin.ok) { hana.toast.show({ message: '写作模型已生成/更新', type: 'success' }); load(); }
-      setBusy(false);
+      if (cancelled || !s || s.kind !== 'generate') return;
+      if (s.running) {
+        setBusy(true);
+        setMsg('建模进行中（接管切页前的任务）…');
+        const fin = await watchGenerate(() => !cancelled);
+        if (cancelled || !fin) return;
+        setMsg(fin.stage === 'timeout' ? fin.message : (fmtTypeResults(fin.results || []) || fin.message || ''));
+        if ((fin.results || []).some((x: any) => x.ok)) { hana.toast.show({ message: '写作模型已生成/更新', type: 'success' }); load(); }
+        setBusy(false);
+        return;
+      }
+      // 已跑完（切页期间结束）：半小时内的结果补一句，避免回来一片空白
+      if (s.lastResult && s.finishedAt && Date.now() - s.finishedAt < 30 * 60 * 1000) {
+        setMsg(`上次建模：${fmtTypeResults(s.lastResult.results || []) || s.lastResult.message || '已完成'}`);
+        load();
+      }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -1280,8 +1314,9 @@ function ModelsTab({ tick }: { tick: number }) {
     try {
       const start = await apiPost('/api/model/generate', {});
       if (!start.started) { setMsg(start.message || '发起失败'); setBusy(false); return; }
-      setMsg('建模中：归属 → 归纳 → 逐类型生成（每个类型一次模型调用，可离开本页）…');
-      const fin = await pollJob('/api/model/status', { kind: 'generate' });
+      setMsg('建模中：正在读取结构库…');
+      const fin = await watchGenerate();
+      if (!fin) { setBusy(false); return; }
       if (fin.stage === 'timeout') { setMsg(fin.message); setBusy(false); return; }
       setMsg(fmtTypeResults(fin.results || []) || fin.message || '');
       if ((fin.results || []).some((x: any) => x.ok)) {
@@ -1367,7 +1402,8 @@ function ModelsTab({ tick }: { tick: number }) {
         <Button disabled={busy || tacticBusy} onClick={() => void generateTactic()}>
           {tacticBusy ? '战术建模中…' : '生成 / 更新战术模型'}
         </Button>
-        <span className="hint">两个按钮同理：样本 ≥2 才生成，再点得新版本（v+1，历史保留），样本未变自动跳过零浪费。类型模型的样本看归并自与宣告篇，战术模型的样本看携带该标签的篇目。</span>
+        <span className="hint">两个按钮同理：样本 ≥2 才生成，再点得新版本（v+1，历史保留）。类型模型的样本看归并自与宣告篇，战术模型的样本看携带该标签的篇目。</span>
+        <span className="hint">建模按类型或标签调用模型，样本多、篇幅长时 token 消耗较大。</span>
       </div>
       {msg && <pre className="hint">{msg}</pre>}
       {viewMode === 'preview' && sel ? (
@@ -2027,8 +2063,15 @@ function ZoteroBox() {
 }
 
 // ---- 首页（方案三四要素 + 导入入口）----
+// 首次使用告知（一次）：只说事实，不作免责声明；localStorage 不可用时退化为每次显示。
+const NOTICE_KEY = 'psm_use_notice_v1';
+
 function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => void; onDone: () => void }) {
   const todo = stats ? stats.queuePending + stats.failures : 0;
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  useEffect(() => {
+    try { setNoticeOpen(!window.localStorage.getItem(NOTICE_KEY)); } catch { setNoticeOpen(true); }
+  }, []);
   // 未配置引导：库路径为空或占位串时，在首页给出一步到位的指引
   const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok'>('loading');
   useEffect(() => {
@@ -2046,6 +2089,12 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
         <div className="home-banner">
           尚未配置结构库。到「设置」填写 libraryPath 并保存，模板会自动铺到该目录，无需手动拷贝。
           <Button onClick={() => go('settings')}>前往设置</Button>
+        </div>
+      )}
+      {noticeOpen && (
+        <div className="home-banner">
+          仅处理你有权使用的文本；结构库保存在本机，不随插件分发。引用与对外使用请自行核对授权，适当引用需指明作者与作品名。
+          <Button onClick={() => { setNoticeOpen(false); try { window.localStorage.setItem(NOTICE_KEY, '1'); } catch { /* 存不了就下次再提示 */ } }}>我知道了</Button>
         </div>
       )}
       <ol className="steps">

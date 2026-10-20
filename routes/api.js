@@ -526,7 +526,7 @@ export function registerApiRoutes(app, ctx) {
     void (async () => {
       let r;
       try {
-        r = await runModelGeneration(ctx);
+        r = await runModelGeneration(ctx, (p) => { modelJob = { ...modelJob, progress: p }; });
       } catch (e) {
         r = { ok: false, stage: "model", message: `建模链异常：${e?.message || e}` };
       }

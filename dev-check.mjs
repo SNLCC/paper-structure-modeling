@@ -296,4 +296,13 @@ console.log("located validate rejects empty item:", !validateExtraction({ ...goo
     && resolveTypeTarget("不存在的类型", known) === null);
 }
 
+// ---- 第 133 轮：引文上限 200 字（适当引用的实质要件：只摘说明问题所需的片段）----
+{
+  const over = JSON.parse(JSON.stringify(good));
+  over.slots[0].evidence = "字".repeat(201);
+  const edge = JSON.parse(JSON.stringify(good));
+  edge.slots[0].evidence = "字".repeat(200);
+  console.log("quote cap 200:", !validateExtraction(over).ok && validateExtraction(edge).ok);
+}
+
 console.log("done");
