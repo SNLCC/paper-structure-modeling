@@ -2161,7 +2161,7 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
       <div className="statusbar">
         {stats ? `库内 ${stats.papers} 篇目 · ${stats.models} 模型 · 待办 ${todo} 条` : '统计中…'}
       </div>
-      <p className="usage-note">使用边界：仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。</p>
+      <p className="usage-note">使用边界：仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习使用。</p>
       <ImportZone onDone={onDone} />
     </div>
   );

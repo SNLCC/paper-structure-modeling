@@ -35,7 +35,7 @@ third-party notices
    内嵌组件：unpdf 随附 Mozilla pdf.js 的 serverless 构建（`dist/pdfjs.mjs`，Apache-2.0，
    https://github.com/mozilla/pdf.js）。此项由 unpdf 的 README 声明；其 LICENSE 文件只含 MIT 正文，
    未附 Apache-2.0 全文，该构建内也未标注许可头，故此处代为转述并随包 Apache 全文：
-   **vendor/sdk/LICENSE-APACHE-2.0.txt**
+   **vendor/sdk/LICENSE-APACHE-2.0.txt**。本包对该构建未作修改，原样再分发。
 
 3. react, react-dom
    Copyright (c) Meta Platforms, Inc.
