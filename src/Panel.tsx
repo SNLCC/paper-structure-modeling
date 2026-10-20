@@ -1588,14 +1588,16 @@ function SettingsTab() {
     if (r.ok) void fetchEngine(true).then(setEngine);
   }
 
-  const engineLine = engine === null
-    ? '检测中…'
+  const engineState = engine === null
+    ? '正在检测主引擎…'
     : engine.ok
-      ? `可用，版本 ${engine.version || '未知'}（解释器 ${engine.python}）`
-      : `不可用（${engine.error || '未知原因'}；解释器 ${engine.python || 'python'}）`;
+      ? `主引擎可用：PyMuPDF ${engine.version || ''}（解释器：${engine.python}）`
+      : `主引擎不可用：${engine.error || '未知原因'}（解释器：${engine.python || 'python'}）`;
+  const pythonCmd = engine && engine.python ? engine.python : 'python';
 
   return (
     <div className="settings">
+      <h4 className="import-title">推荐与结构库</h4>
       <p className="hint">会话名命中标定词才会收到结构推荐；标定词留空 = 全静默，不向任何会话推送。</p>
       <TextInput label="会话标定词（、或逗号分隔，含任一即放行）" value={markers}
         onChange={(e) => setMarkers(e.currentTarget.value)} placeholder="例：构成性、论文、写作" />
@@ -1604,18 +1606,18 @@ function SettingsTab() {
       <TextInput label="单次推荐上限（1-2，设计上限 2）" value={maxN}
         onChange={(e) => setMaxN(e.currentTarget.value)} />
 
-      <p className="hint">
-        PDF 引擎：主引擎 PyMuPDF {engineLine}。不可用时自动回退内置 unpdf，功能不缺，仅部分 PDF 的提取质量低一档。
-      </p>
-      <TextInput label="Python 解释器路径（留空 = PATH 上的 python；本项保存即生效，无需重启）" value={py}
+      <h4 className="import-title">PDF 引擎</h4>
+      <p className={engine === null ? 'hint' : engine.ok ? 'ok' : 'err'}>{engineState}</p>
+      <TextInput label="Python 解释器路径（留空 = PATH 上的 python；保存即生效）" value={py}
         onChange={(e) => setPy(e.currentTarget.value)} placeholder="例：C:\\Python312\\python.exe" />
       <div className="saverow">
-        <Button disabled={probing} onClick={() => void probe()}>{probing ? '检测中…' : '重新检测引擎'}</Button>
-        <span className="hint">启用主引擎：{(engine && engine.python ? engine.python : 'python') + ' -m pip install pymupdf'}</span>
+        <Button disabled={probing} onClick={() => void probe()}>{probing ? '检测中…' : '检测主引擎'}</Button>
+        <span className="hint">主引擎不可用时自动回退内置 unpdf，功能不缺，仅部分 PDF 的提取质量低一档。</span>
       </div>
+      <p className="hint">启用主引擎：{pythonCmd} -m pip install pymupdf</p>
 
       <div className="saverow">
-        <Button variant="primary" onClick={() => void save()}>保存</Button>
+        <Button variant="primary" onClick={() => void save()}>保存以上设置</Button>
         {note && <span className="savehint">{note}</span>}
       </div>
       <p className="hint">命中判定：标定词过闸后，取最近对话文本与标签库/类型库做字典交集，交集词走共用检索层出候选；候选只附命中事实，采纳与否由会话内模型判断。同会话已注入条目不重复推。</p>
@@ -2102,15 +2104,9 @@ function ZoteroBox() {
 }
 
 // ---- 首页（方案三四要素 + 导入入口）----
-// 首次使用告知（一次）：只说事实，不作免责声明；localStorage 不可用时退化为每次显示。
-const NOTICE_KEY = 'psm_use_notice_v1';
 
 function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => void; onDone: () => void }) {
   const todo = stats ? stats.queuePending + stats.failures : 0;
-  const [noticeOpen, setNoticeOpen] = useState(false);
-  useEffect(() => {
-    try { setNoticeOpen(!window.localStorage.getItem(NOTICE_KEY)); } catch { setNoticeOpen(true); }
-  }, []);
   // 未配置引导：库路径为空/占位串 → 提示；请求本身失败 → 单独一态，不再静默留在 loading
   const [libState, setLibState] = useState<'loading' | 'unconfigured' | 'ok' | 'error'>('loading');
   const [libErr, setLibErr] = useState('');
@@ -2150,12 +2146,6 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
           <Button onClick={() => go('settings')}>去设置</Button>
         </div>
       )}
-      {noticeOpen && (
-        <div className="home-banner">
-          仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。
-          <Button onClick={() => { setNoticeOpen(false); try { window.localStorage.setItem(NOTICE_KEY, '1'); } catch { /* 存不了就下次再提示 */ } }}>我知道了</Button>
-        </div>
-      )}
       <ol className="steps">
         <li>把文献拖进面板一键拆解，或在对话里让我拆</li>
         <li>库里提出的疑问到「待办」处理，保证每条引文可回溯</li>
@@ -2171,6 +2161,7 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
       <div className="statusbar">
         {stats ? `库内 ${stats.papers} 篇目 · ${stats.models} 模型 · 待办 ${todo} 条` : '统计中…'}
       </div>
+      <p className="hint">使用边界：仅处理你有权使用的文本；结构库保存在本机，不随插件分发，仅供个人学习与研究使用。</p>
       <ImportZone onDone={onDone} />
     </div>
   );
