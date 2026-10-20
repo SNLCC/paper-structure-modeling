@@ -2126,7 +2126,7 @@ function HomeTab({ stats, go, onDone }: { stats: Stats | null; go: (z: Zone) => 
   useEffect(() => { void fetchEngine().then(setEngine); }, []);
   return (
     <div className="home">
-      <p className="tagline">把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。</p>
+      <p className="tagline">把论文拆成可回溯的论证结构，沉淀为写作模型，学习学术写作时检索取用。</p>
       {libState === 'error' && (
         <div className="home-banner">
           读取配置失败（{libErr || '未知原因'}），暂时无法判断结构库是否已配置。
@@ -2326,7 +2326,7 @@ function Panel() {
     <HanaThemeProvider mode="inherit" className="plugin-panel">
       <CardShell
         title="论文结构建模"
-        description="把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。"
+        description="把论文拆成可回溯的论证结构，沉淀为写作模型，学习学术写作时检索取用。"
         actions={<Button variant="ghost" onClick={bump}>刷新</Button>}
       >
         <nav className="tabs zones">

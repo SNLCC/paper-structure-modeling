@@ -17064,7 +17064,7 @@ function LE({ stats: u, go: r, onDone: o }) {
   return H.useEffect(() => {
     Lr().then(T);
   }, []), /* @__PURE__ */ d.jsxs("div", { className: "home", children: [
-    /* @__PURE__ */ d.jsx("p", { className: "tagline", children: "把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。" }),
+    /* @__PURE__ */ d.jsx("p", { className: "tagline", children: "把论文拆成可回溯的论证结构，沉淀为写作模型，学习学术写作时检索取用。" }),
     h === "error" && /* @__PURE__ */ d.jsxs("div", { className: "home-banner", children: [
       "读取配置失败（",
       v || "未知原因",
@@ -17226,7 +17226,7 @@ function BE() {
     Mn,
     {
       title: "论文结构建模",
-      description: "把论文拆成可回溯的论证结构，沉淀为写作模型，写论文时检索取用。",
+      description: "把论文拆成可回溯的论证结构，沉淀为写作模型，学习学术写作时检索取用。",
       actions: /* @__PURE__ */ d.jsx(_e, { variant: "ghost", onClick: S, children: "刷新" }),
       children: [
         /* @__PURE__ */ d.jsx("nav", { className: "tabs zones", children: gE.map((O) => /* @__PURE__ */ d.jsxs("button", { className: r === O.id ? "tab on" : "tab", onClick: () => o(O.id), children: [
