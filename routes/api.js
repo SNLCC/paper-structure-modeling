@@ -72,7 +72,9 @@ async function initLibraryFromTemplate(ctx, target) {
     }
     return { action: "initialized", files: rels.length };
   } catch (e) {
-    return { action: "failed", message: String(e?.message || e) };
+    // 失败必须带可读原因：宿主层错误形状是 {error, code}，String(e?.message || e) 会退成 [object Object]。
+    const why = e?.message || e?.error || e?.code || String(e);
+    return { action: "failed", message: String(why) };
   }
 }
 

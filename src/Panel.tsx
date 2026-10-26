@@ -20,9 +20,27 @@ const route = (p: string) => p.replace(/^\/+/, '');
 async function parseAny(r: any): Promise<any> {
   const t = await r.text();
   try {
-    return JSON.parse(t);
+    const j = JSON.parse(t);
+    // 第 130 轮：JSON 成功解析也带上 HTTP 状态码——宿主层信封是 {error, code}，没有 message，
+    // 此前一律落成「未知错误」；带上 status 才能在提示里说清是哪个状态码。
+    if (j && typeof j === 'object' && j.status == null) j.status = r.status;
+    return j;
   } catch {
-    return { ok: false, stage: 'http', message: `HTTP ${r.status}：${(t || '无响应体').slice(0, 200)}` };
+    return { ok: false, stage: 'http', status: r.status, message: `HTTP ${r.status}：${(t || '无响应体').slice(0, 200)}` };
+  }
+}
+
+// 第 130 轮：错误文案兜底。宿主自己的失败信封形状是 {error, code}（APPS.md 要求作者兼容），
+// 我们自己的路由分支才带 message。只认 message 会把宿主层失败压成「未知错误」，报告者无法提供线索。
+function errText(r: any): string {
+  if (!r) return '无响应';
+  const raw = r.message || r.error || r.code || (typeof r === 'string' ? r : '') || '';
+  const st = r.status ? `（HTTP ${r.status}）` : '';
+  if (raw) return `${String(raw).slice(0, 300)}${st}`;
+  try {
+    return `${JSON.stringify(r).slice(0, 300)}${st}`;
+  } catch {
+    return `未知错误${st}`;
   }
 }
 async function apiGet(path: string): Promise<any> {
@@ -1020,7 +1038,7 @@ function EditMd({ initial, savePath, onSaved }: { initial: string; savePath: str
     try {
       const r = await apiPost('/api/library/write-file', { path: savePath, content: out });
       if (r && r.ok) { hana.toast.show({ message: '已保存', type: 'success' }); onSaved(out); }
-      else setErr(r?.message || '保存失败');
+      else setErr(errText(r) || '保存失败');
     } catch (e: any) {
       setErr(String(e?.message || e));
     }
@@ -1564,7 +1582,7 @@ function SettingsTab() {
         setMaxN(String(r.config.maxPerRun ?? 2));
         setPy(r.config.pythonPath || '');
       } else {
-        setNote(r.message || '配置读取失败');
+        setNote(errText(r) || '配置读取失败');
       }
     });
     void fetchEngine().then(setEngine);
@@ -1584,8 +1602,23 @@ function SettingsTab() {
       maxPerRun: Number(maxN) || 2,
       pythonPath: py.trim(),
     });
-    setNote(r.ok ? '已保存' : `保存失败：${r.message || '未知错误'}`);
-    if (r.ok) void fetchEngine(true).then(setEngine);
+    if (!r.ok) {
+      setNote(`保存失败：${errText(r)}`);
+      return;
+    }
+    // 模板铺写结果必须显形：路由把结果放在 libraryInit，此前前端一个字都不读，
+    // 铺写失败会静默成「已保存，但库是空的」，报告者无从判断是没铺还是铺失败。
+    const init = r.libraryInit;
+    if (init && init.action === 'failed') {
+      setNote(`已保存，但结构库模板铺写失败：${init.message || '未知原因'}（目标目录可能不可写或被占用）`);
+    } else if (init && init.action === 'kept') {
+      setNote('已保存（目标目录已有内容，未铺写模板；改路径后需重启 Hana 生效）');
+    } else if (init && init.action === 'initialized') {
+      setNote(`已保存（已铺模板 ${init.files ?? '若干'} 个文件；改路径后需重启 Hana 生效）`);
+    } else {
+      setNote('已保存');
+    }
+    void fetchEngine(true).then(setEngine);
   }
 
   const engineState = engine === null
@@ -2187,7 +2220,7 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
       setMsg('有导入任务进行中，等待结果…');
       const fin = await pollImport();
       if (cancelled) return;
-      setMsg(fin.ok ? `完成：${fin.file}` : `仍失败：${fin.message || '未知错误'}${fin.failureTs ? '（已刷新记录）' : ''}`);
+      setMsg(fin.ok ? `完成：${fin.file}` : `仍失败：${errText(fin)}${fin.failureTs ? '（已刷新记录）' : ''}`);
       if (fin.ok || fin.failureTs) { await load(); bump(); }
     })();
     return () => { cancelled = true; };
@@ -2218,13 +2251,13 @@ function ImportFailTab({ tick, bump }: { tick: number; bump: () => void }) {
           setMsg(`已在库中，未重复导入${r.id ? `：${r.id}` : ''}；待办记录已清除`);
           hana.toast.show({ message: '篇目已在库中，未重复导入', type: 'success' });
         } else {
-          setMsg(`仍失败：${r.message || '未知错误'}${r.failureTs ? '（已刷新记录）' : ''}`);
+          setMsg(`仍失败：${errText(r)}${r.failureTs ? '（已刷新记录）' : ''}`);
         }
       } else if (start.ok) {
         setMsg(`重试成功：${start.file}`);
         hana.toast.show({ message: '重试成功，已入库', type: 'success' });
       } else {
-        setMsg(`仍失败：${start.message || '未知错误'}`);
+        setMsg(`仍失败：${errText(start)}`);
       }
     } catch (e: any) {
       setMsg(`请求失败：${String(e?.message || e)}`);

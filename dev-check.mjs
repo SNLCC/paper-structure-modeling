@@ -70,6 +70,26 @@ console.log("render anchor note:", md.includes("无锚点参照"));
 const md3 = renderExtraction(low);
 console.log("low render placeholder:", md3.includes("低可拆解度，留空"));
 
+// ---- 第 130 轮：形状安全渲染 + 双重转义归一 ----
+const arrRec = JSON.parse(JSON.stringify(good));
+arrRec.emergent.skeleton = [{ location: "§1", skeleton: "立问题" }, { location: "§2", skeleton: "作界定" }];
+arrRec.emergent.openingClosing = [{ location: "§1", opening: "权威语录开篇" }, { location: "§3", closing: "枚举收束" }];
+arrRec.meta.toVerify = [{ field: "§2", note: "引文待核" }];
+const arrMd = renderExtraction(arrRec);
+console.log("array render no [object Object]:", !arrMd.includes("[object Object]"));
+console.log("skeleton located render:", arrMd.includes("§1 立问题") && arrMd.includes("§3 枚举收束"));
+console.log("toVerify object render:", arrMd.includes("§2｜引文待核"));
+const badToVerify = JSON.parse(JSON.stringify(good));
+badToVerify.meta.toVerify = [{}];
+console.log("toVerify shape caught:", !validateExtraction(badToVerify).ok);
+const badSkeleton = JSON.parse(JSON.stringify(good));
+badSkeleton.emergent.skeleton = [{ location: "§1" }];
+console.log("skeleton empty-object caught:", !validateExtraction(badSkeleton).ok);
+const escRec = JSON.parse(JSON.stringify(good));
+escRec.understanding = "第一段\\n\\n第二段";
+const escMd = renderExtraction(escRec);
+console.log("double-escape normalized:", escMd.includes("第一段\n\n第二段") && !escMd.includes("\\n"));
+
 // ---- 锚点（M5）----
 const anchor = {
   id: "sample-2020", title: "示例论文标题", authors: "示例作者", year: "2020",
@@ -303,6 +323,14 @@ console.log("located validate rejects empty item:", !validateExtraction({ ...goo
   const edge = JSON.parse(JSON.stringify(good));
   edge.slots[0].evidence = "字".repeat(200);
   console.log("quote cap 200:", !validateExtraction(over).ok && validateExtraction(edge).ok);
+}
+
+// ---- 第 134 轮：引文不参与双重转义归一（引文须与原文逐字相符）----
+{
+  const rec = JSON.parse(JSON.stringify(good));
+  rec.slots[0].evidence = "原文含反斜杠\\n与制表\\t";
+  const evMd = renderExtraction(rec);
+  console.log("evidence not normalized:", evMd.includes("原文含反斜杠\\\\n与制表\\\\t"));
 }
 
 console.log("done");
