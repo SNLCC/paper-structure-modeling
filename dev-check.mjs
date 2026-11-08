@@ -326,11 +326,18 @@ console.log("located validate rejects empty item:", !validateExtraction({ ...goo
 }
 
 // ---- 第 134 轮：引文不参与双重转义归一（引文须与原文逐字相符）----
+// 第 136 轮改：原断言锁的是「双反斜杠」这一实现行为（会绿，但证不了逐字性）。
+// 改锁总则本身：单反斜杠原样出现在渲染结果里，且结果中不含双反斜杠。
+// 另加一条：竖线仍须转义，否则表格结构会被引文里的 `|` 打断。
 {
   const rec = JSON.parse(JSON.stringify(good));
   rec.slots[0].evidence = "原文含反斜杠\\n与制表\\t";
   const evMd = renderExtraction(rec);
-  console.log("evidence not normalized:", evMd.includes("原文含反斜杠\\\\n与制表\\\\t"));
+  console.log("evidence not normalized:", evMd.includes("原文含反斜杠\\n与制表\\t") && !evMd.includes("\\\\n"));
+  const rec2 = JSON.parse(JSON.stringify(good));
+  rec2.slots[0].evidence = "原文含竖线A|B";
+  const evMd2 = renderExtraction(rec2);
+  console.log("evidence pipe still escaped:", evMd2.includes("原文含竖线A\\|B"));
 }
 
 console.log("done");
